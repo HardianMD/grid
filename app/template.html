@@ -512,10 +512,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         var k = d.id === "mode" ? "crossword:mode" : d.id.indexOf("p_") === 0 ? "crossword:" + d.id.slice(2) : null;
         if (!k || !val) return;
         var loc = store.get(k), la = (loc && loc.at) || 0, ra = val.at || x.at || 0;
-        if (!loc || ra > la) {
+        // Newer wins, except that an empty grid never replaces one with letters in it.
+        var lb = blank(loc), rb = blank(val);
+        if (!loc || (lb && !rb) || (ra > la && !(rb && !lb))) {
           store.local(k, val); any = true; delete cloudQ[d.id];
           if (P && k === "crossword:" + P.id) cur = true;
-        } else if (la > ra) cloudQ[d.id] = loc;
+        } else if (la > ra || (rb && !lb)) cloudQ[d.id] = loc;
       });
       PUZZLES.concat([{ id: "mode" }]).forEach(function (p) {
         var id = p.id === "mode" ? "mode" : "p_" + p.id, k = p.id === "mode" ? "crossword:mode" : "crossword:" + p.id;
@@ -523,7 +525,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       });
       CLOUD = col;
       if (Object.keys(cloudQ).length) cloudT = setTimeout(cloudFlush, 1500);
-      if (cur && $("home").hidden) { load(P); size(); }
+      if (cur) { load(P); size(); }  // also when the puzzle only sits behind the home list, so a later save keeps the synced letters
       if (any && !$("home").hidden) showHome(true);
       syncOk();
     }).catch(syncErr);
@@ -831,7 +833,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     } catch (e) { return null; }
   }
 
+  // A puzzle with no letters in it that was never stored is not saved: an empty record dated now would look newer
+  // than real progress synced from another device and replace it.
+  function blank(v) {
+    return !!(v && v.fill && !v.solved && v.fill.join("").trim() === "");
+  }
   function save() {
+    if (!store.get("crossword:" + P.id) && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     store.set("crossword:" + P.id, {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
       ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,

@@ -611,7 +611,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         box.appendChild(d);
       });
     }
-    if (WAITING && STATUS.last_run && STATUS.last_run > WAITING.at && !STATUS.running) { WAITING = null; toast("Puzzles are up to date"); }
+    // Done once the run started for this tap has finished (seen running, or a newer last run, in case this
+    // device's clock is off or the start was missed).
+    if (WAITING && STATUS.running) WAITING.seen = true;
+    if (WAITING && !STATUS.running && (WAITING.seen || (STATUS.last_run && STATUS.last_run > WAITING.at))) { WAITING = null; toast("Puzzles are up to date"); }
     if (WAITING && Date.now() - WAITING.t > 15 * 60000) WAITING = null;
     var running = STATUS.running && Date.now() - Date.parse(STATUS.at || 0) < 15 * 60000;
     $("updBtn").classList.toggle("busy", !!(running || WAITING));
@@ -619,18 +622,20 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // "Check for new puzzles": asks GitHub to run the update now, with a key the owner pastes once (kept in their
   // own Firestore record). The new puzzles then arrive through the listener above.
   function runUpdate() {
-    if (!FBUSER || WAITING) return;
+    if (!FBUSER) return;
+    if (WAITING) { toast("Already checking for new puzzles\u2026"); return; }
+    WAITING = { at: new Date().toISOString().slice(0, 19), t: Date.now() }; showStatus();  // at once, so a second tap can't start another run
     var ref = DB.collection("users/" + FBUSER.uid + "/private").doc("github");
     ref.get().then(function (d) {
       var key = d.exists && d.data().token;
       if (key) return dispatch(key, ref);
       key = (prompt("Paste your GitHub update key (it starts github_pat_). It’s saved to your account, so this is a one-off.") || "").trim();
       if (key) return ref.set({ token: key }).then(function () { return dispatch(key, ref); });
+      WAITING = null; showStatus();
     }).catch(function (e) { WAITING = null; showStatus(); toast("Couldn’t start the check: " + ((e && (e.code || e.message)) || "error")); });
   }
   function dispatch(key, ref) {
     var repo = STATUS.repo || "HardianMD/crossword-data";
-    WAITING = { at: new Date().toISOString().slice(0, 19), t: Date.now() }; showStatus();
     return fetch("https://api.github.com/repos/" + repo + "/actions/workflows/update.yml/dispatches", {
       method: "POST", body: JSON.stringify({ ref: "main" }),
       headers: { Authorization: "Bearer " + key, Accept: "application/vnd.github+json" }

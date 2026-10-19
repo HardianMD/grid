@@ -1,6 +1,6 @@
-# Crosswords
+# Grid
 
-A crossword app, requiring sign in with Google. Data lives in Firestore.
+Private app, requiring sign in with Google. Data lives in Firestore.
 
 - `app/template.html`: the whole page (vanilla JS, no build step).
 - `tools/build.py OUT`: wraps the template into `OUT/index.html` and copies the icons, manifest and word list from `site/`.

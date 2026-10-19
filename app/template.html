@@ -117,7 +117,8 @@ header .timer.stopped { color: #1f7a33; }
 .gate h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
 .gate p { margin: 0 0 16px; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; color: var(--ink-soft); font-size: 14px; }
 .gate .btn { font-size: 15px; padding: 10px 18px; }
-.upd { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; font-size: 18px; line-height: 1; }
+.upd { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; }
+.upd svg { width: 18px; height: 18px; display: block; }
 .upd.busy { animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .problems { margin-top: 8px; padding: 8px 10px; border: 1px solid #d9b77a; border-radius: 10px; background: #fbf3e6; color: #8a5a12; font-size: 13px; }
@@ -346,7 +347,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
-    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Check for new puzzles" aria-label="Check for new puzzles">↻</button></div>
+    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Check for new puzzles" aria-label="Check for new puzzles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></div>
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span><button class="btn mini" id="syncBtn" type="button">Sign in with Google</button></div>
     <div class="problems" id="problems" role="status" hidden></div>

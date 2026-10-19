@@ -1,7 +1,7 @@
 # Crosswords
 
-A crossword solving page for phones, published with GitHub Pages. It shows nothing until you sign in with Google;
-the puzzles, and the progress sync, live in the owner's Firestore database, which only their account can read.
+A crossword solving app, requiring sign in with Google;
+the puzzles, and the progress sync, live in a Firestore database.
 
 - `app/template.html`: the whole page (vanilla JS, no build step).
 - `tools/build.py OUT`: wraps the template into `OUT/index.html` and copies the icons, manifest and word list from `site/`.

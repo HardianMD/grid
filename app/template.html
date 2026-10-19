@@ -670,7 +670,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     HARD = m === "hard" || m === "champ"; MED = m === "medium"; CHAMP = m === "champ"; MODE = m;
     if (!fromCloud) {
       store.set("crossword:mode", { m: m, at: Date.now() });
-      if (P && !solved && USED >= 0 && USED !== 3) USED = Math.min(USED, RANK[m]);
+      // A solve is recorded at the most help it had; with no help used yet (no hints, checks or reveals), the
+      // mode it is played in from here on is the one that counts.
+      if (P && !solved && USED >= 0 && USED !== 3) {
+        var noHelp = !REV && !Object.keys(hinted).length && !Object.keys(ok).length;
+        USED = noHelp ? RANK[m] : Math.min(USED, RANK[m]);
+      }
       if (P) save();
     }
     document.documentElement.dataset.mode = m;
@@ -755,6 +760,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
 
     var saved = store.get("crossword:" + p.id) || {};
+    if (blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
     fill = [];
     for (r = 0; r < R; r++) { fill.push([]); for (c = 0; c < C; c++) fill[r].push((saved.fill && saved.fill[r] && saved.fill[r][c] || " ").trim()); }
     sel = saved.sel && cells[saved.sel.r] && cells[saved.sel.r][saved.sel.c] && !cells[saved.sel.r][saved.sel.c].b

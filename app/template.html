@@ -81,7 +81,6 @@ header .timer.stopped { color: #1f7a33; }
 .clue { display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; font-size: 14px; line-height: 1.3; cursor: pointer; }
 .clue b { font-size: 12px; font-weight: 800; text-align: right; padding-top: 2px; font-variant-numeric: tabular-nums; }
 .clue.on { background: var(--word); }
-.clue.x { box-shadow: inset 3px 0 0 var(--accent); }
 .clue.done { color: var(--ink-soft); }
 .clue.done span { text-decoration: line-through; text-decoration-color: var(--rule); }
 .clue.right b { color: #1f7a33; }
@@ -962,10 +961,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       el.classList.toggle("ok", !HARD && !!ok[k]);
       el.lastChild.textContent = fill[r][c];
     }
-    words.forEach(function (x, i) {
+    words.forEach(function (x) {
       x.el.classList.toggle("on", x === w);
       if (x.span) clueInto(x.span, x);
-      x.el.classList.toggle("x", i === other);
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green

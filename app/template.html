@@ -115,7 +115,7 @@ header .timer.stopped { color: #1f7a33; }
 .src { flex: 0 0 auto; font: 700 10px var(--f-ui); text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px; color: #fff; background: #5b6670; }
 .gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--paper, #f6f3ec); padding: 24px; text-align: center; }
 .gate h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
-.gate p { margin: 0 0 16px; color: var(--ink-soft); font-size: 14px; }
+.gate p { margin: 0 0 16px; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; color: var(--ink-soft); font-size: 14px; }
 .gate .btn { font-size: 15px; padding: 10px 18px; }
 .upd { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; font-size: 18px; line-height: 1; }
 .upd.busy { animation: spin 1.2s linear infinite; }
@@ -577,7 +577,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }).catch(function () { gate("Couldn’t reach the sign-in service. Check your connection and reload."); });
   }
   function denied(e) {
-    var m = e && e.code === "permission-denied" ? "This Google account can’t open these puzzles."
+    var u = FBUSER || {};
+    var m = e && e.code === "permission-denied" ? "This Google account can’t open these puzzles. Signed in as " + (u.email || "?") + ", user ID " + (u.uid || "?") + "."
       : "Couldn’t load the puzzles: " + ((e && (e.code || e.message)) || "error");
     if (BOOTED) toast(m); else gate(m, "Sign out", "out");
   }

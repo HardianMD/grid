@@ -8,4 +8,4 @@ the puzzles, and the progress sync, live in the owner's Firestore database, whic
 - `.github/workflows/pages.yml`: builds and publishes on every push to `main`.
 - `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver.
 
-The Firebase web key in the page is public by design; Firestore's rules are what protect the data.
+

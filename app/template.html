@@ -1,0 +1,2187 @@
+<title>Crossword Pad</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap">
+<style>
+/* Always light: black-and-white grid regardless of phone theme.
+   Layout: full-screen solving pad. Header; scrolling middle with a full-width grid, check buttons and clue lists; current clue and in-page keyboard docked at the bottom. */
+:root {
+  --paper: #f5f7f8;
+  --sheet: #ffffff;
+  --ink: #15191d;
+  --ink-soft: #5b6670;
+  --rule: #c9d1d7;
+  --block: #15191d;
+  --word: #cfe3f5;
+  --cell: #ffd84d;
+  --cross: #e9eff4;
+  --accent: #1d5f99;
+  --key: #ffffff;
+  --key-ink: #15191d;
+  --key-alt: #d5dce2;
+  --kb-bg: #e3e8ec;
+  --ok: #bfe6c3;
+  --ok-word: #9fd8a6;
+  --easy: #1f7a33; --medium: #c27c0e; --hard: #b3261e; --champ: #15191d;
+  --f-ui: "Libre Franklin", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+html, body { height: 100%; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--f-ui);
+  overflow: hidden; -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.app { height: 100%; display: flex; flex-direction: column; position: relative; }
+.pad { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header { display: flex; align-items: center; gap: 12px; padding-block: 6px 4px; }
+header .ttl { flex: 1; min-width: 0; }
+header .meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header .timer { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+header .timer.stopped { color: #1f7a33; }
+.btn { font: 600 13px var(--f-ui); color: var(--accent); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.btn:focus-visible, .key:focus-visible, .clue:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.main { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.gridwrap { display: flex; justify-content: center; padding-left: max(4px, env(safe-area-inset-left, 0px)); padding-right: max(4px, env(safe-area-inset-right, 0px)); }
+.checks { display: flex; gap: 6px; padding-block: 4px 0; }
+.checks .btn { flex: 1; padding: 7px 6px; font-size: 13.5px; white-space: nowrap; border-radius: 8px; background: var(--sheet); }
+.grid { display: grid; background: var(--block); border: 2px solid var(--block); gap: 1px; touch-action: manipulation; }
+.c { position: relative; background: var(--sheet); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.c.b { background: var(--block); cursor: default; }
+.c.cross { background: var(--cross); }
+.c.ok { background: var(--ok); }
+.c.rv { background: #f7dfb4; }
+.c.word { background: var(--word); }
+.c.ok.word { background: var(--ok-word); }
+.c.rv.word:not(.cur) { background: #efcb8a; }
+.c.cur { background: var(--cell); }
+.c.bad { background: #f6c9c5; }
+.c .n { position: absolute; top: 1px; left: 2px; font-size: calc(var(--cs) * 0.27); line-height: 1; font-weight: 600; color: var(--ink); pointer-events: none; }
+.c .l { font-weight: 600; font-size: calc(var(--cs) * 0.6); line-height: 1; margin-top: calc(var(--cs) * 0.12); pointer-events: none; }
+.c.br::after { content: ""; position: absolute; right: -2px; top: 0; bottom: 0; width: 3px; background: var(--block); z-index: 1; }
+.c.bb::before { content: ""; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: var(--block); z-index: 1; }
+.c.hr .l::after, .c.hb .l::before { content: ""; position: absolute; background: var(--block); z-index: 1; }
+.c.hr .l::after { right: -2px; top: 50%; width: calc(var(--cs) * 0.3); height: 2px; transform: translate(50%, -50%); }
+.c.hb .l::before { bottom: -2px; left: 50%; height: calc(var(--cs) * 0.3); width: 2px; transform: translate(-50%, 50%); }
+
+.dock { background: var(--paper); border-top: 1px solid var(--rule); }
+.bar { display: flex; align-items: stretch; gap: 8px; padding-block: 4px; }
+.bar .nav { flex: 0 0 40px; font-size: 20px; color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.bar .nav { min-height: 44px; }
+.bar .now { flex: 1; min-width: 0; align-self: center; background: var(--word); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: 15px; line-height: 1.25; }
+.now .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
+
+.clues { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-block: 0 12px; }
+.clues h2 { position: sticky; top: 0; margin: 0; padding: 4px 0; background: var(--paper); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+.list { min-width: 0; }
+.clue { display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; font-size: 14px; line-height: 1.3; cursor: pointer; }
+.clue b { font-size: 12px; font-weight: 800; text-align: right; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.clue.on { background: var(--word); }
+.clue.x { box-shadow: inset 3px 0 0 var(--accent); }
+.clue.done { color: var(--ink-soft); }
+.clue.done span { text-decoration: line-through; text-decoration-color: var(--rule); }
+.clue.right b { color: #1f7a33; }
+
+.kb { background: var(--kb-bg); padding-block: 4px calc(4px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 4px; }
+.row { display: flex; gap: 5px; justify-content: center; }
+.key { flex: 1 1 0; max-width: 46px; height: 38px; border: 0; border-radius: 6px; background: var(--key); color: var(--key-ink); font: 600 18px var(--f-ui); box-shadow: 0 1px 0 rgba(0,0,0,.25); cursor: pointer; padding: 0; touch-action: manipulation; }
+.key.wide { flex: 1.5 1 0; max-width: 70px; background: var(--key-alt); font-size: 16px; }
+.key:active, .key.down { background: var(--accent); color: var(--sheet); }
+
+.sheet { position: fixed; inset: 0; background: rgba(10,14,18,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
+.sheet .panel { width: 100%; max-width: 640px; background: var(--sheet); border-radius: 14px 14px 0 0; padding-block: 16px calc(16px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 12px; max-height: 80%; overflow-y: auto; }
+.panel h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.danger { color: #b3261e; border-color: currentColor; }
+.checks a.btn { text-decoration: none; }
+[hidden] { display: none !important; }
+.home { position: fixed; inset: 0; background: var(--paper); z-index: 18; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.hwrap { max-width: 640px; margin: 0 auto; }
+.hhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0 6px; }
+.hhead h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.hsum { font-size: 13px; color: var(--ink-soft); }
+.hday { margin: 16px 0 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; }
+.hitem { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: center; width: 100%; margin: 0 0 8px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); font: 400 13px var(--f-ui); color: var(--ink); text-align: left; cursor: pointer; }
+.hitem .ht { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hitem .ht span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hitem .hm { grid-column: 1; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hitem .hs { grid-column: 2; grid-row: 1 / 3; font-weight: 700; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.hitem .hs small { display: block; font-weight: 400; color: var(--ink-soft); }
+.src { flex: 0 0 auto; font: 700 10px var(--f-ui); text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px; color: #fff; background: #5b6670; }
+.gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--paper, #f6f3ec); padding: 24px; text-align: center; }
+.gate h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.gate p { margin: 0 0 16px; color: var(--ink-soft); font-size: 14px; }
+.gate .btn { font-size: 15px; padding: 10px 18px; }
+.upd { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; font-size: 18px; line-height: 1; }
+.upd.busy { animation: spin 1.2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.problems { margin-top: 8px; padding: 8px 10px; border: 1px solid #d9b77a; border-radius: 10px; background: #fbf3e6; color: #8a5a12; font-size: 13px; }
+.problems b { display: block; margin-bottom: 2px; } .problems div { margin-top: 2px; }
+.hitem.new { border: 2px solid var(--accent); padding: 11px 13px; box-shadow: 0 1px 6px rgba(29,95,153,.15); }
+.hitem.new .hs .st { color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 4px 10px; }
+.hitem .hs .pz { margin-top: 4px; font: 700 12px var(--f-ui); color: var(--accent); }
+.hitem.prog .hs { color: var(--accent); }
+.hitem.done { background: #eef7ef; border-color: var(--ok-word); }
+.hitem.done .ht span { color: var(--ink-soft); }
+.hitem.done .hs { color: #1f7a33; }
+.hitem.done.dnf { background: #fbf3e6; border-color: #d9b77a; }
+.hitem.done.dnf .hs { color: #8a5a12; }
+.hsub { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-soft); }
+.modesw { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); flex: 0 0 auto; }
+.modesw button { font: 700 13px var(--f-ui); color: var(--ink-soft); background: none; border: 0; border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.modesw button[aria-pressed="true"] { background: var(--mc); color: var(--sheet); }
+.modesw button:disabled { cursor: default; } .modesw button:disabled:not([aria-pressed="true"]) { opacity: .4; }
+[data-mode="easy"] { --mc: var(--easy); --mf: rgba(31,122,51,.12); } [data-mode="medium"] { --mc: var(--medium); --mf: rgba(194,124,14,.14); }
+[data-mode="hard"] { --mc: var(--hard); --mf: rgba(179,38,30,.1); } [data-mode="champ"] { --mc: var(--champ); --mf: rgba(21,25,29,.08); }
+html[data-mode="easy"] .mtab tr > :nth-child(2), html[data-mode="medium"] .mtab tr > :nth-child(3),
+html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab tr > :nth-child(5) { background: var(--mf); }
+.mico { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--mc); color: var(--sheet); font: 800 12px var(--f-ui); }
+.mtab { width: 100%; border-collapse: collapse; font: 12px/1.3 var(--f-ui); color: var(--ink); }
+.mtab th, .mtab td { padding: 5px 3px; border-bottom: 1px solid var(--rule); text-align: center; vertical-align: top; }
+.mtab th:first-child, .mtab td:first-child { text-align: left; color: var(--ink-soft); font-weight: 600; }
+.mtab thead th { color: var(--mc); font-weight: 800; }
+.srow { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 14px var(--f-ui); }
+.solvedbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-block: 8px; background: #eef7ef; border-top: 1px solid var(--ok-word); border-bottom: 1px solid var(--ok-word); font: 700 14px var(--f-ui); color: #1f7a33; }
+.solvedbar a { text-decoration: none; background: var(--sheet); }
+.solvedbar.dnf { background: #fbf3e6; border-color: #d9b77a; color: #8a5a12; }
+.syncbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+.syncbar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fbar { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
+.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
+.fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
+.fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
+.frange { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; font-weight: 400; text-transform: none; }
+.hempty { text-align: center; color: var(--ink-soft); margin: 24px 0; font-size: 14px; }
+.hnote { font-size: 12px; color: var(--ink-soft); text-align: center; margin: 18px 0 0; }
+header .back { flex: 0 0 auto; padding: 2px 11px 5px; font-size: 22px; line-height: 1; }
+header .more { flex: 0 0 auto; padding: 3px 8px; line-height: 1; }
+
+.clue.see span { color: var(--ink-soft); font-style: italic; }
+.checks .btn.icon { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; }
+.btn.icon svg { width: 18px; height: 18px; display: block; }
+.wheel { box-sizing: border-box; position: absolute; left: 0; right: 0; z-index: 15; background: var(--paper); display: flex; flex-direction: column; gap: 10px; padding-block: 10px; overflow-y: auto; }
+.wheel .top { display: flex; align-items: center; gap: 8px; }
+.wheel .top h3 { margin: 0; flex: 1; font-size: 15px; font-weight: 800; }
+.wheel .top h3 small { font-weight: 400; color: var(--ink-soft); font-size: 13px; margin-left: 6px; }
+.ring { position: relative; align-self: center; border-radius: 50%; background: var(--sheet); border: 1px solid var(--rule); touch-action: none; flex: 0 0 auto; }
+.ring::before { content: ""; position: absolute; inset: 22%; border-radius: 50%; border: 1px dashed var(--rule); }
+.tile { position: absolute; width: var(--ts, 44px); height: var(--ts, 44px); margin: calc(var(--ts, 44px) / -2) 0 0 calc(var(--ts, 44px) / -2); border-radius: 50%; background: var(--ink); color: var(--sheet); font: 800 20px var(--f-ui); display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: left .25s, top .25s, opacity .15s; }
+.ring.jump .tile { transition: none; }
+.tile.drag { transition: none; cursor: grabbing; z-index: 2; transform: scale(1.12); }
+.tile.used { opacity: .25; }
+.slots { display: flex; justify-content: center; gap: 3px; }
+.slot { box-sizing: border-box; padding: 0; color: var(--ink); width: var(--sw, 30px); height: 36px; border: 1.5px solid var(--ink); background: var(--sheet); display: flex; align-items: center; justify-content: center; font: 800 18px var(--f-ui); cursor: pointer; border-radius: 3px; }
+.slot.given { background: var(--cross); color: var(--accent); }
+.slot.pick { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background: var(--cell); }
+.slot.gap { margin-left: 8px; }
+.slot.dash { margin-left: 10px; position: relative; }
+.slot.dash::before { content: ""; position: absolute; left: -9px; top: 50%; width: 6px; height: 2px; background: var(--ink); }
+.wheel .hint { margin: 0; text-align: center; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+.wheel .actions { justify-content: center; }
+.finds { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.finds p { margin: 0; width: 100%; text-align: center; font-size: 13px; color: var(--ink-soft); }
+.pfind { display: grid; gap: 8px; }
+.pfind .chips { max-height: 30vh; overflow-y: auto; }
+u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+.confirm { position: fixed; inset: 0; background: rgba(10,14,18,.45); display: flex; align-items: center; justify-content: center; z-index: 25; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.confirm .box { background: var(--sheet); border-radius: 12px; padding: 18px; max-width: 360px; width: 100%; display: grid; gap: 10px; max-height: 88%; overflow-y: auto; box-sizing: border-box; }
+.confirm h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.confirm p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-soft); }
+.confirm p#hintText { color: var(--ink); font-size: 16px; }
+.confirm .actions { justify-content: flex-end; }
+.dword { font-size: 20px !important; letter-spacing: 0.04em; }
+.dbody { display: grid; gap: 8px; }
+.dbody p { color: var(--ink) !important; font-size: 15px !important; }
+.dbody b { font: 700 12px var(--f-ui); color: var(--accent); margin-right: 6px; font-style: italic; }
+#dictExt { text-decoration: none; }
+.confirm p.note { font-size: 12px; color: var(--ink-soft); }
+.pedit { display: grid; gap: 6px; }
+.defpick { font: 16px/1.9 var(--f-ui); color: var(--ink); }
+.defpick .tok { cursor: pointer; border-radius: 3px; padding: 1px 0; -webkit-user-select: none; user-select: none; }
+.defpick .tok.on { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); background: var(--word); }
+.sub { font: 400 11px var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font: 600 12px var(--f-ui); color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; cursor: pointer; }
+.chip.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.chip:disabled { opacity: .4; cursor: default; }
+.chip.del { color: #b3261e; border-color: #e3b4b0; }
+.chip.def { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.btn.mini.danger { color: #b3261e; border-color: #e3b4b0; }
+.selbar { display: grid; gap: 6px; background: var(--cross); border-radius: 8px; padding: 8px; position: sticky; top: -18px; z-index: 2; }
+.selrow { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.wptok { font: 17px/2 var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; min-height: 2em; -webkit-user-select: none; user-select: none; }
+.wptok .tok { cursor: pointer; border-radius: 3px; padding: 2px 1px; }
+.wptok.letters .tok { padding: 2px 3px; margin: 0 1px; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--rule); }
+.wptok .tok.sel { background: var(--cell); box-shadow: inset 0 0 0 1px var(--ink); }
+.wptok .tok.isdef { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-color: var(--accent); }
+.defpick.flash { animation: defflash 1.2s ease-out; }
+@keyframes defflash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.wptok .empty { color: var(--ink-soft); font-style: italic; }
+#lettersBtn[aria-pressed="true"], #typeBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.selbar.live { box-shadow: inset 0 0 0 2px var(--accent); }
+.btn.mini { padding: 3px 10px; font-size: 12px; white-space: nowrap; }
+.lbtns { display: flex; gap: 8px; align-items: center; }
+.confirm p.pprev { font: 15px/1.45 var(--f-ui); color: var(--ink); background: var(--paper); border-radius: 8px; padding: 8px 10px; min-height: 1.4em; }
+.pprev s { text-decoration-thickness: 2px; color: var(--ink-soft); }
+.lrow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.lrow .lbtns, .selrow .lbtns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.pedit > *, .selbar > * { min-width: 0; }
+.info { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--sheet); color: var(--accent); font: italic 700 14px var(--f-ui); cursor: pointer; padding: 0; }
+.info[aria-expanded="true"] { background: var(--accent); color: var(--sheet); }
+.phelp { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+.confirm .phelp p { margin: 0; font-size: 13px; color: var(--ink); }
+.phelp code { font: 13px ui-monospace, Menlo, monospace; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0 4px; }
+.phelp dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+.phelp dt { font-weight: 600; color: var(--ink-soft); }
+.phelp dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ctype { display: inline-block; font: italic 600 12px var(--f-ui); color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 2px; }
+.pview { display: grid; gap: 8px; }
+.pview p { margin: 0; }
+.confirm .pview .pclue { font: 16px/1.4 var(--f-ui); color: var(--ink); }
+.confirm .pview .pans { font: 800 18px var(--f-ui); letter-spacing: 0.06em; color: var(--ink); }
+.confirm .pview .pwp { font: 15px/1.45 var(--f-ui); color: var(--ink); }
+.pwp > i { font-size: 13px; color: var(--accent); margin-right: 8px; }
+.pwp s { text-decoration-thickness: 2px; color: var(--ink-soft); }
+.pedit label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+#ansInput { text-transform: uppercase; font: 800 18px var(--f-ui); letter-spacing: 0.08em; }
+.pedit input, .pedit textarea { font: 16px var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; -webkit-user-select: text; user-select: text; resize: vertical; width: 100%; box-sizing: border-box; }
+.btn.solid { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; z-index: 30; }
+
+@media (min-width: 900px) and (min-height: 700px) {
+  .main { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 24px; align-content: start; }
+  .gridwrap { grid-column: 1; grid-row: 1; padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  .checks { grid-column: 1; grid-row: 2; align-self: start; }
+  .clues { grid-column: 2; grid-row: 1 / 3; margin-top: 0; }
+  .kb { display: none; }
+}
+#cluesBtn { display: none; }
+#cluesBtn[aria-pressed="true"] { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+/* Phones: the clue list is hidden behind the All clues button (it swaps the keyboard for the list), and the
+   clue box and keys share the room the list used to take. */
+@media not all and (min-width: 900px) and (min-height: 700px) {
+  .main { flex: 0 1 auto; }
+  #cluesBtn { display: flex; }
+  /* Up to six buttons share the row on a 375px screen. */
+  .checks { padding-bottom: 6px; gap: 4px; }
+  .checks .btn { padding-inline: 5px; font-size: 13px; }
+  .checks .btn.icon { padding-inline: 8px; }
+  .dock { flex: 1 1 0; display: flex; flex-direction: column; }
+  .dock .clues { display: none; flex: 1 1 0; min-height: 0; overflow-y: auto; margin: 0; }
+  .app.cl .dock .clues { display: grid; }
+  .app.cl .kb { display: none; }
+  /* The clue box takes what the keys leave and scrolls a very long clue rather than pushing the grid up. */
+  .bar { flex: 1 1 0; min-height: 56px; overflow: hidden; }
+  .app.cl .bar { display: none; }
+  .app.aw .bar { flex: 0 0 auto; }
+  .app.aw .dock { justify-content: flex-end; }
+  .bar .now { display: flex; flex-direction: column; justify-content: center; gap: 2px; align-self: stretch; min-height: 0; overflow-y: auto; font-size: 16px; line-height: 1.3; padding: 8px 14px; }
+  .bar .now > :first-child { margin-top: auto; }
+  .bar .now > :last-child { margin-bottom: auto; }
+  .bar .now.long { font-size: 14px; }
+  .now .tag { font-size: 11px; }
+  .bar .nav { min-height: 0; flex-basis: 44px; font-size: 24px; }
+  .kb { gap: 7px; padding-top: 8px; }
+  .key { height: clamp(38px, 6.4vh, 56px); max-width: none; font-size: 21px; }
+  .key.wide { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app" id="app">
+  <header class="pad">
+    <button class="btn back" id="homeBtn" type="button" aria-label="All puzzles">‹</button>
+    <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
+    <span class="timer" id="timer" aria-label="Time">0:00</span>
+    <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
+  </header>
+  <div class="main" id="main">
+  <div class="gridwrap"><div class="grid" id="grid" role="grid" aria-label="Crossword grid"></div></div>
+  <div class="checks pad" id="checks">
+    <button class="btn icon" id="cluesBtn" type="button" aria-label="All clues" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+    <button class="btn" id="checkWordBtn" type="button">Check word</button>
+    <button class="btn" id="checkAllBtn" type="button">Check all</button>
+    <button class="btn icon" id="wheelBtn" type="button" aria-label="Anagram wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.6" fill="currentColor"/><circle cx="18.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="5.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
+    <button class="btn icon" id="dictBtn" type="button" hidden aria-label="Dictionary"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M8 7h7"/></svg></button>
+    <button class="btn icon" id="hintBtn" type="button">Hint</button>
+    <button class="btn solid" id="submitBtn" type="button" hidden>Submit puzzle</button>
+  </div>
+  <div class="solvedbar pad" id="solvedBar" hidden><span id="solvedTxt"></span><a class="btn" id="blogLink" target="_blank" rel="noopener"></a></div>
+  <div class="clues pad" id="clues">
+    <div class="list"><h2>Across</h2><div id="acrossList"></div></div>
+    <div class="list"><h2>Down</h2><div id="downList"></div></div>
+  </div>
+  </div>
+  <div class="wheel pad" id="wheel" hidden role="dialog" aria-label="Anagram wheel">
+    <div class="top"><h3 id="wheelTitle">Anagram</h3><button class="btn" id="wheelClose" type="button">Close</button></div>
+    <div class="ring" id="ring"></div>
+    <p class="hint" id="wheelHint">Type letters on the keyboard to add them to the wheel.</p>
+    <div class="slots" id="slots"></div>
+    <div class="actions">
+      <button class="btn" id="shuffleBtn" type="button">Shuffle</button>
+      <button class="btn" id="slotsClear" type="button">Clear boxes</button>
+      <button class="btn" id="toGrid" type="button">Put in grid</button>
+      <button class="btn" id="solveBtn" type="button">Solve</button>
+    </div>
+    <div class="finds" id="finds" hidden></div>
+  </div>
+  <div class="dock">
+  <div class="bar pad">
+    <button class="nav" id="prevBtn" type="button" aria-label="Previous clue">‹</button>
+    <div class="now" id="now" role="button" tabindex="0" aria-live="polite"><span class="tag" id="nowTag"></span><span class="txt" id="nowTxt"></span></div>
+    <button class="nav" id="nextBtn" type="button" aria-label="Next clue">›</button>
+  </div>
+  <div class="kb pad" id="kb" aria-label="Keyboard"></div>
+  </div>
+</div>
+
+<div class="home" id="home" hidden>
+  <div class="hwrap pad">
+    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Check for new puzzles" aria-label="Check for new puzzles">↻</button></div>
+    <div class="hsub"><span class="hsum" id="homeSum"></span></div>
+    <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span><button class="btn mini" id="syncBtn" type="button">Sign in with Google</button></div>
+    <div class="problems" id="problems" role="status" hidden></div>
+    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
+    <div class="fpanel" id="fpanel" hidden>
+      <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
+      <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
+      <div class="fgrp"><label for="fSetter">Setter</label><select id="fSetter"></select></div>
+      <div class="fgrp"><span>Date</span><div class="frange"><input type="date" id="fFrom" aria-label="From date"><span>to</span><input type="date" id="fTo" aria-label="To date"></div></div>
+    </div>
+    <div id="homeList"></div>
+    <p class="hnote">Progress is saved in this browser on this device.</p>
+  </div>
+</div>
+<div class="sheet" id="sheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">Difficulty Mode</h3>
+    <div class="srow"><span>Mode</span><div class="modesw" role="group" aria-label="Difficulty"><button type="button" data-mode="easy" aria-pressed="true">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div></div>
+    <table class="mtab">
+      <thead><tr><th></th><th data-mode="easy">Easy</th><th data-mode="medium">Medium</th><th data-mode="hard">Hard</th><th data-mode="champ">Champ</th></tr></thead>
+      <tbody>
+        <tr><td>Check</td><td>Removes wrong letters</td><td>Clears wrong words</td><td>Clears wrong words</td><td>No</td></tr>
+        <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>Once submitted</td><td>Once submitted</td></tr>
+        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit</td></tr>
+        <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Submitted with wrong letters</td><td>Submitted with wrong letters</td></tr>
+      </tbody>
+    </table>
+    <p>You can switch mode at any time. A finished puzzle is recorded at the easiest mode used after its first letter was typed in. Clearing the grid removes only the letters: the time, mode and any reveals stay.</p>
+    <div class="actions" id="actions">
+      <button class="btn danger" id="clearBtn" type="button">Clear this grid</button>
+      <button class="btn" id="closeBtn" type="button">Done</button>
+    </div>
+  </div>
+</div>
+<div class="confirm" id="hintAsk" hidden role="dialog" aria-labelledby="hintTitle">
+  <div class="box">
+    <h3 id="hintTitle">Show a hint?</h3>
+    <p id="hintText">The definition part of this clue will be underlined. Are you sure you want to see the hint?</p>
+    <div class="pview" id="parseView" hidden>
+      <p class="pclue" id="pvClue"></p>
+      <p class="pans" id="pvAns"></p>
+      <p class="pwp"><i id="pvType"></i><span id="pvWp"></span></p>
+    </div>
+    <p class="note" id="parseNote" hidden></p>
+    <div class="pedit" id="parseForm" hidden>
+      <div class="pedit" id="ansRow" hidden>
+        <label for="ansInput">Your answer</label>
+        <input id="ansInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="lrow"><label>Definition <span class="sub">tap the words that define the answer</span></label><button class="btn mini" id="defClear" type="button">Clear</button></div>
+      <div class="defpick" id="defPick"></div>
+      <label>Clue type <span class="sub">tap all that apply</span></label>
+      <div class="chips" id="typeChips"></div>
+      <input id="parseType" type="hidden">
+      <div class="lrow"><label for="parseText">Wordplay</label><span class="lbtns"><button class="btn mini" id="useClue" type="button">From clue</button><button class="btn mini" id="lettersBtn" type="button" aria-pressed="false">Letters</button><button class="btn mini" id="typeBtn" type="button">Type</button><button class="btn mini danger" id="wpClear" type="button">Delete all</button><button class="info" id="parseInfo" type="button" aria-label="How to type parsings" aria-expanded="false">i</button></span></div>
+      <div class="selbar" id="selBar">
+        <div class="selrow"><span class="sub" id="selHint">Tap a word, then tap another to select a run, then pick what they do.</span><span class="lbtns"><button class="btn mini" id="undoBtn" type="button" hidden>Undo</button><button class="btn mini" id="selClear" type="button" hidden aria-label="Clear selection">×</button></span></div>
+        <div class="chips" id="markChips"></div>
+      </div>
+      <div class="wptok" id="wpTok"></div>
+      <textarea id="parseText" rows="4" hidden></textarea>
+      <p class="pprev" id="parsePrev"></p>
+      <div class="phelp" id="parseHelp" hidden>
+        <p><b>Two special marks</b></p>
+        <p><code>_word_</code> shows an indicator in <i>italics</i>. <code>~X~</code> shows letters <s>struck out</s> as removed.</p>
+        <p><b>How to write each type</b></p>
+        <dl>
+          <dt>Anagram</dt><dd><code>(LISTEN)* _broken_</code></dd>
+          <dt>Charade</dt><dd><code>CAR (vehicle) + PET (favourite)</code></dd>
+          <dt>Container</dt><dd><code>PA(R)T: R inside PAT, _holding_</code></dd>
+          <dt>Reversal</dt><dd><code>(STAR)< _back_</code></dd>
+          <dt>Hidden</dt><dd><code>_some_ aPE Time</code>, answer letters in capitals</dd>
+          <dt>Deletion</dt><dd><code>~B~RAIN (mind) _headless_</code></dd>
+          <dt>Initial letters</dt><dd><code>_first of_ Every Very Excited Nurse</code></dd>
+          <dt>Homophone</dt><dd><code>NEW, _sounds like_ KNEW</code></dd>
+          <dt>Double definition</dt><dd><code>PUNCH (hit) / PUNCH (drink)</code></dd>
+          <dt>Cryptic definition</dt><dd>A sentence explaining the pun</dd>
+        </dl>
+        <p>Put the clue type, such as Anagram, in the Clue type box. The definition is underlined for you, so you don't need to write it.</p>
+      </div>
+    </div>
+    <div class="pfind" id="findBox" hidden><p class="note" id="findNote"></p><div class="chips" id="findList"></div></div>
+    <div class="actions">
+      <button class="btn" id="findBtn" type="button" hidden>Find words</button>
+      <button class="btn" id="parseReset" type="button" hidden>Use original</button>
+      <button class="btn" id="parseEdit" type="button" hidden>Edit</button>
+      <button class="btn" id="hintNo" type="button">Not yet</button>
+      <button class="btn solid" id="hintYes" type="button">Show hint</button>
+    </div>
+  </div>
+</div>
+<div class="confirm" id="dictDlg" hidden role="dialog" aria-labelledby="dictWord">
+  <div class="box">
+    <h3 id="dictWord" class="dword"></h3>
+    <div id="dictBody" class="dbody"></div>
+    <p class="note" id="dictNote"></p>
+    <div class="actions">
+      <a class="btn" id="dictExt" target="_blank" rel="noopener">Chambers</a>
+      <button class="btn solid" id="dictClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<div class="gate" id="gate"><div><h1>Crosswords</h1><p id="gateTxt">Loading…</p><button class="btn" id="gateBtn" type="button" hidden>Sign in with Google</button></div></div>
+<script>
+(function () {
+  "use strict";
+  var PUZZLES = [];  // filled from Firestore once signed in
+  var $ = function (id) { return document.getElementById(id); };
+  // Progress lives in browser storage and, once signed in with Google, in Firestore, so it survives the
+  // browser clearing its storage and follows the user between devices.
+  var MEM = {};
+  var store = {
+    get: function (k) {
+      try { var v = localStorage.getItem(k); if (v !== null) return JSON.parse(v); } catch (e) {}
+      return Object.prototype.hasOwnProperty.call(MEM, k) ? MEM[k] : null;
+    },
+    local: function (k, v) { MEM[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    set: function (k, v) { store.local(k, v); cloudPut(k, v); }
+  };
+  var CLOUD = null, cloudQ = {}, cloudT = null;
+  function cloudId(k) {
+    if (k === "crossword:mode") return "mode";
+    var m = /^crossword:(.+)$/.exec(k);
+    return m && m[1] !== "last" && m[1] !== "filter" ? "p_" + m[1] : null;
+  }
+  function cloudPut(k, v) {
+    var id = cloudId(k); if (!id) return;
+    cloudQ[id] = v;
+    if (CLOUD && !cloudT) cloudT = setTimeout(cloudFlush, 3000);
+  }
+  function cloudFlush() {
+    clearTimeout(cloudT); cloudT = null;
+    if (!CLOUD) return;
+    var q = cloudQ; cloudQ = {};
+    Object.keys(q).forEach(function (id) {
+      CLOUD.doc(id).set({ v: JSON.stringify(q[id]), at: (q[id] && q[id].at) || Date.now() }).then(syncOk, function (e) {
+        if (!cloudQ[id]) cloudQ[id] = q[id];
+        syncErr(e);
+      });
+    });
+  }
+  // Sync status, shown in the sign-in bar.
+  var FBUSER = null;
+  function syncOk() {
+    if (!FBUSER) return;
+    $("syncTxt").textContent = "Synced " + new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  }
+  function syncErr(e) {
+    if (!FBUSER) return;
+    var m = "Sync failed: " + ((e && (e.code || e.message)) || "error");
+    $("syncTxt").textContent = m; toast(m);
+  }
+  // Merge the Firestore collection's docs ({v: JSON, at}) with this device by `at`, then keep writing to it.
+  function cloudMerge(col) {
+    return col.get().then(function (snap) {
+      var seen = {}, cur = false, any = false;
+      snap.docs.forEach(function (d) {
+        seen[d.id] = 1;
+        var x = d.data(), val;
+        if (!x || typeof x.v !== "string") return;
+        try { val = JSON.parse(x.v); } catch (e) { return; }
+        var k = d.id === "mode" ? "crossword:mode" : d.id.indexOf("p_") === 0 ? "crossword:" + d.id.slice(2) : null;
+        if (!k || !val) return;
+        var loc = store.get(k), la = (loc && loc.at) || 0, ra = val.at || x.at || 0;
+        if (!loc || ra > la) {
+          store.local(k, val); any = true; delete cloudQ[d.id];
+          if (P && k === "crossword:" + P.id) cur = true;
+        } else if (la > ra) cloudQ[d.id] = loc;
+      });
+      PUZZLES.concat([{ id: "mode" }]).forEach(function (p) {
+        var id = p.id === "mode" ? "mode" : "p_" + p.id, k = p.id === "mode" ? "crossword:mode" : "crossword:" + p.id;
+        if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object") cloudQ[id] = loc; }
+      });
+      CLOUD = col;
+      if (Object.keys(cloudQ).length) cloudT = setTimeout(cloudFlush, 1500);
+      if (cur && $("home").hidden) { load(P); size(); }
+      if (any && !$("home").hidden) showHome(true);
+      syncOk();
+    }).catch(syncErr);
+  }
+  // Google sign-in; progress syncs to Firestore users/<uid>/state/<id>.
+  var FIREBASE = /*FIREBASE_CONFIG*/{apiKey:"AIzaSyD99dXGScwcwSgOzSks-ARSFvBMwhHWt9g",authDomain:"crossword-d83c8.firebaseapp.com",projectId:"crossword-d83c8",storageBucket:"crossword-d83c8.firebasestorage.app",messagingSenderId:"371185083441",appId:"1:371185083441:web:1c6f143c851ebd2bb16110"}, FBV = "10.12.2";
+  function fbScript(name) {
+    return new Promise(function (ok, bad) {
+      var s = document.createElement("script"); s.src = "https://www.gstatic.com/firebasejs/" + FBV + "/" + name + "-compat.js";
+      s.onload = ok; s.onerror = bad; document.head.appendChild(s);
+    });
+  }
+  // Sign-in is required: the puzzles and the update status are in Firestore, readable only by the owner's Google
+  // account. Firestore keeps a copy on the device, so the app opens offline once it has loaded.
+  var DB = null, BOOTED = false, STATUS = {}, WAITING = null;
+  function gate(msg, btn, act) {
+    $("gate").hidden = !msg; $("gateTxt").textContent = msg || "";
+    $("gateBtn").hidden = !btn; $("gateBtn").textContent = btn || ""; $("gateBtn").dataset.act = act || "";
+  }
+  function fbInit() {
+    fbScript("firebase-app").then(function () { return Promise.all([fbScript("firebase-auth"), fbScript("firebase-firestore")]); }).then(function () {
+      firebase.initializeApp(FIREBASE);
+      DB = firebase.firestore();
+      DB.enablePersistence({ synchronizeTabs: true }).catch(function () {});
+      var auth = firebase.auth(), unsub = [];
+      $("gateBtn").addEventListener("click", function () {
+        var act = this.dataset.act;
+        if (act === "out") auth.signOut();
+        else if (act === "update") runUpdate();
+        else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(function (e) { toast("Sign-in didn’t work: " + (e && e.code || "error")); });
+      });
+      $("syncBtn").addEventListener("click", function () { cloudFlush(); auth.signOut(); });
+      $("updBtn").addEventListener("click", runUpdate);
+      auth.onAuthStateChanged(function (u) {
+        unsub.forEach(function (f) { f(); }); unsub = [];
+        CLOUD = null; FBUSER = u || null;
+        if (!u) {
+          if (BOOTED) { location.reload(); return; }  // signed out: nothing of the puzzles stays on screen
+          gate("Sign in to open your puzzles.", "Sign in with Google", "in");
+          return;
+        }
+        $("syncBar").hidden = false; $("syncTxt").textContent = "Syncing…"; $("syncBtn").textContent = "Sign out";
+        if (!BOOTED) gate("Loading puzzles…");
+        unsub.push(DB.collection("puzzles").onSnapshot(function (snap) {
+          var list = [];
+          snap.forEach(function (d) { try { list.push(JSON.parse(d.data().j)); } catch (e) {} });
+          gotPuzzles(list, snap.metadata.fromCache, u);
+        }, denied));
+        unsub.push(DB.collection("meta").doc("status").onSnapshot(function (d) { STATUS = d.data() || {}; showStatus(); }, function () {}));
+      });
+    }).catch(function () { gate("Couldn’t reach the sign-in service. Check your connection and reload."); });
+  }
+  function denied(e) {
+    var m = e && e.code === "permission-denied" ? "This Google account can’t open these puzzles."
+      : "Couldn’t load the puzzles: " + ((e && (e.code || e.message)) || "error");
+    if (BOOTED) toast(m); else gate(m, "Sign out", "out");
+  }
+  function gotPuzzles(list, fromCache, u) {
+    if (!list.length) {
+      if (!BOOTED && !fromCache) gate("No puzzles yet.", "Check for new puzzles", "update");
+      return;
+    }
+    PUZZLES = list;
+    if (!BOOTED) {
+      BOOTED = true;
+      boot();
+      gate(null);
+      cloudMerge(DB.collection("users/" + u.uid + "/state"));
+    } else if (!$("home").hidden) showHome(true);
+  }
+  // The update status: problems the last run met, and whether a run is going (the refresh button spins meanwhile).
+  function showStatus() {
+    var box = $("problems"), list = STATUS.problems || [];
+    box.innerHTML = ""; box.hidden = !list.length;
+    if (list.length) {
+      var t = document.createElement("b");
+      t.textContent = "⚠ The last check hit " + (list.length > 1 ? list.length + " problems" : "a problem");
+      box.appendChild(t);
+      list.forEach(function (x) {
+        var d = document.createElement("div"), when = new Date(x.since);
+        d.textContent = x.text + " (since " + when.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }) + ")";
+        box.appendChild(d);
+      });
+    }
+    if (WAITING && STATUS.last_run && STATUS.last_run > WAITING.at && !STATUS.running) { WAITING = null; toast("Puzzles are up to date"); }
+    if (WAITING && Date.now() - WAITING.t > 15 * 60000) WAITING = null;
+    var running = STATUS.running && Date.now() - Date.parse(STATUS.at || 0) < 15 * 60000;
+    $("updBtn").classList.toggle("busy", !!(running || WAITING));
+  }
+  // "Check for new puzzles": asks GitHub to run the update now, with a key the owner pastes once (kept in their
+  // own Firestore record). The new puzzles then arrive through the listener above.
+  function runUpdate() {
+    if (!FBUSER || WAITING) return;
+    var ref = DB.collection("users/" + FBUSER.uid + "/private").doc("github");
+    ref.get().then(function (d) {
+      var key = d.exists && d.data().token;
+      if (key) return dispatch(key, ref);
+      key = (prompt("Paste your GitHub update key (it starts github_pat_). It’s saved to your account, so this is a one-off.") || "").trim();
+      if (key) return ref.set({ token: key }).then(function () { return dispatch(key, ref); });
+    }).catch(function (e) { WAITING = null; showStatus(); toast("Couldn’t start the check: " + ((e && (e.code || e.message)) || "error")); });
+  }
+  function dispatch(key, ref) {
+    var repo = STATUS.repo || "HardianMD/crossword-data";
+    WAITING = { at: new Date().toISOString().slice(0, 19), t: Date.now() }; showStatus();
+    return fetch("https://api.github.com/repos/" + repo + "/actions/workflows/update.yml/dispatches", {
+      method: "POST", body: JSON.stringify({ ref: "main" }),
+      headers: { Authorization: "Bearer " + key, Accept: "application/vnd.github+json" }
+    }).then(function (r) {
+      if (r.status === 204) { toast("Checking for new puzzles…"); return; }
+      WAITING = null; showStatus();
+      if (r.status === 401 || r.status === 403 || r.status === 404) {
+        ref.delete();
+        toast("GitHub didn’t accept the key (" + r.status + "). Tap again to paste a new one.");
+      } else toast("GitHub answered " + r.status + ". Try again later.");
+    }, function () { WAITING = null; showStatus(); toast("Couldn’t reach GitHub. Try again later."); });
+  }
+
+  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
+  var elapsed = 0, since = null, solved = false;
+
+  // Linked groups: p.links ([["a1","a6"], ...], head first), else inferred from "See N" clues.
+  // Easy (default): hints, reveals and green-locked answers; Check removes only the wrong letters.
+  // Medium: like Easy, but Check never says which letters are right: a wrong word is cleared whole, except green squares.
+  // Hard: no hints, reveals or green; Check clears a wrong word whole, keeping only letters of words already checked right.
+  // Champ: like Hard with no Check or hints. In both, a full grid finishes only when submitted (SUB), which locks and grades it.
+  // A reveal makes a DNF except in Easy (by the mode recorded in USED).
+  // The mode belongs to each puzzle (chosen in its menu); the last choice is the default for puzzles not yet started.
+  // USED is the mode in force when the first letter went in (3: none yet), lowered by any easier mode switched to
+  // before the end, so a solve is recorded at the most help it had. Champ ranks 4, as 3 already means none yet.
+  var RANK = { easy: 0, medium: 1, hard: 2, champ: 4 }, MODES = ["easy", "medium", "hard", null, "champ"];
+  function setMode(m, fromCloud) {
+    m = RANK[m] === undefined ? "easy" : m;
+    HARD = m === "hard" || m === "champ"; MED = m === "medium"; CHAMP = m === "champ"; MODE = m;
+    if (!fromCloud) {
+      store.set("crossword:mode", { m: m, at: Date.now() });
+      if (P && !solved && USED >= 0 && USED !== 3) USED = Math.min(USED, RANK[m]);
+      if (P) save();
+    }
+    document.documentElement.dataset.mode = m;
+    $("modeIco").textContent = m.charAt(0).toUpperCase();
+    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.mode === m));
+    });
+    if (P && $("home").hidden) render();
+  }
+  function linksFor(p) {
+    if (Array.isArray(p.links)) return p.links;
+    var groups = {};
+    [["a", "across"], ["d", "down"]].forEach(function (t) {
+      Object.keys(p[t[1]] || {}).forEach(function (n) {
+        var m = String(p[t[1]][n]).match(/^\s*See (\d+)\s*(Across|Down)?\s*(\([^)]*\))?\s*$/i);
+        if (!m) return;
+        var hd = m[2] ? m[2][0].toLowerCase() : (p[t[1]][m[1]] !== undefined ? t[0] : (t[0] === "a" ? "d" : "a"));
+        (groups[hd + m[1]] = groups[hd + m[1]] || [hd + m[1]]).push(t[0] + n);
+      });
+    });
+    return Object.keys(groups).map(function (k) { return groups[k]; });
+  }
+  function wordName(w) {
+    if (!w.parts) return w.num + (w.dir === "a" ? " Across" : " Down");
+    var same = w.parts.every(function (x) { return x.dir === w.dir; });
+    return same ? w.parts.map(function (x) { return x.num; }).join(", ") + (w.dir === "a" ? " Across" : " Down")
+      : w.parts.map(function (x) { return x.num + (x.dir === "a" ? " Across" : " Down"); }).join(", ");
+  }
+  function parseEnum(clue) {
+    var m = clue.match(/\(([\d,\-\s]+)\)\s*$/);
+    if (!m) return [];
+    var out = [], pos = 0, parts = m[1].split(/([,\-])/);
+    for (var i = 0; i < parts.length; i += 2) {
+      pos += parseInt(parts[i], 10);
+      if (parts[i + 1]) out.push({ after: pos - 1, kind: parts[i + 1] });
+    }
+    return out;
+  }
+
+  function load(p) {
+    P = p; R = p.grid.length; C = p.grid[0].length;
+    var open = function (r, c) { return r >= 0 && r < R && c >= 0 && c < C && p.grid[r][c] !== "#"; };
+    cells = []; words = [];
+    var n = 0;
+    for (var r = 0; r < R; r++) {
+      cells.push([]);
+      for (var c = 0; c < C; c++) cells[r].push({ b: !open(r, c), num: 0, a: -1, d: -1 });
+    }
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+      if (!open(r, c)) continue;
+      var sa = !open(r, c - 1) && open(r, c + 1), sd = !open(r - 1, c) && open(r + 1, c);
+      if (!sa && !sd) continue;
+      cells[r][c].num = ++n;
+      [["a", sa, 0, 1], ["d", sd, 1, 0]].forEach(function (t) {
+        if (!t[1]) return;
+        var w = { dir: t[0], num: n, cells: [] }, rr = r, cc = c;
+        while (open(rr, cc)) { w.cells.push([rr, cc]); cells[rr][cc][t[0]] = words.length; rr += t[2]; cc += t[3]; }
+        var key = t[0] === "a" ? "across" : "down";
+        w.clue = (p[key] && p[key][n]) || "(clue missing)";
+        words.push(w);
+      });
+    }
+    words.forEach(function (w) { w.cdir = w.cells.map(function () { return w.dir; }); w.ends = [w.cells.length - 1]; });
+    // Linked clues ("See 1") are played as one answer: the tail slots join the head clue's word.
+    var byKey = {}; words.forEach(function (w) { byKey[w.dir + w.num] = w; });
+    SEES = [];
+    linksFor(p).forEach(function (grp) {
+      var ws = grp.map(function (k) { return byKey[k]; });
+      if (ws.some(function (w) { return !w; })) return;
+      var head = ws[0];
+      head.parts = ws.map(function (w) { return { dir: w.dir, num: w.num }; });
+      ws.slice(1).forEach(function (t) {
+        head.cells = head.cells.concat(t.cells); head.cdir = head.cdir.concat(t.cdir);
+        head.ends.push(head.cells.length - 1);
+        words.splice(words.indexOf(t), 1);
+        SEES.push({ dir: t.dir, num: t.num, head: head });
+      });
+      head.clue = head.clue.replace(/\s*\[[^\]]*?:\s*([\d,\-\s]+)\]\s*(\([\d,\-\s]+\))?\s*$/, " ($1)");
+    });
+    words.forEach(function (w) { w.breaks = parseEnum(w.clue); });
+    words.sort(function (x, y) { return x.dir === y.dir ? x.num - y.num : (x.dir === "a" ? -1 : 1); });
+    words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
+
+    var saved = store.get("crossword:" + p.id) || {};
+    fill = [];
+    for (r = 0; r < R; r++) { fill.push([]); for (c = 0; c < C; c++) fill[r].push((saved.fill && saved.fill[r] && saved.fill[r][c] || " ").trim()); }
+    sel = saved.sel && cells[saved.sel.r] && cells[saved.sel.r][saved.sel.c] && !cells[saved.sel.r][saved.sel.c].b
+      ? saved.sel : null;
+    SOL = decode(p);
+    DEFS = null;
+    try { if (p.hints) DEFS = JSON.parse(unscramble(p.hints, p.id)); } catch (e) {}
+    PARSES = null;
+    try { if (p.parses) PARSES = JSON.parse(unscramble(p.parses, p.id)); } catch (e) {}
+    hinted = {};
+    // Hint level per clue: 1 = definition underlined, 2 = clue type shown too.
+    if (Array.isArray(saved.hints)) saved.hints.forEach(function (k) { hinted[k] = 1; });
+    else if (saved.hints) hinted = saved.hints;
+    myParses = saved.parses || {};
+    myDefs = saved.defs || {};
+    // Clues with no known answer yet are listed in p.unsolved; answers the solver adds fill the gaps.
+    UNSOLVED = {}; (p.unsolved || []).forEach(function (k) { UNSOLVED[k] = 1; });
+    userAns = saved.answers || {}; userSol = {};
+    words.forEach(function (w) {
+      var a = userAns[w.dir + w.num]; if (!a) return;
+      w.cells.forEach(function (rc, i) { userSol[rc[0] + "," + rc[1]] = a[i]; });
+    });
+    ok = {};
+    (saved.ok || []).forEach(function (k) { ok[k] = 1; });
+    if (!sel) { var w0 = words[0]; sel = { r: w0.cells[0][0], c: w0.cells[0][1], dir: w0.dir }; }
+    store.set("crossword:last", p.id);
+    elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null;
+    startClock();
+    build();
+    var dm = store.get("crossword:mode");
+    setMode(saved.mode || (dm && dm.m) || "easy", true);
+    USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
+    REV = !!saved.rev; REVW = saved.revw || {};
+    if (SUB && !SUB.res) { grade(); if (SUB.res) save(); }  // answers arrived after it was submitted
+    render();
+  }
+
+  // Answers ship lightly scrambled so they are not readable in the page source.
+  function unscramble(b64, key) {
+    var raw = atob(b64), bytes = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+    return new TextDecoder().decode(bytes);
+  }
+  // Clue text, with the definition underlined once its hint has been shown.
+  // Definitions: the solver's own (saved per clue) win over the blog's.
+  function defsFor(w) {
+    var k = w.dir + w.num;
+    if (myDefs[k]) return myDefs[k];
+    var d = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num];
+    return d ? [d] : [];
+  }
+  function defSpans(w, defs) {
+    var out = [];
+    defs.forEach(function (d) {
+      var from = 0, at;
+      while ((at = w.clue.indexOf(d, from)) >= 0) {
+        if (!out.some(function (x) { return at < x[1] && at + d.length > x[0]; })) { out.push([at, at + d.length]); break; }
+        from = at + 1;
+      }
+    });
+    return out.sort(function (a, b) { return a[0] - b[0]; });
+  }
+  function clueInto(el, w, noType) {
+    el.textContent = "";
+    if (!HARD && !noType && hinted[w.dir + w.num] >= 2) {
+      var tg = document.createElement("span"); tg.className = "ctype"; tg.textContent = parseFor(w).type;
+      el.appendChild(tg);
+    }
+    // In Hard mode only the solver's own definitions are underlined.
+    var k = w.dir + w.num, spans = (HARD && !noType) ? (myDefs[k] ? defSpans(w, myDefs[k]) : []) : hinted[k] ? defSpans(w, defsFor(w)) : [], pos = 0;
+    spans.forEach(function (sp) {
+      el.appendChild(document.createTextNode(w.clue.slice(pos, sp[0])));
+      var u = document.createElement("u"); u.className = "def"; u.textContent = w.clue.slice(sp[0], sp[1]); el.appendChild(u);
+      pos = sp[1];
+    });
+    el.appendChild(document.createTextNode(w.clue.slice(pos)));
+  }
+  function decode(p) {
+    if (!p.solution) return null;
+    try {
+      var flat = unscramble(p.solution, p.id), rows = [];
+      for (var r = 0; r < R; r++) rows.push(flat.substr(r * C, C));
+      return rows;
+    } catch (e) { return null; }
+  }
+
+  function save() {
+    store.set("crossword:" + P.id, {
+      fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
+      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
+      sel: sel, at: Date.now()
+    });
+  }
+
+  function metaText(p) {
+    var d = p.date ? new Date(p.date + "T12:00:00") : null;
+    return [p.setter, d && !isNaN(d) ? d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : ""].filter(Boolean).join(" \u00b7 ");
+  }
+  function build() {
+    $("title").textContent = P.title.replace(/ No\. /, " ");
+    $("meta").textContent = metaText(P);
+    var g = $("grid");
+    g.innerHTML = "";
+    g.style.gridTemplateColumns = "repeat(" + C + ", var(--cs))";
+    g.style.gridTemplateRows = "repeat(" + R + ", var(--cs))";
+    cellEls = [];
+    for (var r = 0; r < R; r++) {
+      cellEls.push([]);
+      for (var c = 0; c < C; c++) {
+        var d = document.createElement("div"), cell = cells[r][c];
+        d.className = "c" + (cell.b ? " b" : "");
+        d.setAttribute("role", "gridcell");
+        d.dataset.r = r; d.dataset.c = c;
+        if (!cell.b) {
+          if (cell.num) { var n = document.createElement("span"); n.className = "n"; n.textContent = cell.num; d.appendChild(n); }
+          var l = document.createElement("span"); l.className = "l"; d.appendChild(l);
+        }
+        g.appendChild(d); cellEls[r].push(d);
+      }
+    }
+    words.forEach(function (w) {
+      w.breaks.forEach(function (b) {
+        var rc = w.cells[b.after];
+        if (!rc || w.ends.indexOf(b.after) >= 0) return;
+        var cls = (w.cdir[b.after] === "a" ? (b.kind === "," ? "br" : "hr") : (b.kind === "," ? "bb" : "hb"));
+        cellEls[rc[0]][rc[1]].classList.add(cls);
+      });
+    });
+    ["acrossList", "downList"].forEach(function (id) { $(id).innerHTML = ""; });
+    var items = [];
+    words.forEach(function (w, i) {
+      var el = document.createElement("div");
+      el.className = "clue"; el.tabIndex = 0; el.dataset.i = i;
+      var b = document.createElement("b"); b.textContent = w.parts ? w.parts.map(function (x) { return x.num + (x.dir === w.dir ? "" : x.dir); }).join(", ") : w.num;
+      var s = document.createElement("span"); w.span = s; clueInto(s, w);
+      el.appendChild(b); el.appendChild(s);
+      w.el = el; items.push({ dir: w.dir, num: w.num, el: el });
+    });
+    SEES.forEach(function (t) {
+      var el = document.createElement("div"), h = t.head;
+      el.className = "clue see"; el.tabIndex = 0; el.dataset.i = words.indexOf(h);
+      var b = document.createElement("b"); b.textContent = t.num;
+      var s = document.createElement("span"); s.textContent = "See " + h.num + (h.dir !== t.dir ? (h.dir === "a" ? " Across" : " Down") : "");
+      el.appendChild(b); el.appendChild(s); items.push({ dir: t.dir, num: t.num, el: el });
+    });
+    items.sort(function (x, y) { return x.num - y.num; }).forEach(function (it) {
+      $(it.dir === "a" ? "acrossList" : "downList").appendChild(it.el);
+    });
+    size();
+  }
+
+  function isWide() { return window.matchMedia("(min-width: 900px) and (min-height: 700px)").matches; }
+
+  function size() {
+    if (!P) return;
+    var gw = $("app").querySelector(".gridwrap"), cs = getComputedStyle(gw);
+    var inner = $("app").clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var side = inner;
+    if (isWide()) side = Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - 8);
+    side = Math.max(180, side);
+    var cs = Math.floor((side - 4 - (C - 1)) / C);
+    $("checks").style.maxWidth = isWide() ? (cs * C + C + 3) + "px" : "";
+    $("grid").style.setProperty("--cs", cs + "px");
+    var home = isWide() ? $("main") : $("app").querySelector(".dock");
+    if ($("clues").parentNode !== home) home.appendChild($("clues"));
+  }
+
+  function curWord(s) { s = s || sel; return words[cells[s.r][s.c][s.dir]]; }
+  function filled(w) { return w.cells.every(function (rc) { return fill[rc[0]][rc[1]]; }); }
+
+  function render() {
+    var w = curWord(), other = cells[sel.r][sel.c][sel.dir === "a" ? "d" : "a"];
+    var inWord = {};
+    w.cells.forEach(function (rc) { inWord[rc[0] + "," + rc[1]] = 1; });
+    var inCross = {};
+    if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
+    var total = 0, done = 0, bad = 0, revDnf = REV && USED !== 0;
+    // A DNF shows why: wrong squares in red, revealed answers in amber.
+    var rv = {};
+    if (revDnf) words.forEach(function (x) { if (REVW[x.dir + x.num]) x.cells.forEach(function (rc) { rv[rc[0] + "," + rc[1]] = 1; }); });
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
+      if (cells[r][c].b) continue;
+      var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
+      total++; if (fill[r][c]) done++;
+      if (a && fill[r][c] !== a) bad++;
+      el.classList.toggle("bad", !!a && fill[r][c] !== a);
+      el.classList.toggle("rv", !!rv[k]);
+      el.classList.toggle("word", !!inWord[k]);
+      el.classList.toggle("cross", !inWord[k] && !!inCross[k]);
+      el.classList.toggle("cur", r === sel.r && c === sel.c);
+      el.classList.toggle("ok", !HARD && !!ok[k]);
+      el.lastChild.textContent = fill[r][c];
+    }
+    words.forEach(function (x, i) {
+      x.el.classList.toggle("on", x === w);
+      if (x.span) clueInto(x.span, x);
+      x.el.classList.toggle("x", i === other);
+      x.el.classList.toggle("done", filled(x));
+      x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
+    });
+    $("nowTag").textContent = wordName(w);
+    clueInto($("nowTxt"), w);
+    $("now").classList.toggle("long", $("nowTxt").textContent.length > 70);
+    // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
+    $("dictBtn").hidden = !filled(w);
+    words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
+    // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
+    $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
+    $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
+    $("submitBtn").hidden = !HARD || solved || done < total;
+    $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);
+    $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
+    if (!solved && done && USED === 3) USED = RANK[MODE];
+    if (SOL && !HARD && !solved && done === total && allRight()) {
+      stopClock(); solved = true; save();
+      toast("Solved in " + fmt(elapsed));
+    }
+    $("timer").classList.toggle("stopped", solved);
+    var bl = solved && blogFor(P);
+    $("solvedBar").hidden = !solved;
+    $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
+    if (solved) {
+      var nr = Object.keys(REVW).length;
+      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed"
+        : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
+        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + plural(bad, "wrong square") : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
+      $("blogLink").hidden = !bl;
+      if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = (bl.exact ? "Read the blog" : "Find the blog") + " \u2197"; }
+    }
+    scrollClue(w.el);
+  }
+
+  // Timer: counts up while the page is open and visible, stops when every answer is right.
+  function now() { return elapsed + (since ? Date.now() - since : 0); }
+  function fmt(ms) { var t = Math.floor(ms / 1000), m = Math.floor(t / 60), sec = t % 60; return m + ":" + (sec < 10 ? "0" : "") + sec; }
+  function tick() { $("timer").textContent = fmt(now()); }
+  function startClock() { if (!solved && since === null && !document.hidden && $("home").hidden) since = Date.now(); tick(); }
+  function stopClock() { elapsed = now(); since = null; tick(); }
+  function allRight() {
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
+      if (cells[r][c].b) continue;
+      var a = solAt(r, c);
+      if (!fill[r][c] || (a && fill[r][c] !== a)) return false;
+    }
+    return true;
+  }
+  setInterval(function () { if (since !== null) { tick(); if (Math.floor(now() / 1000) % 5 === 0) save(); } }, 1000);
+  // Hidden: save and upload now (iOS may not come back). Visible again: pick up changes made on other devices.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { if (P) { stopClock(); save(); } cloudFlush(); }
+    else { if (P) startClock(); if (CLOUD) { cloudFlush(); cloudMerge(CLOUD); } }
+  });
+  window.addEventListener("pagehide", function () { if (P) save(); cloudFlush(); });
+
+  function scrollClue(el) {
+    if (!isWide()) return;
+    var box = $("main"), top = el.offsetTop - box.offsetTop, h = el.offsetHeight;
+    if (top < box.scrollTop + 24 || top + h > box.scrollTop + box.clientHeight) {
+      box.scrollTo({ top: Math.max(0, top - 30), behavior: "smooth" });
+    }
+  }
+
+  function select(r, c, dir) {
+    var cell = cells[r][c];
+    if (cell.b) return;
+    if (cell[dir] < 0) dir = dir === "a" ? "d" : "a";
+    sel = { r: r, c: c, dir: dir };
+    render(); save();
+  }
+
+  function tapCell(r, c) {
+    var cell = cells[r][c];
+    if (cell.b) return;
+    if (sel.r === r && sel.c === c) {
+      var nd = sel.dir === "a" ? "d" : "a";
+      if (cell[nd] >= 0) select(r, c, nd);
+      return;
+    }
+    select(r, c, cell.a >= 0 ? "a" : "d");
+  }
+
+  function firstEmpty(w) {
+    for (var i = 0; i < w.cells.length; i++) if (!fill[w.cells[i][0]][w.cells[i][1]]) return w.cells[i];
+    return w.cells[0];
+  }
+
+  function gotoWord(i) {
+    var w = words[i], rc = firstEmpty(w);
+    sel = { r: rc[0], c: rc[1], dir: w.cdir[w.cells.indexOf(rc)] };
+    render(); save();
+  }
+
+  function nextWord(step) {
+    var cur = cells[sel.r][sel.c][sel.dir], n = words.length;
+    for (var k = 1; k <= n; k++) {
+      var i = ((cur + step * k) % n + n) % n;
+      if (!filled(words[i])) return gotoWord(i);
+    }
+    gotoWord(((cur + step) % n + n) % n);
+  }
+
+  // Typing moves one square at a time. On a green (checked) square, the same letter just steps over it;
+  // a different letter lands in the next square instead.
+  function typeLetter(ch) {
+    var w = curWord(), idx = indexIn(w), wasFull = filled(w);
+    var k = sel.r + "," + sel.c;
+    if (lockedCell(k) && fill[sel.r][sel.c] !== ch) {
+      var nx = w.cells[idx + 1];
+      if (!nx) return;
+      sel = { r: nx[0], c: nx[1], dir: w.cdir[idx + 1] };
+      return typeLetter(ch);
+    }
+    if (!lockedCell(k)) { if (fill[sel.r][sel.c] !== ch) delete ok[k]; fill[sel.r][sel.c] = ch; }
+    if (!wasFull && filled(w)) flash(w);
+    var rc = w.cells[idx + 1];
+    if (rc) sel = { r: rc[0], c: rc[1], dir: w.cdir[idx + 1] };
+    render(); save();
+  }
+
+  function indexIn(w) {
+    for (var i = 0; i < w.cells.length; i++) if (w.cells[i][0] === sel.r && w.cells[i][1] === sel.c) return i;
+    return 0;
+  }
+
+  function del() {
+    var w = curWord(), idx = indexIn(w);
+    if (fill[sel.r][sel.c] && !lockedCell(sel.r + "," + sel.c)) { fill[sel.r][sel.c] = ""; delete ok[sel.r + "," + sel.c]; }
+    else if (idx > 0) {
+      var rc = w.cells[idx - 1];
+      sel = { r: rc[0], c: rc[1], dir: w.cdir[idx - 1] };
+      if (!lockedCell(rc[0] + "," + rc[1])) { fill[rc[0]][rc[1]] = ""; delete ok[rc[0] + "," + rc[1]]; }
+    }
+    render(); save();
+  }
+
+  // Known letter for a square: the stored solution, else an answer the solver added; null when nobody knows it.
+  function solAt(r, c) {
+    var v = SOL && SOL[r] && SOL[r][c];
+    if (v && v !== "?") return v;
+    return userSol[r + "," + c] || null;
+  }
+  function known(w) {
+    var key = w.dir + w.num;
+    if (UNSOLVED[key] && !userAns[key]) return false;
+    return w.cells.every(function (rc) { return solAt(rc[0], rc[1]); });
+  }
+  function hasDef(w) { return defsFor(w).length > 0; }
+  function hasType(w) { return !!(PARSES && PARSES[w.dir] && PARSES[w.dir][w.num]); }
+  // What the Hint button does next for this clue.
+  function nextAction(w) {
+    var lv = hinted[w.dir + w.num] || 0;
+    if (locked(w)) return "parse";
+    if (!known(w)) return "add";
+    if (lv < 1 && hasDef(w)) return "hint";
+    if (lv < 2 && hasType(w)) return "hint2";
+    return "reveal";
+  }
+
+  // Check: wrong letters are removed, right ones stay; a fully right word turns green and locks.
+  // Squares nobody knows the answer to are left alone.
+  function check(list) {
+    if (MED || HARD) return checkWords(list);
+    var removed = 0, right = 0, unknown = 0;
+    list.forEach(function (w) {
+      w.cells.forEach(function (rc) {
+        var v = fill[rc[0]][rc[1]], a = solAt(rc[0], rc[1]);
+        if (v && a && v !== a) { fill[rc[0]][rc[1]] = ""; removed++; }
+      });
+      if (!known(w)) { unknown++; return; }
+      if (filled(w)) { right++; w.cells.forEach(function (rc) { ok[rc[0] + "," + rc[1]] = 1; }); }
+    });
+    render(); save();
+    return { removed: removed, right: right, unknown: unknown };
+  }
+
+  // Medium and Hard: right words are marked (green in Medium only); a word with any wrong letter is emptied, keeping marked squares.
+  function checkWords(list) {
+    var cleared = 0, right = 0, unknown = 0, bad = [];
+    list.forEach(function (w) {
+      if (!known(w)) { unknown++; return; }
+      var wrong = w.cells.some(function (rc) { var v = fill[rc[0]][rc[1]], a = solAt(rc[0], rc[1]); return v && a && v !== a; });
+      if (wrong) bad.push(w);
+      else if (filled(w)) { right++; w.cells.forEach(function (rc) { ok[rc[0] + "," + rc[1]] = 1; }); }
+    });
+    bad.forEach(function (w) {
+      w.cells.forEach(function (rc) { if (!ok[rc[0] + "," + rc[1]]) fill[rc[0]][rc[1]] = ""; });
+      cleared++;
+    });
+    render(); save();
+    return { cleared: cleared, right: right, unknown: unknown, removed: 0 };
+  }
+
+  function plural(n, s) { return n + " " + s + (n === 1 ? "" : "s"); }
+
+  // Submitted grid (Hard, Champ): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
+  function grade() {
+    var any = false, bad = 0;
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
+      var a = !cells[r][c].b && solAt(r, c);
+      if (!a) continue;
+      any = true; if (fill[r][c] !== a) bad++;
+    }
+    SUB.res = !any ? "" : bad ? "dnf" : "ok";
+    return bad;
+  }
+  // Two taps, as a submitted grid can't be changed.
+  $("submitBtn").addEventListener("click", function () {
+    var b = this;
+    clearTimeout(b.t);
+    if (b.textContent === "Submit puzzle") {
+      b.textContent = "Tap again to submit";
+      b.t = setTimeout(function () { b.textContent = "Submit puzzle"; }, 3000);
+      return;
+    }
+    b.textContent = "Submit puzzle";
+    stopClock(); solved = true; SUB = { at: Date.now() }; grade();
+    save(); render();
+    toast(SUB.res === "ok" ? "Finished in " + fmt(elapsed) : SUB.res === "dnf" ? "DNF" : "Submitted");
+  });
+
+  $("checkWordBtn").addEventListener("click", function () {
+    var res = check([curWord()]);
+    if (MED || HARD) return toast(res.right ? "Correct" : res.cleared ? "Not right – word cleared" : "Nothing wrong so far");
+    if (res.right) toast("Correct");
+    else if (res.removed) toast("Removed " + plural(res.removed, "wrong letter"));
+    else toast("No wrong letters yet");
+  });
+  $("checkAllBtn").addEventListener("click", function () {
+    var res = check(words), tail = res.unknown ? ". " + plural(res.unknown, "clue") + " couldn't be checked" : "";
+    if (res.right === words.length) toast("Puzzle complete");
+    else if (MED || HARD) toast((res.cleared ? "Cleared " + plural(res.cleared, "wrong word") + ", " : "No wrong words, ") + plural(res.right, "word") + " correct" + tail);
+    else if (res.removed) toast("Removed " + plural(res.removed, "wrong letter") + ", " + plural(res.right, "word") + " correct" + tail);
+    else toast("No wrong letters, " + plural(res.right, "word") + " correct" + tail);
+  });
+
+  function move(dr, dc) {
+    var r = sel.r, c = sel.c, dir = dc ? "a" : "d";
+    if (sel.dir !== dir && cells[r][c][dir] >= 0) return select(r, c, dir);
+    do { r += dr; c += dc; } while (r >= 0 && r < R && c >= 0 && c < C && cells[r][c].b);
+    if (r >= 0 && r < R && c >= 0 && c < C) select(r, c, dir);
+  }
+
+  function flash(w) {
+    w.cells.forEach(function (rc) { var el = cellEls[rc[0]][rc[1]]; el.animate && el.animate([{ filter: "brightness(1.15)" }, { filter: "none" }], { duration: 350 }); });
+  }
+
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 1600);
+  }
+
+  // Keyboard
+  var ROWS = ["QWERTYUIOP", "ASDFGHJKL", "↕ZXCVBNM⌫"];
+  ROWS.forEach(function (row) {
+    var d = document.createElement("div"); d.className = "row";
+    Array.from(row).forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "key"; b.textContent = k; b.dataset.k = k;
+      if (k === "⌫") { b.classList.add("wide"); b.setAttribute("aria-label", "Delete"); }
+      if (k === "↕") { b.classList.add("wide"); b.setAttribute("aria-label", "Switch across or down"); }
+      d.appendChild(b);
+    });
+    $("kb").appendChild(d);
+  });
+  // Anagram wheel: letters come from the current answer; keys add or remove letters while it is open.
+  var AW = { open: false, tiles: [], slots: [], word: null, size: 260 };
+  function wheelOpen() {
+    // Letters backed by a finished crossing answer (or checked correct) start in the boxes;
+    // any other letters typed in this answer become wheel letters.
+    var w = curWord(), letters = [];
+    AW.slots = w.cells.map(function (rc, j) {
+      var v = fill[rc[0]][rc[1]], x = cells[rc[0]][rc[1]][w.cdir[j] === "a" ? "d" : "a"];
+      if (!v) return -1;
+      if (lockedCell(rc[0] + "," + rc[1]) || (x >= 0 && filled(words[x]))) return v;
+      letters.push(v); return -1;
+    });
+    AW.word = w; AW.tiles = []; AW.pick = AW.slots.indexOf(-1);
+    $("ring").innerHTML = "";
+    letters.forEach(addTile);
+    // On phones the wheel covers everything down to the clue box, which shrinks to fit its clue meanwhile.
+    var main = $("main"), el = $("wheel");
+    showList(false); $("app").classList.add("aw");
+    var h = isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
+    el.style.top = main.offsetTop + "px";
+    el.style.height = h + "px";
+    el.hidden = false; AW.open = true;
+    $("wheelTitle").innerHTML = "";
+    $("wheelTitle").appendChild(document.createTextNode(wordName(w)));
+    var sm = document.createElement("small"); sm.textContent = "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")";
+    $("wheelTitle").appendChild(sm);
+    var avail = Math.min(main.clientWidth - 32, h - (letters.length ? 155 : 205), 300);
+    AW.size = Math.max(180, avail);
+    $("ring").style.width = $("ring").style.height = AW.size + "px";
+    $("solveBtn").hidden = HARD && !solved;
+    $("finds").hidden = true; AW.found = null;
+    buildSlots(); layoutTiles(false); wheelRender();
+  }
+  function wheelClose() { $("wheel").hidden = true; AW.open = false; $("app").classList.remove("aw"); }
+  function addTile(ch) {
+    var t = { ch: ch, x: 0, y: 0, el: document.createElement("div") };
+    t.el.className = "tile"; t.el.textContent = ch;
+    $("ring").appendChild(t.el);
+    AW.tiles.push(t);
+    bindTile(t);
+  }
+  function layoutTiles(shuffle) {
+    var n = AW.tiles.length, order = AW.tiles.map(function (_, i) { return i; });
+    var prev = AW.order ? AW.order.join(",") : "";
+    for (var tries = 0; shuffle && tries < 10; tries++) {
+      for (var i = n - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = order[i]; order[i] = order[j]; order[j] = x; }
+      if (n < 3 || order.join(",") !== prev) break;
+    }
+    AW.order = order.slice();
+    AW.tiles.forEach(function (t) { t.el.classList.remove("drag"); });
+    $("ring").classList.add("jump");
+    requestAnimationFrame(function () { requestAnimationFrame(function () { $("ring").classList.remove("jump"); }); });
+    var c = AW.size / 2, ts = Math.max(28, Math.min(44, Math.floor((Math.PI * (AW.size - 44)) / Math.max(n, 1) * 0.9)));
+    $("ring").style.setProperty("--ts", ts + "px");
+    var rad = n <= 1 ? 0 : c - ts / 2 - 6;
+    order.forEach(function (ti, k) {
+      var a = -Math.PI / 2 + (2 * Math.PI * k) / Math.max(n, 1), t = AW.tiles[ti];
+      t.x = c + rad * Math.cos(a); t.y = c + rad * Math.sin(a);
+    });
+    wheelRender();
+  }
+  function buildSlots() {
+    var box = $("slots"); box.innerHTML = "";
+    var n = AW.slots.length, extra = AW.word.breaks.length * 8 + (n - 1) * 3;
+    box.style.setProperty("--sw", Math.max(16, Math.min(30, Math.floor(($("main").clientWidth - 32 - extra) / n))) + "px");
+    var br = {};
+    AW.word.breaks.forEach(function (b) { br[b.after + 1] = b.kind; });
+    AW.slots.forEach(function (_, i) {
+      var d = document.createElement("button");
+      d.type = "button"; d.className = "slot" + (br[i] === "," ? " gap" : br[i] === "-" ? " dash" : "");
+      d.dataset.i = i; box.appendChild(d);
+    });
+  }
+  // When the whole anagram fodder is typed in, tiles for letters already given by crossing answers are left over:
+  // they are dimmed and not used.
+  function coveredTiles() {
+    var inSlot = {}, out = {}, extra = AW.tiles.length - AW.slots.filter(function (v) { return typeof v !== "string"; }).length;
+    AW.slots.forEach(function (v) { if (typeof v === "number" && v >= 0) inSlot[v] = 1; });
+    AW.slots.forEach(function (v) {
+      if (typeof v !== "string" || extra <= 0) return;
+      for (var i = AW.tiles.length - 1; i >= 0; i--) if (!inSlot[i] && !out[i] && AW.tiles[i].ch === v) { out[i] = 1; extra--; return; }
+    });
+    return out;
+  }
+  function wheelRender() {
+    var used = coveredTiles();
+    AW.slots.forEach(function (ti) { if (ti >= 0) used[ti] = 1; });
+    AW.tiles.forEach(function (t, i) {
+      t.el.style.left = t.x + "px"; t.el.style.top = t.y + "px";
+      t.el.classList.toggle("used", !!used[i]);
+    });
+    Array.prototype.forEach.call($("slots").children, function (d, i) {
+      var v = AW.slots[i];
+      d.textContent = typeof v === "string" ? v : v >= 0 ? AW.tiles[v].ch : "";
+      d.classList.toggle("given", typeof v === "string");
+      d.classList.toggle("pick", i === AW.pick);
+    });
+    if (AW.found && AW.found !== wheelSet().key) { $("finds").hidden = true; AW.found = null; }
+    $("wheelHint").hidden = AW.tiles.length > 0;
+  }
+  function placeTile(i) {
+    var at = AW.slots.indexOf(i);
+    if (at >= 0) { AW.slots[at] = -1; AW.pick = at; return wheelRender(); }
+    if (AW.pick < 0) AW.pick = AW.slots.indexOf(-1);
+    if (AW.pick < 0) return;
+    AW.slots[AW.pick] = i;
+    AW.pick = nextFree(AW.pick);
+    wheelRender();
+  }
+  // Next empty box after the one just filled, wrapping round; -1 when all are full.
+  function nextFree(from) {
+    var n = AW.slots.length;
+    for (var k = 1; k <= n; k++) { var j = (from + k) % n; if (AW.slots[j] < 0) return j; }
+    return -1;
+  }
+  function bindTile(t) {
+    t.el.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      var ring = $("ring").getBoundingClientRect(), sx = e.clientX, sy = e.clientY, moved = false;
+      t.el.setPointerCapture && t.el.setPointerCapture(e.pointerId);
+      t.el.classList.add("drag");
+      function mv(ev) {
+        if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) > 6) moved = true;
+        if (!moved) return;
+        t.x = Math.max(14, Math.min(AW.size - 14, ev.clientX - ring.left));
+        t.y = Math.max(14, Math.min(AW.size - 14, ev.clientY - ring.top));
+        t.el.style.left = t.x + "px"; t.el.style.top = t.y + "px";
+      }
+      function up() {
+        t.el.removeEventListener("pointermove", mv); t.el.removeEventListener("pointerup", up); t.el.removeEventListener("pointercancel", up);
+        t.el.classList.remove("drag");
+        if (!moved) placeTile(AW.tiles.indexOf(t));
+      }
+      t.el.addEventListener("pointermove", mv); t.el.addEventListener("pointerup", up); t.el.addEventListener("pointercancel", up);
+    });
+  }
+  // Keys in the wheel: a letter goes into the yellow box using a spare matching tile; delete empties boxes.
+  // Only while the wheel holds fewer letters than the answer does typing add a new tile.
+  function wheelKey(k) {
+    var anyPlaced = AW.slots.some(function (ti) { return ti >= 0; });
+    if (k === "⌫") {
+      if (AW.pick >= 0 && AW.slots[AW.pick] !== -1) { AW.slots[AW.pick] = -1; return wheelRender(); }
+      if (anyPlaced) {
+        var from = AW.pick >= 0 ? AW.pick : AW.slots.length;
+        for (var i = from - 1; i >= 0; i--) if (AW.slots[i] >= 0) { AW.slots[i] = -1; AW.pick = i; return wheelRender(); }
+        for (i = AW.slots.length - 1; i >= 0; i--) if (AW.slots[i] >= 0) { AW.slots[i] = -1; AW.pick = i; return wheelRender(); }
+        return;
+      }
+      var last = AW.tiles.length - 1; if (last < 0) return;
+      AW.order = null;
+      AW.tiles.pop().el.remove();
+      layoutTiles(false);
+      return;
+    }
+    if (!/^[A-Z]$/.test(k)) return;
+    // Until a letter has been placed, typing fills the wheel, repeated letters included, up to the number of
+    // letters the answer still needs (letters given by finished crossings don't count).
+    var room = AW.slots.filter(function (v) { return typeof v !== "string"; }).length;
+    if (!anyPlaced && AW.tiles.length < room) { addTile(k); layoutTiles(false); return; }
+    var used = coveredTiles();
+    AW.slots.forEach(function (ti) { if (ti >= 0) used[ti] = 1; });
+    var spare = -1;
+    for (var t = 0; t < AW.tiles.length && spare < 0; t++) if (AW.tiles[t].ch === k && !used[t]) spare = t;
+    if (spare < 0 && AW.tiles.length < room) { addTile(k); layoutTiles(false); spare = AW.tiles.length - 1; if (!anyPlaced) return; }
+    if (spare < 0) return toast(AW.tiles.length >= room ? "The wheel already has all " + room + " letters" : "No spare " + k + " in the wheel");
+    if (AW.pick < 0) AW.pick = AW.slots.indexOf(-1);
+    if (AW.pick < 0) return toast("All boxes are full");
+    AW.slots[AW.pick] = spare;
+    AW.pick = nextFree(AW.pick);
+    wheelRender();
+  }
+  $("wheelBtn").addEventListener("click", wheelOpen);
+  // Anagram solver, only inside the wheel so the letters have to be worked out first: answers from the word list
+  // (words.txt, UKACD) using exactly the wheel letters around any letters fixed by crossing answers.
+  var WORDS = null;
+  function loadWords() {
+    if (!WORDS) WORDS = fetch("words.txt").then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { return t.split(/\r?\n/); }, function (e) { WORDS = null; throw e; });
+    return WORDS;
+  }
+  function plain(s) { return s.normalize("NFD").replace(/[^A-Za-z]/g, "").toUpperCase(); }
+  // Word lengths as an enumeration: "play on words" -> "4,2,5", "rub-a-dub" -> "3-1-3".
+  function shapeOf(s) { return s.normalize("NFD").replace(/[^A-Za-z -]/g, "").trim().replace(/[A-Za-z]+/g, function (m) { return m.length; }).replace(/ +/g, ","); }
+  function partsOf(w) {
+    var out = [], from = 0;
+    w.breaks.forEach(function (b) { out.push({ at: from, len: b.after + 1 - from, kind: b.kind }); from = b.after + 1; });
+    out.push({ at: from, len: w.cells.length - from, kind: "" });
+    return out;
+  }
+  function wordShape(w) { return partsOf(w).map(function (p) { return p.len + p.kind; }).join(""); }
+  // Whole entries in the list (phrases included) of the answer's length with any fixed letters in place, each once;
+  // fit: the entry's word lengths match the answer's. keep(L), when given, filters further.
+  function entries(list, w, fixed, keep) {
+    var n = fixed.length, want = wordShape(w), seen = {}, out = [];
+    list.forEach(function (e) {
+      if (e.length < n) return;
+      var L = plain(e);
+      if (L.length !== n || seen[L]) return;
+      for (var i = 0; i < n; i++) if (fixed[i] && L[i] !== fixed[i]) return;
+      if (keep && !keep(L)) return;
+      seen[L] = 1; out.push({ text: e.toUpperCase(), L: L, fit: shapeOf(e) === want });
+    });
+    return out;
+  }
+  // Load the word list for a button press: the button is disabled meanwhile.
+  function withWords(btn, fn) {
+    btn.disabled = true;
+    loadWords().then(fn, function () { toast("The word list couldn't be loaded"); }).then(function () { btn.disabled = false; });
+  }
+  function chipList(box, hits, max, pick) {
+    hits.slice(0, max).forEach(function (h) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = h.text;
+      b.onclick = function () { pick(h); };
+      box.appendChild(b);
+    });
+  }
+  function counts(s) {
+    var c = []; for (var i = 0; i < 26; i++) c.push(0);
+    for (i = 0; i < s.length; i++) c[s.charCodeAt(i) - 65]++;
+    return c;
+  }
+  var SINGLE = {};
+  function singles(list, len) {
+    if (!SINGLE[len]) {
+      var seen = {}; SINGLE[len] = [];
+      list.forEach(function (e, r) {
+        if (e.length < len || /[ -]/.test(e)) return;
+        var L = plain(e);
+        if (L.length === len && !seen[L]) { seen[L] = 1; SINGLE[len].push({ L: L, c: counts(L), text: e.toUpperCase(), score: Math.log(r + 100) }); }
+      });
+    }
+    return SINGLE[len];
+  }
+  // Answers of several words, such as (7,5): one single word per part that fits the part's fixed letters, together
+  // using exactly the letters available. words.txt is ordered from common to rare words, so the search meets common
+  // words first; it stops at 2000 answers, which are ranked by how common their words are.
+  function combos(list, fixed, pool, parts) {
+    var cand = parts.map(function (pt) {
+      return singles(list, pt.len).filter(function (w) {
+        for (var i = 0; i < pt.len; i++) if (fixed[pt.at + i] && w.L[i] !== fixed[pt.at + i]) return false;
+        for (i = 0; i < 26; i++) if (w.c[i] > pool[i]) return false;
+        return true;
+      });
+    });
+    var order = parts.map(function (_, i) { return i; }).sort(function (a, b) { return cand[a].length - cand[b].length; });
+    var out = [], pick = [], steps = 0;
+    (function dfs(k) {
+      if (k === order.length) { out.push(pick.slice()); return; }
+      var ws = cand[order[k]];
+      for (var j = 0; j < ws.length && out.length < 2000 && ++steps < 3e6; j++) {
+        var c = ws[j].c, i;
+        for (i = 0; i < 26 && c[i] <= pool[i]; i++);
+        if (i < 26) continue;
+        for (i = 0; i < 26; i++) pool[i] -= c[i];
+        pick[order[k]] = ws[j]; dfs(k + 1);
+        for (i = 0; i < 26; i++) pool[i] += c[i];
+      }
+    })(0);
+    return out.map(function (ws) {
+      return { L: ws.map(function (w) { return w.L; }).join(""), fit: true,
+        text: ws.map(function (w, i) { return w.text + (parts[i].kind === "-" ? "-" : parts[i].kind ? " " : ""); }).join(""),
+        score: ws.reduce(function (n, w) { return n + w.score; }, 0) };
+    }).sort(function (a, b) { return a.score - b.score; });
+  }
+  function wheelSet() {
+    var fixed = AW.slots.map(function (v) { return typeof v === "string" ? v : ""; });
+    var cov = coveredTiles(), have = AW.tiles.filter(function (_, i) { return !cov[i]; }).map(function (t) { return t.ch; }).sort().join("");
+    return { fixed: fixed, have: have, open: fixed.filter(function (v) { return !v; }).length, key: have + "|" + fixed.join(",") };
+  }
+  function solveAnagram() {
+    var s = wheelSet();
+    withWords($("solveBtn"), function (list) {
+      var hits = entries(list, AW.word, s.fixed, function (L) {
+        return L.split("").filter(function (_, i) { return !s.fixed[i]; }).sort().join("") === s.have;
+      });
+      var fit = hits.filter(function (h) { return h.fit; }), parts = partsOf(AW.word), box = $("finds");
+      if (parts.length > 1) {
+        var got = {};
+        fit.forEach(function (h) { got[h.L] = 1; });
+        fit = fit.concat(combos(list, s.fixed, counts(s.have + s.fixed.join("")), parts).filter(function (h) { return !got[h.L]; }));
+      }
+      var show = fit.length ? fit : hits;
+      box.innerHTML = ""; box.hidden = false; AW.found = s.key;
+      var note = !show.length ? "No words in the list use exactly these letters." :
+        (fit.length ? "" : "None match the word lengths, but these use the same letters. ") + (show.length > 40 ? "Showing the first 40 of " + (show.length >= 2000 ? "2,000+" : show.length) + "." : "");
+      if (note) { var p = document.createElement("p"); p.textContent = note; box.appendChild(p); }
+      chipList(box, show, 40, function (h) { useFind(h.L); });
+    });
+  }
+  // Put a found word into the boxes using the wheel's own tiles.
+  function useFind(L) {
+    var cov = coveredTiles(), free = AW.tiles.map(function (_, i) { return i; }).filter(function (i) { return !cov[i]; });
+    AW.slots = AW.slots.map(function (v, i) {
+      if (typeof v === "string") return v;
+      for (var j = 0; j < free.length; j++) if (AW.tiles[free[j]].ch === L[i]) return free.splice(j, 1)[0];
+      return -1;
+    });
+    AW.pick = AW.slots.indexOf(-1); wheelRender();
+  }
+  // Two taps, so the words never show by accident.
+  $("solveBtn").addEventListener("click", function () {
+    var b = this, s = wheelSet();
+    if (s.have.length !== s.open) return toast(s.have.length < s.open ? "Put all " + s.open + " letters in the wheel first" : "The wheel has more letters than the answer");
+    clearTimeout(b.t);
+    if (b.textContent === "Solve") {
+      b.textContent = "Show words?";
+      b.t = setTimeout(function () { b.textContent = "Solve"; }, 3000);
+      return;
+    }
+    b.textContent = "Solve"; solveAnagram();
+  });
+  // Hint underlines the definition; once hinted, the same button becomes Reveal.
+  function lockedCell(k) { return !!SUB || (!HARD && !!ok[k]); }
+  function locked(w) { if (HARD) return solved; return w.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }); }
+  var askMode = "hint";
+  $("hintBtn").addEventListener("click", function () {
+    var w = curWord(), name = wordName(w);
+    $("hintNo").hidden = false; $("hintNo").textContent = "Not yet";
+    $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = true;
+    $("hintText").hidden = false;
+    var act = nextAction(w);
+    // The word finder is offered only once a hint for this clue has been accepted.
+    $("findBox").hidden = true;
+    $("findBtn").hidden = !(hinted[w.dir + w.num] >= 1) || act === "parse" || act === "add";
+    if (act === "parse") {
+      showParse(w);
+    } else if (act === "add") {
+      openEditor(w, true);
+    } else if (act === "hint2") {
+      askMode = "hint2";
+      $("hintTitle").textContent = "Show a" + (hasDef(w) ? " second" : "") + " hint for " + name + "?";
+      $("hintText").textContent = "The type of clue, such as anagram or charade, will be shown. Are you sure you want to see it?";
+      $("hintYes").textContent = "Show clue type";
+    } else if (act === "reveal") {
+      askMode = "reveal";
+      $("hintTitle").textContent = "Reveal " + name + "?";
+      $("hintText").textContent = "The answer will be filled in and locked. Are you sure you want to reveal it?" +
+        (fromBlog(w) ? " Its parsing comes from the " + blogName() + " blog." : "");
+      $("hintYes").textContent = "Reveal answer";
+    } else {
+      askMode = "hint";
+      $("hintTitle").textContent = "Show a hint for " + name + "?";
+      $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see the hint?";
+      $("hintYes").textContent = "Show hint";
+    }
+    $("hintAsk").hidden = false;
+  });
+  // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
+  // Clues whose definition and parsing came from the puzzle's blog (p.blog_keys: head-clue keys).
+  function fromBlog(w) {
+    return !!P.blog && (P.blog_keys || []).indexOf(w.dir + w.num) >= 0;
+  }
+  function blogName() {
+    return P.blog_name || "the blog";
+  }
+  function parseFor(w) {
+    var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
+    var x = mine || blog || { type: "Not parsed", wordplay: "The blog has no parsing for this clue. Tap Edit to add your own." };
+    return { mine: !!mine, blog: !!blog, type: x.type, wordplay: x.wordplay || "" };
+  }
+  // Blog-style markup: _indicator_ in italics, ~letters~ struck through.
+  function markup(el, text) {
+    el.textContent = "";
+    text.split(/(_[^_]+_|~[^~]+~)/).forEach(function (part) {
+      if (!part) return;
+      var m = part.length > 2 && (part[0] === "_" || part[0] === "~") && part[part.length - 1] === part[0];
+      if (m) { var n = document.createElement(part[0] === "_" ? "i" : "s"); n.textContent = part.slice(1, -1); el.appendChild(n); }
+      else el.appendChild(document.createTextNode(part));
+    });
+  }
+  // Dictionary pop-up for the current answer, looked up in free dictionaries.
+  var dictSeq = 0;
+  function openDict(w) {
+    var word = answerText(w), seq = ++dictSeq, box = $("dictBody");
+    $("dictWord").textContent = word;
+    box.innerHTML = "<p>Looking this word up…</p>";
+    $("dictNote").textContent = "";
+    $("dictExt").href = "https://chambers.co.uk/search/?query=" + encodeURIComponent(word.toLowerCase()) + "&title=21st";
+    $("dictDlg").hidden = false;
+    lookup(word, true).then(function (r) {
+      if (seq !== dictSeq) return;
+      if (!r) { box.innerHTML = "<p>No dictionary has this word. Tap Chambers to look it up.</p>"; return; }
+      box.innerHTML = "";
+      r.senses.forEach(function (x) {
+        var p = document.createElement("p");
+        if (x.pos) { var bb = document.createElement("b"); bb.textContent = x.pos; p.appendChild(bb); }
+        p.appendChild(document.createTextNode(x.def)); box.appendChild(p);
+      });
+      $("dictNote").textContent = "Definitions from " + r.name + ".";
+    });
+  }
+  // Free dictionaries in turn (Free Dictionary API, Wiktionary, Datamuse); null if none has the word.
+  // Words are looked up as soon as they are filled (render), two at a time; a tapped word jumps the queue. Entries
+  // found are kept in this browser (not synced), so reviewing a puzzle later needs no lookups. A word no dictionary
+  // had (or a failed request) is tried again only when tapped, so background lookups never repeat.
+  var DICTQ = {}, DICTNO = {}, dictJobs = [], dictBusy = 0;
+  function lookup(word, now) {
+    var lw = word.toLowerCase(), kept = null;
+    if (!now && DICTNO[lw]) return;
+    try { kept = JSON.parse(localStorage.getItem("xwdict:" + lw)); } catch (e) {}
+    if (!DICTQ[lw]) DICTQ[lw] = kept ? Promise.resolve(kept) : new Promise(function (ok) { dictJobs.push({ lw: lw, ok: ok }); });
+    for (var i = 0; now && i < dictJobs.length; i++) if (dictJobs[i].lw === lw) { dictRun(dictJobs.splice(i, 1)[0]); break; }
+    while (dictBusy < 2 && dictJobs.length) dictRun(dictJobs.shift());
+    return DICTQ[lw];
+  }
+  function dictRun(job) {
+    var i = 0;
+    dictBusy++;
+    (function next() {
+      if (i >= DICTS.length) return done(null);
+      var d = DICTS[i++];
+      getJSON(d.url(job.lw)).then(function (data) {
+        var senses = d.read(data, job.lw).filter(function (x) { return x.def; }).slice(0, 5);
+        if (!senses.length) throw 0;
+        done({ name: d.name, senses: senses });
+      }).catch(next);
+    })();
+    function done(r) {
+      if (r) { delete DICTNO[job.lw]; try { localStorage.setItem("xwdict:" + job.lw, JSON.stringify(r)); } catch (e) {} }
+      else { DICTNO[job.lw] = 1; delete DICTQ[job.lw]; }
+      dictBusy--; job.ok(r);
+      while (dictBusy < 2 && dictJobs.length) dictRun(dictJobs.shift());
+    }
+  }
+  function getJSON(url) {
+    var ctl = new AbortController();
+    setTimeout(function () { ctl.abort(); }, 6000);
+    return fetch(url, { signal: ctl.signal }).then(function (r) { if (!r.ok) throw 0; return r.json(); });
+  }
+  function plainText(h) { var d = new DOMParser().parseFromString(h || "", "text/html"); return (d.body.textContent || "").trim(); }  // inert parse: dictionary HTML never runs
+  var POSNAME = { n: "noun", v: "verb", adj: "adjective", adv: "adverb", u: "" };
+  var DICTS = [
+    { name: "Wiktionary via the Free Dictionary API", url: function (w) { return "https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(w); },
+      read: function (data) { var out = []; (data || []).forEach(function (e) { (e.meanings || []).forEach(function (m) { (m.definitions || []).slice(0, 2).forEach(function (d) { out.push({ pos: m.partOfSpeech, def: d.definition }); }); }); }); return out; } },
+    { name: "Wiktionary", url: function (w) { return "https://en.wiktionary.org/api/rest_v1/page/definition/" + encodeURIComponent(w.replace(/ /g, "_")); },
+      read: function (data) { var out = []; ((data && data.en) || []).forEach(function (m) { (m.definitions || []).slice(0, 2).forEach(function (d) { out.push({ pos: (m.partOfSpeech || "").toLowerCase(), def: plainText(d.definition) }); }); }); return out; } },
+    { name: "Datamuse (WordNet)", url: function (w) { return "https://api.datamuse.com/words?sp=" + encodeURIComponent(w) + "&md=d&max=1"; },
+      read: function (data, w) { var e = (data || [])[0]; if (!e || e.word.toLowerCase() !== w) return [];
+        return (e.defs || []).map(function (x) { var t = x.split("\t"); return { pos: POSNAME[t[0]] != null ? POSNAME[t[0]] : t[0], def: t[1] || "" }; }); } }
+  ];
+  $("dictBtn").addEventListener("click", function () { var w = curWord(); if (w && filled(w)) openDict(w); });
+  $("dictClose").addEventListener("click", function () { $("dictDlg").hidden = true; });
+  $("dictDlg").addEventListener("click", function (e) { if (e.target === $("dictDlg")) $("dictDlg").hidden = true; });
+  function answerText(w) {
+    var br = {}, out = "";
+    w.breaks.forEach(function (b) { br[b.after] = b.kind === "-" ? "-" : " "; });
+    w.cells.forEach(function (rc, i) { out += fill[rc[0]][rc[1]] + (br[i] || ""); });
+    return out;
+  }
+  function showParse(w) {
+    var r = parseFor(w), key = w.dir + w.num, had = hinted[key];
+    askMode = "parse";
+    $("hintTitle").textContent = wordName(w);
+    hinted[key] = had || 1; clueInto($("pvClue"), w, true); if (!had) delete hinted[key];
+    $("pvAns").textContent = answerText(w);
+    $("pvType").textContent = r.type;
+    markup($("pvWp"), r.wordplay);
+    $("hintText").hidden = true; $("parseView").hidden = false;
+    $("parseNote").textContent = r.mine ? "Your parsing, saved on this device." : r.blog && fromBlog(w) ? "Parsing from the " + blogName() + " blog. " : "No parsing from the blog yet.";
+    if (!r.mine && r.blog && fromBlog(w)) {
+      var a = document.createElement("a"); a.href = P.blog; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Read the post";
+      $("parseNote").appendChild(a);
+    }
+    $("parseNote").hidden = false;
+    $("parseForm").hidden = true;
+    $("parseEdit").hidden = false; $("parseReset").hidden = !r.mine && !myDefs[key];
+    $("hintNo").hidden = true;
+    $("hintYes").textContent = "Done";
+  }
+  // Editor for a parsing; with withAnswer it also asks for the answer to a clue nobody had solved.
+  function openEditor(w, withAnswer) {
+    var r = parseFor(w), has = r.mine || r.blog;
+    askMode = withAnswer ? "add" : "edit";
+    $("hintTitle").textContent = (withAnswer ? "Add your answer for " : "") + wordName(w);
+    $("ansRow").hidden = !withAnswer;
+    if (withAnswer) $("ansInput").value = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; }).join("");
+    $("parseType").value = has ? r.type : ""; $("parseText").value = has ? r.wordplay : "";
+    UNDO = []; $("undoBtn").hidden = true; defFresh = true;
+    lastSel = [0, 0]; TOK.anchor = -1; $("parseText").hidden = true; $("wpTok").hidden = false; $("typeBtn").classList.remove("on"); $("typeBtn").textContent = "Type";
+    buildTypeChips($("parseType").value); preview(); selState(); buildDefPick(w);
+    $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
+    $("hintText").hidden = !withAnswer;
+    $("parseView").hidden = true; $("parseNote").hidden = true; $("parseForm").hidden = false;
+    $("parseEdit").hidden = true; $("parseReset").hidden = true;
+    $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
+    $("hintYes").textContent = "Save";
+    $("hintAsk").hidden = false;
+  }
+  $("parseEdit").addEventListener("click", function () { openEditor(curWord(), false); });
+  // Definition picker: the clue as tappable words; runs of chosen words become the definition(s).
+  var DTOK = [];
+  function buildDefPick(w) {
+    var box = $("defPick"), body = w.clue.replace(/\s*\([\d,\-\s]+\)\s*$/, ""), re = /\S+/g, m;
+    var spans = defSpans(w, defsFor(w));
+    box.innerHTML = ""; DTOK = [];
+    var pos = 0;
+    while ((m = re.exec(body))) {
+      if (m.index > pos) box.appendChild(document.createTextNode(body.slice(pos, m.index)));
+      var t = document.createElement("span"), a = m.index, b = a + m[0].length;
+      t.className = "tok"; t.textContent = m[0];
+      if (spans.some(function (sp) { return a < sp[1] && b > sp[0]; })) t.classList.add("on");
+      t.addEventListener("click", function () { this.classList.toggle("on"); });
+      box.appendChild(t); DTOK.push({ el: t, a: a, b: b });
+      pos = b;
+    }
+    DTOK.clue = w.clue; renderTok();
+  }
+  // "Definition" in the mark-up bar: underline the selected words in the clue, replacing the blog's choice.
+  var defFresh = true;
+  function markDef(t) {
+    var q = t.replace(/[_~()*<]/g, "").trim().toLowerCase(), clue = (DTOK.clue || "").toLowerCase();
+    var at = q ? clue.indexOf(q) : -1;
+    if (at < 0) return toast("Those words aren\u2019t in the clue");
+    if (defFresh) { DTOK.forEach(function (x) { x.el.classList.remove("on"); }); defFresh = false; }
+    DTOK.forEach(function (x) { if (x.a < at + q.length && x.b > at) x.el.classList.add("on"); });
+    lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState();
+    var dp = $("defPick"); dp.classList.remove("flash"); void dp.offsetWidth; dp.classList.add("flash");
+    toast("Definition set \u2013 tap Save to keep it");
+  }
+  $("defClear").addEventListener("click", function () { DTOK.forEach(function (x) { x.el.classList.remove("on"); }); defFresh = false; renderTok(); });
+  $("defPick").addEventListener("click", function () { defFresh = false; setTimeout(renderTok, 0); });
+  $("wpClear").addEventListener("click", function () {
+    var ta = $("parseText"); if (!ta.value) return;
+    UNDO.push(ta.value); $("undoBtn").hidden = false;
+    ta.value = ""; lastSel = [0, 0]; TOK.anchor = -1; preview(); selState();
+  });
+  function pickedDefs() {
+    var out = [], run = null;
+    DTOK.forEach(function (t, i) {
+      if (t.el.classList.contains("on")) { if (run) run.b = t.b; else run = { a: t.a, b: t.b }; }
+      else if (run) { out.push(run); run = null; }
+    });
+    if (run) out.push(run);
+    return out.map(function (r) {
+      return DTOK.clue.slice(r.a, r.b).replace(/[,;:.\u2013\u2014-]+$/, "");
+    }).filter(Boolean);
+  }
+  function saveDefs(w) {
+    var d = pickedDefs(), k = w.dir + w.num, blog = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num];
+    if (d.length === 1 && d[0] === blog) delete myDefs[k];
+    else if (d.length || blog) myDefs[k] = d;
+    if (d.length) hinted[k] = Math.max(hinted[k] || 0, 1);
+  }
+  // Editor helpers: clue types as toggles, and a mark-up bar that acts on the selected text.
+  var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Subtraction", "Initial letters", "Final letters", "Alternate letters", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
+  function buildTypeChips(current) {
+    var have = current.split(/\s*(?:,|\+)\s*/).filter(Boolean), box = $("typeChips");
+    box.innerHTML = "";
+    var list = TYPES.slice();
+    have.forEach(function (h) { if (!list.some(function (t) { return t.toLowerCase() === h.toLowerCase(); })) list.push(h); });
+    list.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = t;
+      if (have.some(function (h) { return h.toLowerCase() === t.toLowerCase(); })) b.classList.add("on");
+      box.appendChild(b);
+    });
+    syncType();
+  }
+  function syncType() {
+    $("parseType").value = Array.prototype.filter.call($("typeChips").children, function (b) { return b.classList.contains("on"); })
+      .map(function (b) { return b.textContent; }).join(", ");
+  }
+  $("typeChips").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    b.classList.toggle("on"); syncType();
+  });
+  var MARKS = [
+    ["Indicator", function (t) { return "_" + t + "_"; }],
+    ["Anagram fodder", function (t) { return "(" + t.toUpperCase() + ")*"; }],
+    ["Reversed", function (t) { return "(" + t.toUpperCase() + ")<"; }],
+    ["Goes inside", function (t) { return "(" + t + ")"; }],
+    ["Removed", function (t) { return "~" + t + "~"; }],
+    ["Answer letters", function (t) { return t.toUpperCase(); }],
+    ["Not in answer", function (t) { return t.toLowerCase(); }],
+    ["Clear marks", function (t) { return t.replace(/^\((.*)\)[*<]?$/, "$1").replace(/[_~]/g, ""); }],
+    ["Definition", null],
+    ["Delete", function () { return ""; }]
+  ];
+  MARKS.forEach(function (m, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip" + (m[0] === "Delete" ? " del" : m[0] === "Definition" ? " def" : ""); b.textContent = m[0]; b.dataset.i = i;
+    $("markChips").appendChild(b);
+  });
+  var lastSel = [0, 0];
+  function selState() {
+    var ta = $("parseText"), has = document.activeElement === ta && ta.selectionEnd > ta.selectionStart;
+    if (has) lastSel = [ta.selectionStart, ta.selectionEnd];
+    var live = lastSel[1] > lastSel[0];
+    $("selBar").classList.toggle("live", live);
+    $("selHint").textContent = live ? "Mark \u201c" + ta.value.slice(lastSel[0], lastSel[1]) + "\u201d as:" : ta.hidden ? (TOK.letters ? "Tap a letter, then tap another to select a run, then pick what they do." : "Tap a word, then tap another to select a run, then pick what they do.") : "Select text below, then pick what it does.";
+    $("selClear").hidden = !live || !ta.hidden;
+    Array.prototype.forEach.call($("markChips").children, function (b) { b.disabled = !live; });
+  }
+  function preview() { markup($("parsePrev"), $("parseText").value || " "); renderTok(); }
+  // Tap-to-select view of the wordplay, so marking up never needs the iOS keyboard.
+  var TOK = { letters: false, anchor: -1, items: [] };
+  function renderTok() {
+    var box = $("wpTok"), text = $("parseText").value, re = TOK.letters ? /\S/g : /\S+/g, m, pos = 0;
+    box.innerHTML = ""; box.classList.toggle("letters", TOK.letters); TOK.items = [];
+    // Underline the wordplay words that are the chosen definition, so "Definition" shows here too.
+    var low = text.toLowerCase(), dr = [];
+    pickedDefs().forEach(function (d) {
+      d = d.toLowerCase(); if (!d) return;
+      for (var at = low.indexOf(d); at >= 0; at = low.indexOf(d, at + 1)) dr.push([at, at + d.length]);
+    });
+    if (!text.trim()) { box.innerHTML = '<span class="empty">Tap \u201cFrom clue\u201d or \u201cType\u201d to add wordplay.</span>'; return; }
+    while ((m = re.exec(text))) {
+      var gap = text.slice(pos, m.index);
+      if (gap) gap.split("\n").forEach(function (g, i) { if (i) box.appendChild(document.createElement("br")); if (g) box.appendChild(document.createTextNode(g)); });
+      var t = document.createElement("span"), a = m.index, b = a + m[0].length, idx = TOK.items.length;
+      t.className = "tok"; t.textContent = m[0];
+      if (lastSel[1] > lastSel[0] && a >= lastSel[0] && b <= lastSel[1]) t.classList.add("sel");
+      if (dr.some(function (r) { return a < r[1] && b > r[0]; })) t.classList.add("isdef");
+      t.dataset.i = idx; t.addEventListener("click", function () { tapTok(+this.dataset.i); });
+      box.appendChild(t); TOK.items.push({ a: a, b: b });
+      pos = b;
+    }
+  }
+  function tapTok(i) {
+    var it = TOK.items[i], has = lastSel[1] > lastSel[0];
+    if (!has || TOK.anchor < 0) { TOK.anchor = i; lastSel = [it.a, it.b]; }
+    else if (i === TOK.anchor && lastSel[0] === it.a && lastSel[1] === it.b) { TOK.anchor = -1; lastSel = [0, 0]; }
+    else { var x = TOK.items[TOK.anchor], lo = Math.min(x.a, it.a), hi = Math.max(x.b, it.b); lastSel = [lo, hi]; }
+    renderTok(); selState();
+  }
+  function typing(on) {
+    var ta = $("parseText");
+    ta.hidden = !on; $("wpTok").hidden = on; $("typeBtn").classList.toggle("on", on); $("typeBtn").textContent = on ? "Done" : "Type";
+    lastSel = [0, 0]; TOK.anchor = -1;
+    if (on) { try { ta.focus(); } catch (e) {} } else { ta.blur(); preview(); }
+    selState();
+  }
+  $("typeBtn").addEventListener("click", function () { typing($("parseText").hidden); });
+  $("lettersBtn").addEventListener("click", function () {
+    TOK.letters = !TOK.letters; this.setAttribute("aria-pressed", String(TOK.letters));
+    lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState();
+  });
+  var UNDO = [];
+  $("undoBtn").addEventListener("click", function () {
+    if (!UNDO.length) return;
+    $("parseText").value = UNDO.pop(); this.hidden = !UNDO.length;
+    lastSel = [0, 0]; TOK.anchor = -1; preview(); selState();
+  });
+  $("selClear").addEventListener("click", function () { lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState(); });
+  // Keep the textarea's selection when a chip is pressed.
+  $("markChips").addEventListener("pointerdown", function (e) { if (e.target.closest(".chip")) e.preventDefault(); });
+  $("markChips").addEventListener("mousedown", function (e) { if (e.target.closest(".chip")) e.preventDefault(); });
+  $("markChips").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b || b.disabled) return;
+    var ta = $("parseText"), a = lastSel[0], z = lastSel[1];
+    if (z <= a) return;
+    if (!MARKS[+b.dataset.i][1]) return markDef(ta.value.slice(a, z));
+    var out = MARKS[+b.dataset.i][1](ta.value.slice(a, z));
+    UNDO.push(ta.value); $("undoBtn").hidden = false;
+    ta.value = ta.value.slice(0, a) + out + ta.value.slice(z);
+    if (!out) { var before = ta.value.slice(0, a).replace(/[ \t]+$/, ""), after = ta.value.slice(a).replace(/^[ \t]+/, ""); ta.value = before + (before && after && !/\n$/.test(before) && !/^[\n,.;:)]/.test(after) ? " " : "") + after; a = before.length; }
+    if (ta.hidden) { lastSel = [0, 0]; TOK.anchor = -1; }
+    else { lastSel = [a, a + out.length]; try { ta.focus(); ta.setSelectionRange(a, a + out.length); } catch (err) {} }
+    preview(); selState();
+  });
+  ["select", "keyup", "mouseup", "touchend", "input", "focus"].forEach(function (ev) {
+    $("parseText").addEventListener(ev, function () { if (ev === "input") { lastSel = [0, 0]; preview(); } setTimeout(selState, 0); });
+  });
+  document.addEventListener("selectionchange", function () { if (document.activeElement === $("parseText")) selState(); });
+  $("useClue").addEventListener("click", function () {
+    var w = curWord(), ta = $("parseText");
+    var text = w.clue.replace(/\s*\([\d,\-\s]+\)\s*$/, "").toLowerCase();
+    UNDO.push(ta.value); $("undoBtn").hidden = false;
+    ta.value = ta.value.trim() ? ta.value.trim() + "\n" + text : text;
+    lastSel = [0, 0]; TOK.anchor = -1; preview(); selState(); if (!ta.hidden) ta.focus();
+  });
+  $("parseInfo").addEventListener("click", function () {
+    var open = $("parseHelp").hidden;
+    $("parseHelp").hidden = !open;
+    $("parseInfo").setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  $("parseReset").addEventListener("click", function () {
+    var w = curWord();
+    delete myParses[w.dir + w.num]; delete myDefs[w.dir + w.num]; save(); render(); showParse(w);
+  });
+  $("hintNo").addEventListener("click", function () {
+    if (askMode === "edit") return showParse(curWord());
+    $("ansRow").hidden = true;
+    $("hintAsk").hidden = true;
+  });
+  $("hintAsk").addEventListener("click", function (e) { if (e.target === $("hintAsk") && askMode !== "edit" && askMode !== "add") $("hintAsk").hidden = true; });
+  $("hintYes").addEventListener("click", function () {
+    var w = curWord();
+    if (askMode === "add") {
+      var key = w.dir + w.num, letters = $("ansInput").value.toUpperCase().replace(/[^A-Z]/g, "");
+      if (letters.length !== w.cells.length) return toast("The answer needs " + w.cells.length + " letters");
+      var clash = w.cells.some(function (rc, i) { var a = solAt(rc[0], rc[1]); return (a && a !== letters[i]) || (ok[rc[0] + "," + rc[1]] && fill[rc[0]][rc[1]] !== letters[i]); });
+      if (clash) return toast("That doesn't fit the letters already checked");
+      userAns[key] = letters;
+      w.cells.forEach(function (rc, i) { userSol[rc[0] + "," + rc[1]] = letters[i]; fill[rc[0]][rc[1]] = letters[i]; ok[rc[0] + "," + rc[1]] = 1; });
+      var at = $("parseType").value.trim(), ax = $("parseText").value.trim();
+      if (ax || at) myParses[key] = { type: at || "Parsing", wordplay: ax };
+      saveDefs(w);
+      $("ansRow").hidden = true;
+      flash(w); render(); save(); toast("Answer added");
+      return showParse(w);
+    }
+    if (askMode === "edit") {
+      var t = $("parseType").value.trim(), x = $("parseText").value.trim();
+      if (x) myParses[w.dir + w.num] = { type: t || "Parsing", wordplay: x };
+      saveDefs(w); save(); render(); toast("Parsing saved");
+      return showParse(w);
+    }
+    $("hintAsk").hidden = true;
+    if (askMode === "parse") return;
+    if (askMode === "reveal") {
+      w.cells.forEach(function (rc) { fill[rc[0]][rc[1]] = solAt(rc[0], rc[1]); ok[rc[0] + "," + rc[1]] = 1; });
+      REV = true; REVW[w.dir + w.num] = 1;
+      flash(w);
+      render(); save();
+      return;
+    }
+    hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1;
+    clueInto(w.span, w);
+    render(); save();
+  });
+  // Word finder: words from the word list that fit the answer's length and the letters already in the grid.
+  $("findBtn").addEventListener("click", function () {
+    var w = curWord(), pat = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; });
+    var br = {};
+    w.breaks.forEach(function (b) { br[b.after] = b.kind === "-" ? "-" : " "; });
+    var shown = pat.map(function (ch, i) { return (ch || "?") + (br[i] || ""); }).join("");
+    withWords($("findBtn"), function (list) {
+      var all = entries(list, w, pat), fit = all.filter(function (h) { return h.fit; }), hits = fit.length ? fit : all;
+      $("findNote").textContent = shown + ": " + (!hits.length ? "no words in the list fit." :
+        (fit.length ? "" : "none match the word lengths, but these fit the letters. ") +
+        (hits.length > 60 ? "Showing 60 of " + hits.length + "; fill in more letters to narrow it down." : hits.length + (hits.length > 1 ? " words fit." : " word fits.")));
+      $("findList").innerHTML = "";
+      chipList($("findList"), hits, 60, function (h) {
+        w.cells.forEach(function (rc, i) {
+          var k = rc[0] + "," + rc[1];
+          if (!lockedCell(k)) { if (fill[rc[0]][rc[1]] !== h.L[i]) delete ok[k]; fill[rc[0]][rc[1]] = h.L[i]; }
+        });
+        $("hintAsk").hidden = true;
+        render(); save();
+      });
+      $("findBox").hidden = false;
+    });
+  });
+  $("wheelClose").addEventListener("click", wheelClose);
+  $("shuffleBtn").addEventListener("click", function () { layoutTiles(true); });
+  $("slotsClear").addEventListener("click", function () { AW.slots = AW.slots.map(function (v) { return typeof v === "string" ? v : -1; }); AW.pick = AW.slots.indexOf(-1); wheelRender(); });
+  $("slots").addEventListener("click", function (e) {
+    var d = e.target.closest(".slot"); if (!d) return;
+    var i = +d.dataset.i;
+    if (AW.pick === i && AW.slots[i] !== -1) AW.slots[i] = -1;
+    AW.pick = i; wheelRender();
+  });
+  $("toGrid").addEventListener("click", function () {
+    var w = AW.word;
+    w.cells.forEach(function (rc, i) {
+      var k = rc[0] + "," + rc[1];
+      var v = AW.slots[i];
+      if (typeof v === "number" && v >= 0 && !lockedCell(k)) { if (fill[rc[0]][rc[1]] !== AW.tiles[v].ch) delete ok[k]; fill[rc[0]][rc[1]] = AW.tiles[v].ch; }
+    });
+    wheelClose();
+    sel = { r: w.cells[0][0], c: w.cells[0][1], dir: w.dir };
+    render(); save();
+  });
+
+  $("kb").addEventListener("pointerdown", function (e) {
+    var b = e.target.closest(".key"); if (!b) return;
+    e.preventDefault();
+    var k = b.dataset.k;
+    if (AW.open) { if (k !== "↕") wheelKey(k); return; }
+    if (k === "⌫") del();
+    else if (k === "↕") tapCell(sel.r, sel.c);
+    else typeLetter(k);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (!$("home").hidden || !$("sheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if (AW.open) {
+      if (k === "Escape") wheelClose();
+      else if (/^[a-zA-Z]$/.test(k)) wheelKey(k.toUpperCase());
+      else if (k === "Backspace") wheelKey("⌫");
+      else return;
+      return e.preventDefault();
+    }
+    if (/^[a-zA-Z]$/.test(k)) { typeLetter(k.toUpperCase()); }
+    else if (k === "Backspace" || k === "Delete") del();
+    else if (k === "ArrowLeft") move(0, -1);
+    else if (k === "ArrowRight") move(0, 1);
+    else if (k === "ArrowUp") move(-1, 0);
+    else if (k === "ArrowDown") move(1, 0);
+    else if (k === "Tab" || k === "Enter") nextWord(e.shiftKey ? -1 : 1);
+    else if (k === " ") tapCell(sel.r, sel.c);
+    else return;
+    e.preventDefault();
+  });
+
+  $("grid").addEventListener("click", function (e) {
+    var el = e.target.closest(".c"); if (!el) return;
+    tapCell(+el.dataset.r, +el.dataset.c);
+  });
+  $("clues").addEventListener("click", function (e) {
+    var el = e.target.closest(".clue"); if (el) { showList(false); gotoWord(+el.dataset.i); }
+  });
+  $("now").addEventListener("click", function () { tapCell(sel.r, sel.c); });
+  // Phones: the All clues button swaps the keyboard for the clue list, centred on the current clue.
+  function showList(on) {
+    $("app").classList.toggle("cl", on);
+    $("cluesBtn").setAttribute("aria-pressed", on ? "true" : "false");
+    var box = $("clues"), cur = on && box.querySelector(".clue.on");
+    if (cur) box.scrollTop = cur.offsetTop - box.offsetTop - (box.clientHeight - cur.offsetHeight) / 2;
+  }
+  $("cluesBtn").addEventListener("click", function () { showList(!$("app").classList.contains("cl")); });
+  $("prevBtn").addEventListener("click", function () { nextWord(-1); });
+  $("nextBtn").addEventListener("click", function () { nextWord(1); });
+
+  // Puzzle sheet
+  var confirming = false;
+  function openSheet() {
+    confirming = false; $("clearBtn").textContent = "Clear this grid"; $("clearBtn").hidden = solved;
+    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) { b.disabled = solved; });  // a finished puzzle keeps its mode
+    $("sheet").hidden = false;
+  }
+  function closeSheet() { $("sheet").hidden = true; }
+
+  // Home: every puzzle, newest first, grouped by date.
+  function pubOf(p) {
+    return p.publication || "";
+  }
+  function typeOf(p) {
+    if (p.type) return p.type;
+    var m = (p.title || "").match(/\b(Quiptic|Quick|Prize|Cryptic)\b/i);
+    return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : "Other";
+  }
+  // Exact blog post when known (p.blog), else a search on the usual blog for that paper.
+  function blogFor(p) {
+    if (p.blog) return { url: p.blog, exact: true };
+    return p.blog_search ? { url: p.blog_search, exact: false } : null;
+  }
+  function progressOf(p) {
+    var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0;
+    p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
+      if (ch === "#") return; t++;
+      if (s.fill && s.fill[r] && (s.fill[r][c] || " ").trim()) n++;
+    }); });
+    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used], dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub };
+  }
+  function dayLabel(d) {
+    if (!d) return "Undated";
+    var a = new Date(d + "T12:00:00"), t = new Date(); t.setHours(12, 0, 0, 0);
+    var diff = Math.round((t - a) / 864e5);
+    if (diff === 0) return "Today";
+    if (diff === 1) return "Yesterday";
+    return a.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: a.getFullYear() === t.getFullYear() ? undefined : "numeric" });
+  }
+  var FILT = store.get("crossword:filter") || {};
+  function filterOk(p) {
+    if (FILT.pub && FILT.pub.length && FILT.pub.indexOf(pubOf(p)) < 0) return false;
+    if (FILT.type && FILT.type.length && FILT.type.indexOf(typeOf(p)) < 0) return false;
+    if (FILT.setter && (p.setter || "") !== FILT.setter) return false;
+    if (FILT.from && (p.date || "") < FILT.from) return false;
+    if (FILT.to && (p.date || "9999") > FILT.to) return false;
+    return true;
+  }
+  function filterCount() { return (FILT.pub || []).length + (FILT.type || []).length + (FILT.setter ? 1 : 0) + (FILT.from || FILT.to ? 1 : 0); }
+  function chipSet(box, values, key) {
+    box.innerHTML = "";
+    values.forEach(function (v) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = v;
+      if ((FILT[key] || []).indexOf(v) >= 0) b.classList.add("on");
+      b.addEventListener("click", function () {
+        var a = FILT[key] = FILT[key] || [], i = a.indexOf(v);
+        if (i >= 0) a.splice(i, 1); else a.push(v);
+        filterChanged();
+      });
+      box.appendChild(b);
+    });
+  }
+  function uniq(f) { var o = {}; PUZZLES.forEach(function (p) { var v = f(p); if (v) o[v] = 1; }); return Object.keys(o).sort(); }
+  function buildFilters() {
+    chipSet($("fPub"), uniq(pubOf), "pub");
+    chipSet($("fType"), uniq(typeOf), "type");
+    var sel = $("fSetter"); sel.innerHTML = "";
+    [""].concat(uniq(function (p) { return p.setter; })).forEach(function (v) {
+      var o = document.createElement("option"); o.value = v; o.textContent = v || "Any setter"; sel.appendChild(o);
+    });
+    sel.value = FILT.setter || "";
+    $("fFrom").value = FILT.from || ""; $("fTo").value = FILT.to || "";
+  }
+  function filterChanged() { store.set("crossword:filter", FILT); buildFilters(); showHome(true); }
+  $("filterBtn").addEventListener("click", function () {
+    var open = $("fpanel").hidden; $("fpanel").hidden = !open; this.setAttribute("aria-expanded", String(open));
+    if (open) buildFilters();
+  });
+  $("fSetter").addEventListener("change", function () { FILT.setter = this.value; filterChanged(); });
+  $("fFrom").addEventListener("change", function () { FILT.from = this.value; filterChanged(); });
+  $("fTo").addEventListener("change", function () { FILT.to = this.value; filterChanged(); });
+  $("filterClear").addEventListener("click", function () { FILT = {}; filterChanged(); });
+  function showHome(keepScroll) {
+    if (P) { save(); stopClock(); }
+    var list = $("homeList"), last = null, todo = 0, done = 0;
+    list.innerHTML = "";
+    var all = PUZZLES.slice().sort(function (x, y) { return (y.date || "").localeCompare(x.date || "") || y.id.localeCompare(x.id); });
+    var shown = all.filter(filterOk), nf = filterCount();
+    $("filterSum").textContent = nf ? "Showing " + shown.length + " of " + all.length : "";
+    $("filterClear").hidden = !nf; $("filterBtn").classList.toggle("on", !!nf);
+    $("filterBtn").textContent = nf ? "Filter (" + nf + ")" : "Filter";
+    if (!shown.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No puzzles match these filters."; list.appendChild(e); }
+    shown.forEach(function (p) {
+      var g = progressOf(p), pub = pubOf(p);
+      if (p.date !== last) {
+        last = p.date;
+        var h = document.createElement("h2"); h.className = "hday"; h.textContent = dayLabel(p.date); list.appendChild(h);
+      }
+      var b = document.createElement("button"), state = g.solved ? "done" : g.n ? "prog" : "new";
+      if (state === "done") done++; else if (state === "new") todo++;
+      b.type = "button"; b.className = "hitem " + state;
+      var ht = document.createElement("div"); ht.className = "ht";
+      if (pub) { var tg = document.createElement("i"); tg.className = "src"; tg.textContent = pub; tg.style.fontStyle = "normal"; if (p.badge) { tg.style.background = p.badge.bg; tg.style.color = p.badge.fg; } ht.appendChild(tg); }
+      var tt = document.createElement("span"); tt.textContent = pub ? p.title.replace(new RegExp("^(The )?" + pub + "\\s+", "i"), "") : p.title; ht.appendChild(tt);
+      var hm = document.createElement("div"); hm.className = "hm"; hm.textContent = metaText(p);
+      var hs = document.createElement("div"); hs.className = "hs";
+      if (state === "done") {
+        if (g.dnf) b.classList.add("dnf");
+        hs.textContent = g.dnf ? "DNF" : g.sub && !g.sub.res ? "Submitted" : "\u2713 Solved";
+        var sm = document.createElement("small");
+        sm.textContent = (g.mode ? g.mode.charAt(0).toUpperCase() + g.mode.slice(1) + " \u00b7 " : "") + fmt(g.time); hs.appendChild(sm);
+      }
+      else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; var sm2 = document.createElement("small"); sm2.textContent = fmt(g.time); hs.appendChild(sm2); }
+      else { var st = document.createElement("span"); st.className = "st"; st.textContent = "New"; hs.appendChild(st); }
+      // Parsed means a blog's explanations are in; until then any parsings are unverified.
+      if (!p.blog) { var pz = document.createElement("small"); pz.className = "pz"; pz.textContent = "Unparsed"; hs.appendChild(pz); }
+      b.appendChild(ht); b.appendChild(hm); b.appendChild(hs);
+      b.addEventListener("click", function () { openPuzzle(p); });
+      list.appendChild(b);
+    });
+    $("homeSum").textContent = todo + " new \u00b7 " + done + " solved";
+    $("home").hidden = false;
+    if (keepScroll !== true) $("home").scrollTop = 0;
+  }
+  function openPuzzle(p) {
+    showList(false);
+    $("home").hidden = true;
+    if (!P || p.id !== P.id) load(p); else { startClock(); render(); }
+    size();
+  }
+  $("homeBtn").addEventListener("click", showHome);
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".modesw button");
+    if (b) setMode(b.dataset.mode);
+  });
+  $("menuBtn").addEventListener("click", openSheet);
+  $("closeBtn").addEventListener("click", closeSheet);
+  $("sheet").addEventListener("click", function (e) { if (e.target === $("sheet")) closeSheet(); });
+  $("clearBtn").addEventListener("click", function () {
+    if (!confirming) { confirming = true; $("clearBtn").textContent = "Tap again to clear every letter"; return; }
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) fill[r][c] = "";
+    ok = {};  // the time, recorded mode and reveals stay: clearing never makes a fresh attempt
+    save(); render(); closeSheet(); toast("Grid cleared");
+  });
+
+  window.addEventListener("resize", function () { size(); });
+
+  function boot() {
+    var lastId = store.get("crossword:last");
+    var start = PUZZLES.filter(function (p) { return p.id === lastId; })[0] || PUZZLES[PUZZLES.length - 1];
+    var md = store.get("crossword:mode");
+    MODE = md && md.m || md || "easy";
+    setMode(MODE, true);
+    load(start);
+    showHome();
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(size);
+  fbInit();
+})();
+</script>

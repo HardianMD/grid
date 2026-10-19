@@ -85,6 +85,7 @@ header .timer.stopped { color: #1f7a33; }
 .clue.done { color: var(--ink-soft); }
 .clue.done span { text-decoration: line-through; text-decoration-color: var(--rule); }
 .clue.right b { color: #1f7a33; }
+.clue.right.rev b { color: var(--medium); }
 
 .kb { background: var(--kb-bg); padding-block: 4px calc(4px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 4px; }
 .row { display: flex; gap: 5px; justify-content: center; }
@@ -967,6 +968,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       x.el.classList.toggle("x", i === other);
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
+      x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
     });
     $("nowTag").textContent = wordName(w);
     clueInto($("nowTxt"), w);

@@ -254,18 +254,21 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .btn.solid { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; z-index: 30; }
 
-@media (min-width: 900px) and (min-height: 700px) {
+/* Wide screens: tablets in landscape, and any computer with a mouse whatever its window height. The grid fits the
+   window beside the clue list, and the physical keyboard replaces the in-page one. */
+@media (min-width: 900px) and (min-height: 700px), (min-width: 900px) and (pointer: fine) {
   .main { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 24px; align-content: start; }
   .gridwrap { grid-column: 1; grid-row: 1; padding-left: max(16px, env(safe-area-inset-left, 0px)); }
   .checks { grid-column: 1; grid-row: 2; align-self: start; }
   .clues { grid-column: 2; grid-row: 1 / 3; margin-top: 0; }
+  body { margin: 0; }
   .kb { display: none; }
 }
 #cluesBtn { display: none; }
 #cluesBtn[aria-pressed="true"] { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 /* Phones: the clue list is hidden behind the All clues button (it swaps the keyboard for the list), and the
    clue box and keys share the room the list used to take. */
-@media not all and (min-width: 900px) and (min-height: 700px) {
+@media (max-width: 899.98px), (max-height: 699.98px) and (pointer: coarse), (max-height: 699.98px) and (pointer: none) {
   .main { flex: 0 1 auto; }
   #cluesBtn { display: flex; }
   /* Up to six buttons share the row on a 375px screen. */
@@ -909,7 +912,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     size();
   }
 
-  function isWide() { return window.matchMedia("(min-width: 900px) and (min-height: 700px)").matches; }
+  function isWide() { return window.matchMedia("(min-width: 900px) and (min-height: 700px), (min-width: 900px) and (pointer: fine)").matches; }
 
   function size() {
     if (!P) return;

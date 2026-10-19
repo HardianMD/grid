@@ -70,8 +70,7 @@ header .timer.stopped { color: #1f7a33; }
 
 .dock { background: var(--paper); border-top: 1px solid var(--rule); }
 .bar { display: flex; align-items: stretch; gap: 8px; padding-block: 4px; }
-.bar .nav { flex: 0 0 40px; font-size: 20px; color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
-.bar .nav { min-height: 44px; }
+.bar .nav { flex: 0 0 40px; min-height: 44px; font-size: 20px; color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
 .bar .now { flex: 1; min-width: 0; align-self: center; background: var(--word); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: 15px; line-height: 1.25; }
 .now .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
 
@@ -98,7 +97,6 @@ header .timer.stopped { color: #1f7a33; }
 .panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.danger { color: #b3261e; border-color: currentColor; }
-.checks a.btn { text-decoration: none; }
 [hidden] { display: none !important; }
 .home { position: fixed; inset: 0; background: var(--paper); z-index: 18; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .hwrap { max-width: 640px; margin: 0 auto; }
@@ -113,7 +111,7 @@ header .timer.stopped { color: #1f7a33; }
 .hitem .hs { grid-column: 2; grid-row: 1 / 3; font-weight: 700; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
 .hitem .hs small { display: block; font-weight: 400; color: var(--ink-soft); }
 .src { flex: 0 0 auto; font: 700 10px var(--f-ui); text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px; color: #fff; background: #5b6670; }
-.gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--paper, #f6f3ec); padding: 24px; text-align: center; }
+.gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--paper); padding: 24px; text-align: center; }
 .gate h1 { margin: 0 0 8px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
 .gate p { margin: 0 0 16px; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; color: var(--ink-soft); font-size: 14px; }
 .gate .btn { font-size: 15px; padding: 10px 18px; }
@@ -359,7 +357,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       <div class="fgrp"><span>Date</span><div class="frange"><input type="date" id="fFrom" aria-label="From date"><span>to</span><input type="date" id="fTo" aria-label="To date"></div></div>
     </div>
     <div id="homeList"></div>
-    <p class="hnote">Progress is saved in this browser on this device.</p>
+    <p class="hnote">Progress is saved on this device and synced to your Google account.</p>
   </div>
 </div>
 <div class="sheet" id="sheet" hidden>
@@ -536,10 +534,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
   // Google sign-in; progress syncs to Firestore users/<uid>/state/<id>.
   var FIREBASE = /*FIREBASE_CONFIG*/{apiKey:"AIzaSyD99dXGScwcwSgOzSks-ARSFvBMwhHWt9g",authDomain:"crossword-d83c8.firebaseapp.com",projectId:"crossword-d83c8",storageBucket:"crossword-d83c8.firebasestorage.app",messagingSenderId:"371185083441",appId:"1:371185083441:web:1c6f143c851ebd2bb16110"}, FBV = "10.12.2";
+  // The three SDK files download together and run in order (async = false).
   function fbScript(name) {
     return new Promise(function (ok, bad) {
       var s = document.createElement("script"); s.src = "https://www.gstatic.com/firebasejs/" + FBV + "/" + name + "-compat.js";
-      s.onload = ok; s.onerror = bad; document.head.appendChild(s);
+      s.async = false; s.onload = ok; s.onerror = bad; document.head.appendChild(s);
     });
   }
   // Sign-in is required: the puzzles and the update status are in Firestore, readable only by the owner's Google
@@ -550,7 +549,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("gateBtn").hidden = !btn; $("gateBtn").textContent = btn || ""; $("gateBtn").dataset.act = act || "";
   }
   function fbInit() {
-    fbScript("firebase-app").then(function () { return Promise.all([fbScript("firebase-auth"), fbScript("firebase-firestore")]); }).then(function () {
+    Promise.all(["firebase-app", "firebase-auth", "firebase-firestore"].map(fbScript)).then(function () {
       firebase.initializeApp(FIREBASE);
       DB = firebase.firestore();
       DB.enablePersistence({ synchronizeTabs: true }).catch(function () {});
@@ -923,8 +922,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
   function size() {
     if (!P) return;
-    var gw = $("app").querySelector(".gridwrap"), cs = getComputedStyle(gw);
-    var inner = $("app").clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var pad = getComputedStyle($("app").querySelector(".gridwrap"));
+    var inner = $("app").clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
     var side = inner;
     if (isWide()) side = Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - 8);
     side = Math.max(180, side);
@@ -963,7 +962,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }
     words.forEach(function (x) {
       x.el.classList.toggle("on", x === w);
-      if (x.span) clueInto(x.span, x);
+      var k = x.dir + x.num, sig = [HARD, hinted[k] || 0, hinted[k] >= 2 ? parseFor(x).type : "", myDefs[k] || ""].join("|");
+      if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
@@ -1632,8 +1632,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function lookup(word, now) {
     var lw = word.toLowerCase(), kept = null;
     if (!now && DICTNO[lw]) return;
-    try { kept = JSON.parse(localStorage.getItem("xwdict:" + lw)); } catch (e) {}
-    if (!DICTQ[lw]) DICTQ[lw] = kept ? Promise.resolve(kept) : new Promise(function (ok) { dictJobs.push({ lw: lw, ok: ok }); });
+    if (!DICTQ[lw]) {
+      try { kept = JSON.parse(localStorage.getItem("xwdict:" + lw)); } catch (e) {}
+      DICTQ[lw] = kept ? Promise.resolve(kept) : new Promise(function (ok) { dictJobs.push({ lw: lw, ok: ok }); });
+    }
     for (var i = 0; now && i < dictJobs.length; i++) if (dictJobs[i].lw === lw) { dictRun(dictJobs.splice(i, 1)[0]); break; }
     while (dictBusy < 2 && dictJobs.length) dictRun(dictJobs.shift());
     return DICTQ[lw];
@@ -1951,7 +1953,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       return;
     }
     hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1;
-    clueInto(w.span, w);
     render(); save();
   });
   // Word finder: words from the word list that fit the answer's length and the letters already in the grid.
@@ -2062,11 +2063,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function pubOf(p) {
     return p.publication || "";
   }
-  function typeOf(p) {
-    if (p.type) return p.type;
-    var m = (p.title || "").match(/\b(Quiptic|Quick|Prize|Cryptic)\b/i);
-    return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : "Other";
-  }
+  function typeOf(p) { return p.type || "Other"; }
   // Exact blog post when known (p.blog), else a search on the usual blog for that paper.
   function blogFor(p) {
     if (p.blog) return { url: p.blog, exact: true };

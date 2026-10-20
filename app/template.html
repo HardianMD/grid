@@ -623,9 +623,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Listen to the Firestore collection's docs ({v: JSON, at}) and merge each change with this device by `at`, so
   // progress made on another device shows up here at once. Only records changed since the last sync (less a day,
   // for other devices' clocks) are read. Once the server has answered, this device's newer records are sent up.
+  // Metadata changes are asked for so the server's answer arrives even when it matches the cache (nothing new).
   function cloudListen(col) {
     var since = (store.get("crossword:synced") || 0) - 864e5, first = true;
-    (since > 0 ? col.where("at", ">", since) : col).onSnapshot(function (snap) {
+    (since > 0 ? col.where("at", ">", since) : col).onSnapshot({ includeMetadataChanges: true }, function (snap) {
       var cur = false, any = false;
       snap.docChanges().forEach(function (c) {
         if (c.type === "removed") return;

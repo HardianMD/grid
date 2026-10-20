@@ -161,6 +161,7 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 .htab td:nth-child(3) { width: 26px; text-align: center; }
 .htab .mico { width: 18px; height: 18px; font-size: 10px; font-style: normal; }
 .htab .hh { color: var(--accent); } .htab .rv { color: var(--medium); } .htab .free { color: #1f7a33; }
+.htab .hdt { color: var(--accent); cursor: pointer; } .htab .hdt small { color: var(--ink-soft); font-size: 11px; }
 .hall { justify-self: center; }
 #statBody p { margin: 12px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 #statBody h4 { margin: 16px 0 0; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
@@ -2595,6 +2596,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (t.list) {
         c.classList.add("tap");
         c.addEventListener("click", function (e) {
+          var dt = e.target.closest(".hdt");
+          if (dt) return openPuzzle(t.list.find(function (x) { return x.p.id === dt.dataset.id; }).p);
           if (e.target.closest(".hall")) SOPEN[t.key] = 2; else SOPEN[t.key] = SOPEN[t.key] ? 0 : 1;
           showStats();
         });
@@ -2622,9 +2625,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       }
       var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dots = function (n, cl) { return n ? '<span class="' + cl + '">' + "\u25cf".repeat(Math.min(n, 8)) + (n > 8 ? "+" : "") + "</span>" : ""; };
       var tb = document.createElement("table"); tb.className = "htab";
-      tb.innerHTML = '<tr><th>Date</th><th>Time</th><th></th><th><span class="hh">Hints</span> <span class="rv">Reveals</span></th></tr>' + shown.map(function (x) {
+      tb.innerHTML = '<tr><th>Date and setter</th><th>Time</th><th></th><th><span class="hh">Hints</span> <span class="rv">Reveals</span></th></tr>' + shown.map(function (x) {
         var g = x.g, d = x.p.date ? new Date(x.p.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "";
-        return "<tr><td>" + d + '</td><td class="' + (g.dnf ? "rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + "</td><td>" +
+        return '<tr><td class="hdt" data-id="' + x.p.id + '">' + d + (x.p.setter ? " <small>" + x.p.setter.replace(/[&<>"]/g, function (ch) { return "&#" + ch.charCodeAt(0) + ";"; }) + "</small>" : "") + '</td><td class="' + (g.dnf ? "rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + "</td><td>" +
           (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td><td>" +
           (g.hn || g.rv ? dots(g.hn, "hh") + dots(g.rv, "rv") : '<span class="free">\u2713 no help</span>') + "</td></tr>";
       }).join("");

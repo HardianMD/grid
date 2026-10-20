@@ -583,41 +583,49 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var m = "Sync failed: " + ((e && (e.code || e.message)) || "error");
     $("syncTxt").textContent = m; toast(m);
   }
-  // Merge the Firestore collection's docs ({v: JSON, at}) with this device by `at`, then keep writing to it.
-  // After the first merge only records changed since the last one (less a day, for other devices' clocks) are read.
-  function cloudMerge(col) {
-    var since = (store.get("crossword:synced") || 0) - 864e5;
-    return (since > 0 ? col.where("at", ">", since) : col).get().then(function (snap) {
-      var seen = {}, cur = false, any = false;
-      snap.docs.forEach(function (d) {
-        seen[d.id] = 1;
-        var x = d.data(), val;
+  // Listen to the Firestore collection's docs ({v: JSON, at}) and merge each change with this device by `at`, so
+  // progress made on another device shows up here at once. Only records changed since the last sync (less a day,
+  // for other devices' clocks) are read. Once the server has answered, this device's newer records are sent up.
+  function cloudListen(col) {
+    var since = (store.get("crossword:synced") || 0) - 864e5, first = true;
+    (since > 0 ? col.where("at", ">", since) : col).onSnapshot(function (snap) {
+      var cur = false, any = false;
+      snap.docChanges().forEach(function (c) {
+        if (c.type === "removed") return;
+        var d = c.doc, x = d.data(), val;
         if (!x || typeof x.v !== "string") return;
         try { val = JSON.parse(x.v); } catch (e) { return; }
         var k = KEEP.indexOf(d.id) >= 0 ? "crossword:" + d.id : d.id.indexOf("p_") === 0 ? "crossword:" + d.id.slice(2) : null;
         if (!k || !val) return;
         var loc = store.get(k), la = (loc && loc.at) || 0, ra = val.at || x.at || 0;
-        // Newer wins, except that an empty grid never replaces one with letters in it.
-        var lb = blank(loc), rb = blank(val);
-        if (!loc || (lb && !rb) || (ra > la && !(rb && !lb))) {
+        // Newer wins, except that a grid with letters beats an empty one and a finished grid beats both.
+        var lr = loc && rank(loc), rr = rank(val);
+        if (!loc || rr > lr || (rr === lr && ra > la)) {
           store.local(k, val); any = true; delete cloudQ[d.id];
           if (P && k === "crossword:" + P.id) cur = true;
-        } else if (la > ra || (rb && !lb)) cloudQ[d.id] = loc;
+        } else if (lr > rr || la > ra) cloudQ[d.id] = loc;
       });
-      PUZZLES.map(function (p) { return "p_" + p.id; }).concat(KEEP).forEach(function (id) {
-        var k = "crossword:" + id.replace(/^p_/, "");
-        if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object" && (loc.at || 0) > since) cloudQ[id] = loc; }
-      });
-      store.local("crossword:synced", Date.now());
       CLOUD = col;
-      if (Object.keys(cloudQ).length) cloudT = setTimeout(cloudFlush, 1500);
+      if (!snap.metadata.fromCache) {
+        if (first) {
+          var seen = {}; snap.docs.forEach(function (d) { seen[d.id] = 1; });
+          PUZZLES.map(function (p) { return "p_" + p.id; }).concat(KEEP).forEach(function (id) {
+            var k = "crossword:" + id.replace(/^p_/, "");
+            if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object" && (loc.at || 0) > since) cloudQ[id] = loc; }
+          });
+          first = false;
+        }
+        store.local("crossword:synced", Date.now());
+        syncOk();
+      }
+      if (Object.keys(cloudQ).length && !cloudT) cloudT = setTimeout(cloudFlush, 1500);
       if (cur) { load(P); size(); }  // also when the puzzle only sits behind the home list, so a later save keeps the synced letters
       if (any) applyPrefs();
       if (any && P) render();
       if (any && !$("home").hidden) showHome(true);
-      syncOk();
-    }).catch(syncErr);
+    }, syncErr);
   }
+  function rank(v) { return v.solved ? 2 : blank(v) ? 0 : 1; }
   // Favourite clues, newest first: [{p: puzzle id, k: clue key, at}], synced as one record.
   function favs() { return (store.get("crossword:favs") || {}).list || []; }
   function isFav(list, pid, k) { return list.some(function (f) { return f.p === pid && f.k === k; }); }
@@ -702,7 +710,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       BOOTED = true;
       boot();
       gate(null);
-      cloudMerge(DB.collection("users/" + u.uid + "/state"));
+      cloudListen(DB.collection("users/" + u.uid + "/state"));
     } else if (!$("home").hidden) showHome(true);
   }
   // The update status: problems the last run met, and whether a run is going (the refresh button spins meanwhile).
@@ -974,13 +982,23 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function blank(v) {
     return !!(v && v.fill && !v.solved && v.fill.join("").trim() === "");
   }
+  // The clock and the cursor alone don't date or upload the record: a device left open on a puzzle would otherwise
+  // look newer than progress made since on another device and overwrite it.
   function save() {
-    if (!store.get("crossword:" + P.id) && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
-    store.set("crossword:" + P.id, {
+    var k = "crossword:" + P.id, old = store.get(k);
+    if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
+    var rec = {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
       ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
-      sel: sel, at: Date.now()
-    });
+      sel: sel
+    };
+    var same = old && core(old) === core(rec);
+    rec.at = same ? old.at : Date.now();
+    (same ? store.local : store.set)(k, rec);
+  }
+  function core(v) {
+    var o = {}; Object.keys(v).forEach(function (k) { if (k !== "time" && k !== "sel" && k !== "at") o[k] = v[k]; });
+    return JSON.stringify(o);
   }
 
   function metaText(p) {
@@ -1152,10 +1170,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return true;
   }
   setInterval(function () { if (since !== null) { tick(); if (Math.floor(now() / 1000) % 5 === 0) save(); } }, 1000);
-  // Hidden: save and upload now (iOS may not come back). Visible again: pick up changes made on other devices.
+  // Hidden: save and upload now (iOS may not come back). Changes from other devices arrive through cloudListen.
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) { if (P) { stopClock(); save(); } cloudFlush(); }
-    else { if (P) startClock(); if (CLOUD) { cloudFlush(); cloudMerge(CLOUD); } }
+    else if (P) startClock();
   });
   window.addEventListener("pagehide", function () { if (P) save(); cloudFlush(); });
 

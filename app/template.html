@@ -2552,16 +2552,25 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("setDone").addEventListener("click", function () { $("setSheet").hidden = true; });
   $("setSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   // Stats from the puzzle records: totals, then by paper and type, then by the mode each finish was recorded at.
-  // Times count clean solves (not DNFs); hints and reveals are per finished puzzle. Submitted grids still waiting
-  // for their answers are left out.
+  // Times count clean solves (not DNFs); hints and reveals are per finished puzzle. A submitted grid not yet graded
+  // is checked against any answers that have arrived since, and counts as a solve while none are known.
   var SOPEN = {};  // crossword cards open in Stats: 1 the latest solves, 2 all of them
+  function subDnf(p) {
+    var s = store.get("crossword:" + p.id) || {}, flat = "", bad = false, w = p.grid[0].length;
+    try { flat = p.solution ? unscramble(p.solution, p.id) : ""; } catch (e) {}
+    p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
+      var a = flat[r * w + c];
+      if (ch !== "#" && a && a !== "?" && (s.fill && s.fill[r] && s.fill[r][c] || " ").trim() !== a) bad = true;
+    }); });
+    return bad;
+  }
   function showStats() {
     var all = tally(), types = {}, modes = {}, prog = 0, box = $("statBody");
     function tally() { return { n: 0, ok: 0, dnf: 0, time: 0, okTime: 0, best: 0, hn: 0, rv: 0, free: 0 }; }
     PUZZLES.forEach(function (p) {
       var g = progressOf(p), key = kindOf(p);
       if (!g.solved) { if (g.n) prog++; return; }
-      if (g.sub && !g.sub.res) return;
+      if (g.sub && !g.sub.res) g.dnf = subDnf(p);
       (types[key] = types[key] || Object.assign(tally(), { p: p, key: key, list: [] })).list.push({ p: p, g: g });
       [all, types[key], modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
         t.n++; t.time += g.time; t.hn += g.hn; t.rv += g.rv;

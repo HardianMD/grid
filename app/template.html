@@ -24,7 +24,8 @@
   --kb-bg: #e3e8ec;
   --ok: #bfe6c3;
   --ok-word: #9fd8a6;
-  --easy: #1f7a33; --medium: #c27c0e; --hard: #b3261e; --champ: #15191d;
+  --good: #1f7a33; --good-bg: #eef7ef; --warn: #8a5a12; --warn-bg: #fbf3e6; --warn-line: #d9b77a; --bad: #b3261e;
+  --easy: var(--good); --medium: #c27c0e; --hard: var(--bad); --champ: #15191d;
   --f-ui: "Libre Franklin", -apple-system, "Helvetica Neue", Arial, sans-serif;
   --f-clue: var(--f-ui); --cz: 1; --nowbg: var(--word);  /* clue font, size scale and clue box tint, from Settings */
   color-scheme: light;
@@ -44,7 +45,7 @@ header .meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; ove
 header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 header .ttl.full h1, header .ttl.full .meta { white-space: normal; }  /* title tapped: all of it, over more lines if need be */
 header .timer { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-header .timer.stopped { color: #1f7a33; }
+header .timer.stopped { color: var(--good); }
 .btn { font: 600 13px var(--f-ui); color: var(--accent); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .btn:focus-visible, .key:focus-visible, .clue:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -85,7 +86,7 @@ header .timer.stopped { color: #1f7a33; }
 .clue.on { background: var(--word); }
 .clue.done { color: var(--ink-soft); }
 .clue.done span { text-decoration: line-through; text-decoration-color: var(--rule); }
-.clue.right b { color: #1f7a33; }
+.clue.right b { color: var(--good); }
 .clue.right.rev b { color: var(--medium); }
 .clue.fav b::after, .favs .fn::after { content: "\2605"; display: block; color: var(--gold); font-size: 11px; }
 .star { border: 0; background: none; padding: 6px; margin: -6px 0 -6px -2px; vertical-align: -3px; color: var(--ink-soft); cursor: pointer; }
@@ -110,7 +111,7 @@ header .timer.stopped { color: #1f7a33; }
 .panel h3 { margin: 0; font-size: 15px; font-weight: 800; }
 .panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn.danger { color: #b3261e; border-color: currentColor; }
+.btn.danger { color: var(--bad); border-color: currentColor; }
 .btn.out { justify-self: start; }
 #setSheet .fgrp { border-top: 1px solid var(--rule); padding-top: 12px; }
 .tog + .tog { border-top: 1px solid var(--cross); padding-top: 8px; }
@@ -140,8 +141,8 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 .sfig { grid-template-columns: repeat(4, 1fr); }
 .stiles > div { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 4px; }
 /* Solved, DNF and in progress take the home list's green, amber and blue. */
-.stiles > div:nth-child(1) { background: #eef7ef; border-color: var(--ok-word); } .stiles > div:nth-child(1) * { color: #1f7a33; }
-.stiles > div:nth-child(2) { background: #fbf3e6; border-color: #d9b77a; } .stiles > div:nth-child(2) * { color: #8a5a12; }
+.stiles > div:nth-child(1) { background: var(--good-bg); border-color: var(--ok-word); } .stiles > div:nth-child(1) * { color: var(--good); }
+.stiles > div:nth-child(2) { background: var(--warn-bg); border-color: var(--warn-line); } .stiles > div:nth-child(2) * { color: var(--warn); }
 .stiles > div:nth-child(3) { background: #edf3f9; border-color: var(--accent); } .stiles > div:nth-child(3) * { color: var(--accent); }
 .stiles b, .sfig b { display: block; font: 800 18px var(--f-ui); color: var(--ink); font-variant-numeric: tabular-nums; }
 .sfig b { font-size: 15px; }
@@ -152,7 +153,7 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 #statBody { margin-top: 12px; }
 .scard.tap { cursor: pointer; }
 .shl { font: 400 12px var(--f-ui); color: var(--ink-soft); }
-.shl .down { color: #1f7a33; } .shl .up { color: #8a5a12; }
+.shl .down { color: var(--good); } .shl .up { color: var(--warn); }
 .spark svg { display: block; width: 100%; height: 44px; }
 .htab { width: 100%; border-collapse: collapse; font: 400 13px var(--f-ui); font-variant-numeric: tabular-nums; }
 .htab th { font-weight: 400; font-size: 11px; color: var(--ink-soft); text-align: left; padding: 4px 2px; }
@@ -160,7 +161,7 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 .htab th:last-child, .htab td:last-child, .htab th:nth-child(2), .htab td:nth-child(2) { text-align: right; }
 .htab td:nth-child(3) { width: 26px; text-align: center; }
 .htab .mico { width: 18px; height: 18px; font-size: 10px; font-style: normal; }
-.htab .hh { color: var(--accent); } .htab .rv { color: var(--medium); } .htab .free { color: #1f7a33; }
+.htab .hh { color: var(--accent); } .htab .rv { color: var(--medium); } .htab .free { color: var(--good); }
 .htab .hdt { color: var(--accent); cursor: pointer; } .htab .hdt small { color: var(--ink-soft); font-size: 11px; }
 .hall { justify-self: center; }
 #statBody p { margin: 12px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
@@ -190,20 +191,20 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 .note-item { display: grid; gap: 2px; width: 100%; text-align: left; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); font: inherit; color: var(--ink); cursor: pointer; }
 .note-item b { font-size: 15px; }
 .note-item span { font-size: 13.5px; color: var(--ink-soft); }
-.note-item.dnf span { color: #8a5a12; } .note-item.ok span { color: #1f7a33; }
+.note-item.dnf span { color: var(--warn); } .note-item.ok span { color: var(--good); }
 .upd.busy { animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.problems { margin-top: 8px; padding: 8px 10px; border: 1px solid #d9b77a; border-radius: 10px; background: #fbf3e6; color: #8a5a12; font-size: 13px; }
+.problems { margin-top: 8px; padding: 8px 10px; border: 1px solid var(--warn-line); border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
 .problems b { display: block; margin-bottom: 2px; } .problems div { margin-top: 2px; }
 .hitem.new { border: 2px solid var(--accent); padding: 11px 13px; box-shadow: 0 1px 6px rgba(29,95,153,.15); }
 .hitem.new .hs .st { color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 4px 10px; }
 .hitem .hs .pz { margin-top: 4px; font: 700 12px var(--f-ui); color: var(--accent); }
 .hitem.prog .hs { color: var(--accent); }
-.hitem.done { background: #eef7ef; border-color: var(--ok-word); }
+.hitem.done { background: var(--good-bg); border-color: var(--ok-word); }
 .hitem.done .ht span { color: var(--ink-soft); }
-.hitem.done .hs { color: #1f7a33; }
-.hitem.done.dnf { background: #fbf3e6; border-color: #d9b77a; }
-.hitem.done.dnf .hs { color: #8a5a12; }
+.hitem.done .hs { color: var(--good); }
+.hitem.done.dnf { background: var(--warn-bg); border-color: var(--warn-line); }
+.hitem.done.dnf .hs { color: var(--warn); }
 .hsub { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-soft); }
 .modesw { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); flex: 0 0 auto; }
 .modesw button { font: 700 13px var(--f-ui); color: var(--ink-soft); background: none; border: 0; border-radius: 999px; padding: 6px 10px; cursor: pointer; }
@@ -219,9 +220,9 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .mtab th:first-child, .mtab td:first-child { text-align: left; color: var(--ink-soft); font-weight: 600; }
 .mtab thead th { color: var(--mc); font-weight: 800; }
 .srow { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 14px var(--f-ui); }
-.solvedbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-block: 8px; background: #eef7ef; border-top: 1px solid var(--ok-word); border-bottom: 1px solid var(--ok-word); font: 700 14px var(--f-ui); color: #1f7a33; }
+.solvedbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-block: 8px; background: var(--good-bg); border-top: 1px solid var(--ok-word); border-bottom: 1px solid var(--ok-word); font: 700 14px var(--f-ui); color: var(--good); }
 .solvedbar a { text-decoration: none; background: var(--sheet); white-space: nowrap; }
-.solvedbar.dnf { background: #fbf3e6; border-color: #d9b77a; color: #8a5a12; }
+.solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .syncbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
 .syncbar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fbar { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
@@ -286,9 +287,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .chip { font: 600 12px var(--f-ui); color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; cursor: pointer; }
 .chip.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .chip:disabled { opacity: .4; cursor: default; }
-.chip.del { color: #b3261e; border-color: #e3b4b0; }
 .chip.def { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-.btn.mini.danger { color: #b3261e; border-color: #e3b4b0; }
+.chip.del, .btn.mini.danger { color: var(--bad); border-color: #e3b4b0; }
 .selbar { display: grid; gap: 6px; background: var(--cross); border-radius: 8px; padding: 8px; position: sticky; top: -18px; z-index: 2; }
 .selrow { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 .wptok { font: 17px/2 var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; min-height: 2em; -webkit-user-select: none; user-select: none; }
@@ -379,7 +379,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
     <span class="timer" id="timer" aria-label="Time">0:00</span>
     <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
-    <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"></button>
   </header>
   <div class="main" id="main">
   <div class="gridwrap"><div class="grid" id="grid" role="grid" aria-label="Crossword grid"></div></div>
@@ -576,6 +576,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   "use strict";
   var PUZZLES = [];  // filled from Firestore once signed in
   var $ = function (id) { return document.getElementById(id); };
+  $("setBtn2").innerHTML = $("setBtn").innerHTML;  // the Settings cog, drawn once in the page
   // Progress lives in browser storage and, once signed in with Google, in Firestore, so it survives the
   // browser clearing its storage and follows the user between devices.
   var MEM = {};
@@ -589,9 +590,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   };
   var CLOUD = null, cloudQ = {}, cloudT = null, KEEP = ["mode", "favs", "prefs", "notes"];  // KEEP: synced records besides puzzles
   function cloudId(k) {
-    if (/^crossword:(mode|favs|prefs|notes)$/.test(k)) return k.slice(10);
-    var m = /^crossword:(.+)$/.exec(k);
-    return m && m[1] !== "last" && m[1] !== "filter" ? "p_" + m[1] : null;
+    var m = /^crossword:(.+)$/.exec(k), id = m && m[1];
+    return !id || id === "last" || id === "filter" ? null : KEEP.indexOf(id) >= 0 ? id : "p_" + id;
   }
   function cloudPut(k, v) {
     var id = cloudId(k); if (!id) return;
@@ -779,7 +779,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (!FBUSER) return;
     if (WAITING) { toast("Refresh already syncing\u2026"); return; }
     WAITING = { at: new Date().toISOString().slice(0, 19), t: Date.now() }; showStatus();  // at once, so a second tap can't start another run
-    var ref = DB.collection("users/" + FBUSER.uid + "/private").doc("github");
+    var ref = keyRef();
     ref.get().then(function (d) {
       var key = d.exists && d.data().token;
       if (key) return dispatch(key, ref);
@@ -868,6 +868,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return same ? w.parts.map(function (x) { return x.num; }).join(", ") + (w.dir === "a" ? " Across" : " Down")
       : w.parts.map(function (x) { return x.num + (x.dir === "a" ? " Across" : " Down"); }).join(", ");
   }
+  // A linked head clue ending "[...: 5,4]" takes the whole answer's enumeration, "(5,4)".
+  function joinEnum(clue) { return clue.replace(/\s*\[[^\]]*?:\s*([\d,\-\s]+)\]\s*(\([\d,\-\s]+\))?\s*$/, " ($1)"); }
   function parseEnum(clue) {
     var m = clue.match(/\(([\d,\-\s]+)\)\s*$/);
     if (!m) return [];
@@ -917,7 +919,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         words.splice(words.indexOf(t), 1);
         SEES.push({ dir: t.dir, num: t.num, head: head });
       });
-      head.clue = head.clue.replace(/\s*\[[^\]]*?:\s*([\d,\-\s]+)\]\s*(\([\d,\-\s]+\))?\s*$/, " ($1)");
+      head.clue = joinEnum(head.clue);
     });
     words.forEach(function (w) { w.breaks = parseEnum(w.clue); });
     words.sort(function (x, y) { return x.dir === y.dir ? x.num - y.num : (x.dir === "a" ? -1 : 1); });
@@ -1185,7 +1187,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF in " + fmt(elapsed) + " - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
         : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + " - " + help
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
-        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
+        : SUB.res === "dnf" ? dnfText(elapsed, bad, gap) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
       // A Hard grid submitted before its answers are out hasn't been marked, so it can still be reopened.
       $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard" && !EDITED);  // once only
@@ -1358,6 +1360,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
 
   function plural(n, s) { return n + " " + s + (n === 1 ? "" : "s"); }
+  // A submitted grid marked wrong: bad squares wrong or blank, gap of them blank.
+  function dnfText(t, bad, gap) { return "DNF in " + fmt(t) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")); }
 
   // Submitted grid (Hard, Champ): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
   function grade() {
@@ -1372,13 +1376,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
   // A submitted grid can't be changed, so Submit asks first; in Hard and Champ, submitting with blank squares is giving up.
   // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
+  function askReset(no) {
+    $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
+    $("hintText").hidden = false; $("hintNo").hidden = false; $("hintNo").textContent = no;
+  }
   function confirmAsk(mode, title, text, yes) {
-    askMode = mode;
-    $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = true;
-    $("findBox").hidden = $("findBtn").hidden = $("ansRow").hidden = true;
-    $("hintText").hidden = false;
+    askMode = mode; askReset("Cancel");
+    $("findBtn").hidden = $("ansRow").hidden = true;
     $("hintTitle").textContent = title; $("hintText").textContent = text;
-    $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
     $("hintYes").textContent = yes;
     $("hintAsk").hidden = false;
   }
@@ -1765,13 +1770,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function locked(w) { if (HARD || solved) return solved; return w.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }); }
   var askMode = "hint";
   $("hintBtn").addEventListener("click", function () {
-    var w = curWord(), name = wordName(w);
-    $("hintNo").hidden = false; $("hintNo").textContent = "Not yet";
-    $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = true;
-    $("hintText").hidden = false;
-    var act = nextAction(w);
+    var w = curWord(), name = wordName(w), act = nextAction(w);
+    askReset("Not yet");
     // The word finder is offered only once a hint for this clue has been accepted.
-    $("findBox").hidden = true;
     $("findBtn").hidden = !(hinted[w.dir + w.num] >= 1) || act === "parse" || act === "add";
     if (act === "parse") {
       showParse(w);
@@ -1896,9 +1897,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("dictBtn").addEventListener("click", function () { var w = curWord(); if (w && filled(w)) openDict(w); });
   $("dictClose").addEventListener("click", function () { $("dictDlg").hidden = true; });
   $("dictDlg").addEventListener("click", function (e) { if (e.target === $("dictDlg")) $("dictDlg").hidden = true; });
+  // What follows each square of an answer: " " between words, "-" at a hyphen.
+  function seps(breaks) { var br = {}; breaks.forEach(function (b) { br[b.after] = b.kind === "-" ? "-" : " "; }); return br; }
   function answerText(w) {
-    var br = {}, out = "";
-    w.breaks.forEach(function (b) { br[b.after] = b.kind === "-" ? "-" : " "; });
+    var br = seps(w.breaks), out = "";
     w.cells.forEach(function (rc, i) { out += fill[rc[0]][rc[1]] + (br[i] || ""); });
     return out;
   }
@@ -2183,8 +2185,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Word finder: words from the word list that fit the answer's length and the letters already in the grid.
   $("findBtn").addEventListener("click", function () {
     var w = curWord(), pat = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; });
-    var br = {};
-    w.breaks.forEach(function (b) { br[b.after] = b.kind === "-" ? "-" : " "; });
+    var br = seps(w.breaks);
     var shown = pat.map(function (ch, i) { return (ch || "?") + (br[i] || ""); }).join("");
     withWords($("findBtn"), function (list) {
       var all = entries(list, w, pat), fit = all.filter(function (h) { return h.fit; }), hits = fit.length ? fit : all;
@@ -2396,7 +2397,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       return s;
     }).join(""));
     if (!a || a.indexOf("?") >= 0) return "The answer isn\u2019t known yet.";
-    var br = {}; parseEnum(clue.replace(/\s*\[[^\]]*?:\s*([\d,\-\s]+)\]\s*(\([\d,\-\s]+\))?\s*$/, " ($1)")).forEach(function (x) { br[x.after] = x.kind === "-" ? "-" : " "; });
+    var br = seps(parseEnum(joinEnum(clue)));
     return Array.from(a).map(function (ch, i) { return ch + (br[i] || ""); }).join("");
   }
   function showFavs() {
@@ -2608,19 +2609,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function checkSubs() {
     var add = [];
     PUZZLES.forEach(function (p) {
-      var k = "crossword:" + p.id, s = store.get(k), flat = "", w = p.grid[0].length, any = false, bad = 0, gap = 0;
+      var k = "crossword:" + p.id, s = store.get(k), m;
       if (!s || !s.sub || s.sub.res || !p.solution) return;
       if (P && P.id === p.id && $("home").hidden) return;  // the open puzzle is marked on screen instead
-      try { flat = unscramble(p.solution, p.id); } catch (e) { return; }
-      p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
-        var a = flat[r * w + c], f = (s.fill && s.fill[r] && s.fill[r][c] || " ").trim();
-        if (ch === "#" || !a || a === "?") return;
-        any = true; if (f !== a) { bad++; if (!f) gap++; }
-      }); });
-      if (!any) return;
-      s.sub.res = bad ? "dnf" : "ok"; store.set(k, s);
+      if (!(m = markOf(p, s)).any) return;
+      s.sub.res = m.bad ? "dnf" : "ok"; store.set(k, s);
       if (P && P.id === p.id) P.stale = true;
-      add.push({ id: p.id, res: s.sub.res, bad: bad, gap: gap, time: s.time || 0 });
+      add.push({ id: p.id, res: s.sub.res, bad: m.bad, gap: m.gap, time: s.time || 0 });
     });
     if (add.length) setNotes(notes().concat(add)); else bellDot();
   }
@@ -2637,7 +2632,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       b.type = "button"; b.className = "note-item " + n.res;
       t.textContent = p.title.replace(/ No\. /, " ") + " has been checked";
       r.textContent = n.res === "ok" ? "\u2713 Finished in " + fmt(n.time)
-        : "DNF in " + fmt(n.time) + ": " + (n.gap ? (n.bad > n.gap ? plural(n.bad - n.gap, "wrong square") + ", " : "") + n.gap + " blank" : plural(n.bad, "wrong square"));
+        : dnfText(n.time, n.bad, n.gap);
       b.appendChild(t); b.appendChild(r);
       b.addEventListener("click", function () { $("noteSheet").hidden = true; openPuzzle(p); });
       box.appendChild(b);
@@ -2648,14 +2643,16 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function closeNotes() { $("noteSheet").hidden = true; }
   $("noteDone").addEventListener("click", closeNotes);
   $("noteSheet").addEventListener("click", function (e) { if (e.target === this) closeNotes(); });
-  function subDnf(p) {
-    var s = store.get("crossword:" + p.id) || {}, flat = "", bad = false, w = p.grid[0].length;
+  // A saved grid against the puzzle's known answers: any (some answer is known), bad (squares wrong or blank), gap (blank).
+  function markOf(p, s) {
+    var flat = "", w = p.grid[0].length, m = { any: false, bad: 0, gap: 0 };
     try { flat = p.solution ? unscramble(p.solution, p.id) : ""; } catch (e) {}
     p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
-      var a = flat[r * w + c];
-      if (ch !== "#" && a && a !== "?" && (s.fill && s.fill[r] && s.fill[r][c] || " ").trim() !== a) bad = true;
+      var a = flat[r * w + c], f = (s.fill && s.fill[r] && s.fill[r][c] || " ").trim();
+      if (ch === "#" || !a || a === "?") return;
+      m.any = true; if (f !== a) { m.bad++; if (!f) m.gap++; }
     }); });
-    return bad;
+    return m;
   }
   function showStats() {
     var all = tally(), types = {}, modes = {}, prog = 0, box = $("statBody");
@@ -2663,7 +2660,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     PUZZLES.forEach(function (p) {
       var g = progressOf(p), key = kindOf(p);
       if (!g.solved) { if (g.n) prog++; return; }
-      if (g.sub && !g.sub.res) g.dnf = subDnf(p);
+      if (g.sub && !g.sub.res) g.dnf = markOf(p, store.get("crossword:" + p.id) || {}).bad > 0;
       (types[key] = types[key] || Object.assign(tally(), { p: p, key: key, list: [] })).list.push({ p: p, g: g });
       [all, types[key], modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
         t.n++; t.time += g.time; t.hn += g.hn; t.rv += g.rv;

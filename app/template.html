@@ -26,7 +26,7 @@
   --ok-word: #9fd8a6;
   --easy: #1f7a33; --medium: #c27c0e; --hard: #b3261e; --champ: #15191d;
   --f-ui: "Libre Franklin", -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --f-clue: var(--f-ui); --cz: 1;  /* clue font and size scale, from Settings */
+  --f-clue: var(--f-ui); --cz: 1; --nowbg: var(--word);  /* clue font, size scale and clue box tint, from Settings */
   color-scheme: light;
 }
 html, body { height: 100%; }
@@ -73,7 +73,7 @@ header .timer.stopped { color: #1f7a33; }
 .dock { background: var(--paper); border-top: 1px solid var(--rule); }
 .bar { display: flex; align-items: stretch; gap: 8px; padding-block: 4px; }
 .bar .nav { flex: 0 0 40px; min-height: 44px; font-size: 20px; color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
-.bar .now { flex: 1; min-width: 0; align-self: center; background: var(--word); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: calc(15px * var(--cz)); line-height: 1.25; }
+.bar .now { flex: 1; min-width: 0; align-self: center; background: var(--nowbg); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: calc(15px * var(--cz)); line-height: 1.25; }
 .now .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
 
 .clues { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-block: 0 12px; }
@@ -114,6 +114,11 @@ header .timer.stopped { color: #1f7a33; }
 #setSheet .fgrp { border-top: 1px solid var(--rule); padding-top: 12px; }
 .tog + .tog { border-top: 1px solid var(--cross); padding-top: 8px; }
 .chip .src { margin-right: 5px; }
+.chip .sw { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; border: 1px solid var(--rule); vertical-align: -1px; }
+/* The example clue in Settings, drawn like the clue box above the keyboard. */
+.cprev { background: var(--nowbg); border-radius: 8px; padding: 8px 14px; font: calc(16px * var(--cz))/1.3 var(--f-clue); color: var(--ink); text-transform: none; letter-spacing: 0; }
+.cprev .tag { font-family: var(--f-ui); }
+html.notint .bar .now, html.notint .cprev { box-shadow: inset 0 0 0 1px var(--rule); }
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
 .fgrp .modesw { justify-self: start; }
@@ -421,7 +426,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       <label class="tog">Hide the timer while solving<input type="checkbox" data-p="noTimer"></label>
     </div>
     <div class="fgrp"><span>Clue text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div></div>
-    <div class="fgrp"><span>Clue font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div></div>
+    <div class="fgrp"><span>Clue font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div>
+      <div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt">Notes rearranged for a gem, perhaps (5)</span></div>
+    </div>
+    <div class="fgrp"><span>Clue box colour</span><div class="chips" data-p="tint"><button type="button" class="chip" data-v="blue"><i class="sw" style="background:#cfe3f5"></i>Blue</button><button type="button" class="chip" data-v="green"><i class="sw" style="background:#d6eedb"></i>Green</button><button type="button" class="chip" data-v="amber"><i class="sw" style="background:#f8e6c4"></i>Amber</button><button type="button" class="chip" data-v="pink"><i class="sw" style="background:#f6d9e4"></i>Pink</button><button type="button" class="chip" data-v="grey"><i class="sw" style="background:#e6eaee"></i>Grey</button><button type="button" class="chip" data-v="none"><i class="sw" style="background:transparent"></i>None</button></div></div>
     <div class="fgrp"><span>Home list</span>
       <label class="tog">Hide finished puzzles<input type="checkbox" data-p="hideDone"></label>
       <span class="sub">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
@@ -2481,11 +2489,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     keyRef().set({ token: k }).then(function () { $("setKey").value = ""; toast("Update key saved"); keyNote(); }, function (e) { toast("Couldn\u2019t save the key: " + ((e && e.code) || "error")); });
   });
   // Clue size and font, the timer and the home list follow Settings.
-  var FONTS = { arial: "Arial, Helvetica, sans-serif", times: "\"Times New Roman\", Times, serif", georgia: "Georgia, serif" }, SIZES = { l: 1.15, xl: 1.3 };
+  var FONTS = { arial: "Arial, Helvetica, sans-serif", times: "\"Times New Roman\", Times, serif", georgia: "Georgia, serif" }, SIZES = { l: 1.15, xl: 1.3 },
+    TINTS = { green: "#d6eedb", amber: "#f8e6c4", pink: "#f6d9e4", grey: "#e6eaee", none: "transparent" };
   function applyPrefs() {
     var pf = prefs(), st = document.documentElement.style;
     st.setProperty("--cz", SIZES[pf.size] || 1); st.setProperty("--f-clue", FONTS[pf.font] || "var(--f-ui)");
+    st.setProperty("--nowbg", TINTS[pf.tint] || "var(--word)");
     document.documentElement.classList.toggle("notimer", !!pf.noTimer);
+    document.documentElement.classList.toggle("notint", pf.tint === "none");
     if (BOOTED && !$("home").hidden) showHome(true);
   }
   $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });

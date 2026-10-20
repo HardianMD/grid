@@ -2627,7 +2627,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("bellBtn").addEventListener("click", function () {
     var list = notes(), box = $("noteList");
     box.innerHTML = "";
-    if (!list.length) { var e = document.createElement("p"); e.className = "sub"; e.textContent = "No notifications."; box.appendChild(e); }
+    var e = document.createElement("p"); e.className = "sub";
+    e.textContent = list.length ? "Tap a puzzle to review it. Each notification stays here until its puzzle has been opened." : "No notifications.";
+    box.appendChild(e);
     list.forEach(function (n) {
       var p = PUZZLES.filter(function (x) { return x.id === n.id; })[0];
       if (!p) return;

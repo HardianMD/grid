@@ -110,7 +110,10 @@ header .timer.stopped { color: #1f7a33; }
 .panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.danger { color: #b3261e; border-color: currentColor; }
-.btn.out { padding: 10px; font-size: 14px; }
+.btn.out { justify-self: start; }
+#setSheet .fgrp { border-top: 1px solid var(--rule); padding-top: 12px; }
+.tog + .tog { border-top: 1px solid var(--cross); padding-top: 8px; }
+.chip .src { margin-right: 5px; }
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
 .fgrp .modesw { justify-self: start; }
@@ -409,12 +412,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="fgrp"><span>New puzzles start in</span>
       <div class="chips" data-p="start"><button type="button" class="chip" data-v="last">The last mode used for that series</button><button type="button" class="chip" data-v="fixed">The same mode every time</button></div>
       <div class="modesw" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div>
+      <span class="sub">Puzzles you have already started keep their own mode.</span>
     </div>
-    <p>Puzzles you have already started keep their own mode.</p>
     <div class="fgrp"><span>Solving</span>
       <label class="tog">Skip squares already filled<input type="checkbox" data-p="skip"></label>
       <label class="tog">Jump to the next clue when a word is complete<input type="checkbox" data-p="jump"></label>
-      <label class="tog">Show hints and reveals without asking<input type="checkbox" data-p="noAsk"></label>
+      <label class="tog">Show hints and reveals without confirming<input type="checkbox" data-p="noAsk"></label>
       <label class="tog">Hide the timer while solving<input type="checkbox" data-p="noTimer"></label>
     </div>
     <div class="fgrp"><span>Clue text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div></div>
@@ -424,7 +427,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       <span class="sub">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
     </div>
     <div class="fgrp"><label for="setKey">Update key</label><div class="krow"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn" id="keySave" type="button">Save</button></div><span class="sub" id="keyNote"></span></div>
-    <button class="btn danger out" id="syncBtn" type="button">Sign out</button>
+    <div class="fgrp"><button class="btn danger out" id="syncBtn" type="button">Sign out</button></div>
   </div>
 </div>
 <div class="sheet" id="statSheet" hidden>
@@ -2212,6 +2215,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return p.publication || "";
   }
   function typeOf(p) { return p.type || "Other"; }
+  // The paper's coloured tag, as on the home list.
+  function badgeEl(p) {
+    var tg = document.createElement("i"); tg.className = "src"; tg.style.fontStyle = "normal"; tg.textContent = pubOf(p);
+    if (p.badge) { tg.style.background = p.badge.bg; tg.style.color = p.badge.fg; }
+    return tg;
+  }
   function kindOf(p) { return (pubOf(p) + " " + typeOf(p)).trim(); }
   // Exact blog post when known (p.blog), else a search on the usual blog for that paper.
   function blogFor(p) {
@@ -2373,7 +2382,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (state === "done") done++; else if (state === "new") todo++;
       b.type = "button"; b.className = "hitem " + state;
       var ht = document.createElement("div"); ht.className = "ht";
-      if (pub) { var tg = document.createElement("i"); tg.className = "src"; tg.textContent = pub; tg.style.fontStyle = "normal"; if (p.badge) { tg.style.background = p.badge.bg; tg.style.color = p.badge.fg; } ht.appendChild(tg); }
+      if (pub) ht.appendChild(badgeEl(p));
       var tt = document.createElement("span"); tt.textContent = pub ? p.title.replace(new RegExp("^(The )?" + pub + "\\s+", "i"), "") : p.title; ht.appendChild(tt);
       var hm = document.createElement("div"); hm.className = "hm"; hm.textContent = metaText(p);
       var hs = document.createElement("div"); hs.className = "hs";
@@ -2428,7 +2437,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var pf = prefs(), start = pf.start || "last", m = pf.mode || "easy";
     $("setName").value = pf.name || "";
     $("setHide").innerHTML = "";
-    uniq(kindOf).forEach(function (k) { var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.v = b.textContent = k; $("setHide").appendChild(b); });
+    uniq(kindOf).forEach(function (k) {
+      var b = document.createElement("button"), p = PUZZLES.filter(function (x) { return kindOf(x) === k; })[0];
+      b.type = "button"; b.className = "chip"; b.dataset.v = k;
+      if (pubOf(p)) b.appendChild(badgeEl(p));
+      b.appendChild(document.createTextNode(pubOf(p) ? typeOf(p) : k)); $("setHide").appendChild(b);
+    });
     // Chips: the saved choice, else the first; hide lists the crosswords not shown, so its chips are on when shown.
     Array.prototype.forEach.call(document.querySelectorAll("#setSheet .chips[data-p]"), function (box) {
       var p = box.dataset.p, v = pf[p] || box.firstElementChild && box.firstElementChild.dataset.v;
@@ -2515,11 +2529,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       c.className = "scard"; r.className = "srow";
       if (mode) { var i = document.createElement("i"); i.className = "mico"; i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
       // Paper cards carry the paper's badge, as in the home list.
-      if (t.p && pubOf(t.p)) {
-        var tg = document.createElement("i"); tg.className = "src"; tg.style.fontStyle = "normal"; tg.textContent = pubOf(t.p);
-        if (t.p.badge) { tg.style.background = t.p.badge.bg; tg.style.color = t.p.badge.fg; }
-        l.appendChild(tg); name = typeOf(t.p);
-      }
+      if (t.p && pubOf(t.p)) { l.appendChild(badgeEl(t.p)); name = typeOf(t.p); }
       l.appendChild(document.createTextNode(name));
       sm.textContent = plural(t.ok, "solve") + (t.dnf ? " \u00b7 " + t.dnf + " DNF" : "");
       r.appendChild(l); r.appendChild(sm); c.appendChild(r);

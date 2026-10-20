@@ -41,7 +41,8 @@ body {
 header { display: flex; align-items: center; gap: 12px; padding-block: 6px 4px; }
 header .ttl { flex: 1; min-width: 0; }
 header .meta { font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+header .ttl.full h1, header .ttl.full .meta { white-space: normal; }  /* title tapped: all of it, over more lines if need be */
 header .timer { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 header .timer.stopped { color: #1f7a33; }
 .btn { font: 600 13px var(--f-ui); color: var(--accent); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
@@ -200,7 +201,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .mtab thead th { color: var(--mc); font-weight: 800; }
 .srow { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 14px var(--f-ui); }
 .solvedbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-block: 8px; background: #eef7ef; border-top: 1px solid var(--ok-word); border-bottom: 1px solid var(--ok-word); font: 700 14px var(--f-ui); color: #1f7a33; }
-.solvedbar a { text-decoration: none; background: var(--sheet); }
+.solvedbar a { text-decoration: none; background: var(--sheet); white-space: nowrap; }
 .solvedbar.dnf { background: #fbf3e6; border-color: #d9b77a; color: #8a5a12; }
 .syncbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
 .syncbar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1158,7 +1159,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
         : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
-      if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = (bl.exact ? "Read the blog" : "Find the blog") + " \u2197"; }
+      if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
     scrollClue(w.el);
   }
@@ -2492,6 +2493,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var ex = $("homeList").querySelector(".hitem"); $("listPrev").innerHTML = ""; if (ex) $("listPrev").appendChild(ex.cloneNode(true));
     $("setSheet").hidden = false; keyNote();
   }
+  $("title").addEventListener("click", function () { this.parentNode.classList.toggle("full"); size(); });
   $("setBtn").addEventListener("click", showSettings); $("setBtn2").addEventListener("click", showSettings);
   $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
   $("setSheet").addEventListener("change", function (e) { if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); } });

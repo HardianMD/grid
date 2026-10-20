@@ -168,6 +168,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
 .frange { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; font-weight: 400; text-transform: none; }
+.hmore { display: block; margin: 8px auto 0; }
 .hempty { text-align: center; color: var(--ink-soft); margin: 24px 0; font-size: 14px; }
 .hnote { font-size: 12px; color: var(--ink-soft); text-align: center; margin: 18px 0 0; }
 header .back { flex: 0 0 auto; padding: 2px 11px 5px; font-size: 22px; line-height: 1; }
@@ -515,8 +516,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("syncTxt").textContent = m; toast(m);
   }
   // Merge the Firestore collection's docs ({v: JSON, at}) with this device by `at`, then keep writing to it.
+  // After the first merge only records changed since the last one (less a day, for other devices' clocks) are read.
   function cloudMerge(col) {
-    return col.get().then(function (snap) {
+    var since = (store.get("crossword:synced") || 0) - 864e5;
+    return (since > 0 ? col.where("at", ">", since) : col).get().then(function (snap) {
       var seen = {}, cur = false, any = false;
       snap.docs.forEach(function (d) {
         seen[d.id] = 1;
@@ -535,8 +538,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       });
       PUZZLES.map(function (p) { return "p_" + p.id; }).concat(["mode", "favs"]).forEach(function (id) {
         var k = "crossword:" + id.replace(/^p_/, "");
-        if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object") cloudQ[id] = loc; }
+        if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object" && (loc.at || 0) > since) cloudQ[id] = loc; }
       });
+      store.local("crossword:synced", Date.now());
       CLOUD = col;
       if (Object.keys(cloudQ).length) cloudT = setTimeout(cloudFlush, 1500);
       if (cur) { load(P); size(); }  // also when the puzzle only sits behind the home list, so a later save keeps the synced letters
@@ -565,8 +569,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     });
   }
   // Sign-in is required: the puzzles and the update status are in Firestore, readable only by the owner's Google
-  // account. Firestore keeps a copy on the device, so the app opens offline once it has loaded.
-  var DB = null, BOOTED = false, STATUS = {}, WAITING = null;
+  // account. Firestore keeps every puzzle on the device (no size limit, so none is dropped), so the app opens
+  // offline once it has loaded, and each opening reads only the puzzles uploaded since the newest one kept (`u`).
+  var DB = null, BOOTED = false, STATUS = {}, WAITING = null, PZ = {};
   function gate(msg, btn, act) {
     $("gate").hidden = !msg; $("gateTxt").textContent = msg || "";
     $("gateBtn").hidden = !btn; $("gateBtn").textContent = btn || ""; $("gateBtn").dataset.act = act || "";
@@ -575,6 +580,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     Promise.all(["firebase-app", "firebase-auth", "firebase-firestore"].map(fbScript)).then(function () {
       firebase.initializeApp(FIREBASE);
       DB = firebase.firestore();
+      DB.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
       DB.enablePersistence({ synchronizeTabs: true }).catch(function () {});
       var auth = firebase.auth(), unsub = [];
       $("gateBtn").addEventListener("click", function () {
@@ -595,11 +601,18 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         }
         $("syncBar").hidden = false; $("syncTxt").textContent = "Syncing…"; $("syncBtn").textContent = "Sign out";
         if (!BOOTED) gate("Loading puzzles…");
-        unsub.push(DB.collection("puzzles").onSnapshot(function (snap) {
-          var list = [];
-          snap.forEach(function (d) { try { list.push(JSON.parse(d.data().j)); } catch (e) {} });
-          gotPuzzles(list, snap.metadata.fromCache, u);
-        }, denied));
+        var col = DB.collection("puzzles"), add = function (snap) {
+          var top = "";
+          snap.forEach(function (d) { var x = d.data(); if (x.u > top) top = x.u; try { PZ[d.id] = JSON.parse(x.j); } catch (e) {} });
+          return top;
+        };
+        col.get({ source: "cache" }).then(add, function () { return ""; }).then(function (top) {
+          if (FBUSER !== u) return;
+          unsub.push(col.where("u", ">", top).onSnapshot(function (snap) {
+            add(snap);
+            gotPuzzles(Object.keys(PZ).map(function (k) { return PZ[k]; }), snap.metadata.fromCache, u);
+          }, denied));
+        });
         unsub.push(DB.collection("meta").doc("status").onSnapshot(function (d) { STATUS = d.data() || {}; showStatus(); }, function () {}));
       });
     }).catch(function () { gate("Couldn’t reach the sign-in service. Check your connection and reload."); });
@@ -2241,6 +2254,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       box.appendChild(el);
     });
   }
+  // The list shows two weeks, from today or from the newest puzzle the filters match; each View more adds the two
+  // weeks before the newest puzzle still hidden.
+  function weeks2(d) { var a = new Date(d + "T12:00:00"); a.setDate(a.getDate() - 13); return d ? a.toISOString().slice(0, 10) : ""; }
+  var FROM = weeks2(new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10));
   function showHome(keepScroll) {
     if (P) { save(); stopClock(); }
     $("favsBtn").classList.toggle("on", FAVTAB); $("favsBtn").setAttribute("aria-pressed", String(FAVTAB));
@@ -2249,11 +2266,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var list = $("homeList"), last = null, todo = 0, done = 0;
     list.innerHTML = "";
     var all = PUZZLES.slice().sort(function (x, y) { return (y.date || "").localeCompare(x.date || "") || y.id.localeCompare(x.id); });
-    var shown = all.filter(filterOk), nf = filterCount();
-    $("filterSum").textContent = nf ? "Showing " + shown.length + " of " + all.length : "";
+    var match = all.filter(filterOk), nf = filterCount();
+    var from = match.length && !(match[0].date >= FROM) ? weeks2(match[0].date) : FROM;
+    var shown = match.filter(function (p) { return p.date >= from; }), more = match[shown.length];
+    $("filterSum").textContent = nf ? "Showing " + match.length + " of " + all.length : "";
     $("filterClear").hidden = !nf; $("filterBtn").classList.toggle("on", !!nf);
     $("filterBtn").textContent = nf ? "Filter (" + nf + ")" : "Filter";
-    if (!shown.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No puzzles match these filters."; list.appendChild(e); }
+    if (!match.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No puzzles match these filters."; list.appendChild(e); }
     shown.forEach(function (p) {
       var g = progressOf(p), pub = pubOf(p);
       if (p.date !== last) {
@@ -2282,6 +2301,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       b.addEventListener("click", function () { openPuzzle(p); });
       list.appendChild(b);
     });
+    if (more) {
+      var mb = document.createElement("button"); mb.type = "button"; mb.className = "btn hmore"; mb.textContent = "View more";
+      mb.addEventListener("click", function () { FROM = weeks2(more.date); showHome(true); });
+      list.appendChild(mb);
+    }
     $("homeSum").textContent = todo + " new \u00b7 " + done + " solved";
     $("home").hidden = false;
     if (keepScroll !== true) $("home").scrollTop = 0;

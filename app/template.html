@@ -92,7 +92,10 @@ header .timer.stopped { color: #1f7a33; }
 .star.on svg { fill: currentColor; }
 .favs .clue { grid-template-columns: 22px 1fr auto; align-items: start; margin: 0 0 8px; padding: 10px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .favs .fm { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-soft); }
-.favs .pwp { grid-column: 2 / 4; margin: 0; font-size: 14px; }
+.favs { margin-top: 12px; }
+.favs .fb { display: grid; gap: 6px; }
+.favs .pwp, .favs .pans { grid-column: 2 / 4; margin: 0; font-size: 14px; }
+.favs .pans { font-weight: 800; letter-spacing: 0.06em; }
 
 .kb { background: var(--kb-bg); padding-block: 4px calc(4px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 4px; }
 .row { display: flex; gap: 5px; justify-content: center; }
@@ -2170,6 +2173,23 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Favourites tab: each starred clue with no hints; Parse shows its parsing in place, and tapping it opens the clue.
   var FAVTAB = false;
   $("favsBtn").addEventListener("click", function () { FAVTAB = !FAVTAB; showHome(); });
+  // A favourite's answer, from the puzzle's grid and solution (or the solver's own answer), without loading the puzzle.
+  function answerOf(p, k, clue) {
+    var R0 = p.grid.length, C0 = p.grid[0].length, at = {}, n = 0, flat = "";
+    var open = function (r, c) { return r >= 0 && r < R0 && c >= 0 && c < C0 && p.grid[r][c] !== "#"; };
+    for (var r = 0; r < R0; r++) for (var c = 0; c < C0; c++) {
+      if (open(r, c) && ((!open(r, c - 1) && open(r, c + 1)) || (!open(r - 1, c) && open(r + 1, c)))) at[++n] = [r, c];
+    }
+    try { flat = unscramble(p.solution, p.id); } catch (e) {}
+    var a = ((store.get("crossword:" + p.id) || {}).answers || {})[k] || ((linksFor(p).filter(function (g) { return g[0] === k; })[0] || [k]).map(function (x) {
+      var s = "", rc = at[x.slice(1)] || [-1, -1], dr = x[0] === "d" ? 1 : 0;
+      for (var rr = rc[0], cc = rc[1]; open(rr, cc); rr += dr, cc += 1 - dr) s += flat[rr * C0 + cc] || "";
+      return s;
+    }).join(""));
+    if (!a || a.indexOf("?") >= 0) return "The answer isn\u2019t known yet.";
+    var br = {}; parseEnum(clue.replace(/\s*\[[^\]]*?:\s*([\d,\-\s]+)\]\s*(\([\d,\-\s]+\))?\s*$/, " ($1)")).forEach(function (x) { br[x.after] = x.kind === "-" ? "-" : " "; });
+    return Array.from(a).map(function (ch, i) { return ch + (br[i] || ""); }).join("");
+  }
   function showFavs() {
     var box = $("favList"), byId = {};
     box.innerHTML = "";
@@ -2182,19 +2202,28 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var b = document.createElement("b"); b.className = "fn"; b.textContent = num;
       var s = document.createElement("span"); s.textContent = (p[dir === "a" ? "across" : "down"] || {})[num] || "";
       var m = document.createElement("small"); m.className = "fm"; m.textContent = (dir === "a" ? "Across" : "Down") + " \u00b7 " + p.title + " \u00b7 " + metaText(p); s.appendChild(m);
-      var pb = document.createElement("button"); pb.type = "button"; pb.className = "btn mini"; pb.textContent = "Parse";
-      pb.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var x = el.querySelector(".pwp");
-        if (x) { el.removeChild(x); pb.textContent = "Parse"; return; }
+      var fb = document.createElement("div"); fb.className = "fb";
+      // Each button shows its line under the clue, or hides it again; the answer line stays above the parsing.
+      [["Solution", "pans", function (x) { x.textContent = answerOf(p, f.k, s.firstChild.textContent); }],
+       ["Parse", "pwp", function (x) {
         var mine = ((store.get("crossword:" + p.id) || {}).parses || {})[f.k], blog = null;
         try { blog = JSON.parse(unscramble(p.parses, p.id))[dir][num]; } catch (er) {}
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
-        x = document.createElement("p"); x.className = "pwp";
         var t = document.createElement("i"); t.textContent = r.type; var wp = document.createElement("span"); markup(wp, r.wordplay || "");
-        x.appendChild(t); x.appendChild(wp); el.appendChild(x); pb.textContent = "Hide";
+        x.appendChild(t); x.appendChild(wp);
+      }]].forEach(function (d) {
+        var bt = document.createElement("button"); bt.type = "button"; bt.className = "btn mini"; bt.textContent = d[0];
+        bt.addEventListener("click", function (e) {
+          e.stopPropagation();
+          var x = el.querySelector("." + d[1]);
+          bt.classList.toggle("solid", !x);
+          if (x) return el.removeChild(x);
+          x = document.createElement("p"); x.className = d[1]; d[2](x);
+          el.insertBefore(x, d[1] === "pans" ? el.querySelector(".pwp") : null);
+        });
+        fb.appendChild(bt);
       });
-      el.appendChild(b); el.appendChild(s); el.appendChild(pb);
+      el.appendChild(b); el.appendChild(s); el.appendChild(fb);
       el.addEventListener("click", function () {
         openPuzzle(p);
         var i = words.findIndex(function (w) { return w.dir === dir && String(w.num) === num; });

@@ -945,6 +945,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     build();
     setMode(saved.mode || lastMode(p), true);
     USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
+    if (USED < 0 && solved) USED = RANK[MODE];  // older finished records: the mode it was played in
     REV = !!saved.rev; REVW = saved.revw || {};
     if (SUB && !SUB.res) { grade(); if (SUB.res) save(); }  // answers arrived after it was submitted
     render();
@@ -2279,14 +2280,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (p.blog) return { url: p.blog, exact: true };
     return p.blog_search ? { url: p.blog_search, exact: false } : null;
   }
-  // Records from before the mode was tracked (used -1) fall back to the mode the puzzle was last played in.
+  // Records from before the mode was tracked (used -1) count at the mode the puzzle was played in.
   function progressOf(p) {
-    var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0;
+    var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0, u = s.used >= 0 ? s.used : RANK[s.mode];
     p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
       if (ch === "#") return; t++;
       if (s.fill && s.fill[r] && (s.fill[r][c] || " ").trim()) n++;
     }); });
-    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used] || s.mode, dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: s.hn || 0, rv: Object.keys(s.revw || {}).length };
+    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[u], dnf: (!!s.rev && u !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: s.hn || 0, rv: Object.keys(s.revw || {}).length };
   }
   function dayLabel(d) {
     if (!d) return "Undated";

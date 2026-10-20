@@ -22,6 +22,7 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - run: node tools/check.js
       - run: python3 tools/build.py _site
       - uses: actions/upload-pages-artifact@v3
         with:

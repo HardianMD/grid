@@ -994,9 +994,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (solved) {
       var nr = Object.keys(REVW).length;
       // Easy and Medium also say how much help the solve had.
-      var help = USED === 0 || USED === 1 ? " \u00b7 " + plural(HN, "hint") + " \u00b7 " + (nr || !REV ? plural(nr, "answer") : "answers") + " revealed" : "";
-      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? "DNF in " + fmt(elapsed) + (help || ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
-        : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + help
+      var help = USED === 0 || USED === 1 ? plural(HN, "hint") + " and " + (nr || !REV ? plural(nr, "reveal") : "reveals") : "";
+      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
+        : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + " - " + help
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
         : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + plural(bad, "wrong square") : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;

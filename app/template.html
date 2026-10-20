@@ -185,6 +185,12 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 .gate .btn { font-size: 15px; padding: 10px 18px; }
 .upd { width: 34px; height: 34px; padding: 0; display: inline-grid; place-items: center; }
 .upd svg { width: 18px; height: 18px; display: block; }
+#bellBtn { position: relative; }
+#bellBtn .dot { position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #d93025; border: 1.5px solid var(--sheet); }
+.note-item { display: grid; gap: 2px; width: 100%; text-align: left; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); font: inherit; color: var(--ink); cursor: pointer; }
+.note-item b { font-size: 15px; }
+.note-item span { font-size: 13.5px; color: var(--ink-soft); }
+.note-item.dnf span { color: #8a5a12; } .note-item.ok span { color: #1f7a33; }
 .upd.busy { animation: spin 1.2s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .problems { margin-top: 8px; padding: 8px 10px; border: 1px solid #d9b77a; border-radius: 10px; background: #fbf3e6; color: #8a5a12; font-size: 13px; }
@@ -418,7 +424,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
-    <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
+    <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span></div>
     <div class="problems" id="problems" role="status" hidden></div>
@@ -431,6 +437,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div id="homeList"></div><div class="favs" id="favList" hidden></div><div class="stats" id="statBody" hidden></div>
     <p class="hnote">Progress is saved on this device and synced to your Google account.</p>
+  </div>
+</div>
+<div class="sheet" id="noteSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="noteTitle">
+    <div class="srow"><h3 id="noteTitle">Notifications</h3><button class="btn" id="noteDone" type="button">Close</button></div>
+    <div id="noteList" style="display:grid;gap:8px"></div>
   </div>
 </div>
 <div class="sheet" id="setSheet" hidden>
@@ -575,9 +587,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     local: function (k, v) { MEM[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
     set: function (k, v) { store.local(k, v); cloudPut(k, v); }
   };
-  var CLOUD = null, cloudQ = {}, cloudT = null, KEEP = ["mode", "favs", "prefs"];  // KEEP: synced records besides puzzles
+  var CLOUD = null, cloudQ = {}, cloudT = null, KEEP = ["mode", "favs", "prefs", "notes"];  // KEEP: synced records besides puzzles
   function cloudId(k) {
-    if (/^crossword:(mode|favs|prefs)$/.test(k)) return k.slice(10);
+    if (/^crossword:(mode|favs|prefs|notes)$/.test(k)) return k.slice(10);
     var m = /^crossword:(.+)$/.exec(k);
     return m && m[1] !== "last" && m[1] !== "filter" ? "p_" + m[1] : null;
   }
@@ -731,6 +743,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       return;
     }
     PUZZLES = list;
+    checkSubs();
     if (!BOOTED) {
       BOOTED = true;
       boot();
@@ -2436,6 +2449,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var FROM = weeks2(new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10));
   function showHome(keepScroll) {
     if (P) { save(); stopClock(); }
+    checkSubs();
     ["favs", "stats"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
     $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats";
     if (TAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); if (TAB === "favs") showFavs(); else showStats(); }
@@ -2490,7 +2504,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function openPuzzle(p) {
     showList(false);
     $("home").hidden = true;
-    if (!P || p.id !== P.id) load(p); else { startClock(); render(); }
+    if (!P || p.id !== P.id || P.stale) load(p); else { startClock(); render(); }
     size();
   }
   $("homeBtn").addEventListener("click", showHome);
@@ -2584,6 +2598,56 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Times count clean solves (not DNFs); hints and reveals are per finished puzzle. A submitted grid not yet graded
   // is checked against any answers that have arrived since, and counts as a solve while none are known.
   var SOPEN = {};  // crossword cards open in Stats: 1 the latest solves, 2 all of them
+  // Notifications: a submitted grid is marked as soon as its answers arrive, and the bell says how it went.
+  // Opening the list clears the red dot; closing it deletes what was shown.
+  function notes() { return (store.get("crossword:notes") || {}).list || []; }
+  function setNotes(list) { store.set("crossword:notes", { list: list, at: Date.now() }); bellDot(); }
+  function bellDot() { $("bellDot").hidden = !notes().some(function (n) { return !n.seen; }); }
+  function checkSubs() {
+    var add = [];
+    PUZZLES.forEach(function (p) {
+      var k = "crossword:" + p.id, s = store.get(k), flat = "", w = p.grid[0].length, any = false, bad = 0, gap = 0;
+      if (!s || !s.sub || s.sub.res || !p.solution) return;
+      if (P && P.id === p.id && $("home").hidden) return;  // the open puzzle is marked on screen instead
+      try { flat = unscramble(p.solution, p.id); } catch (e) { return; }
+      p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
+        var a = flat[r * w + c], f = (s.fill && s.fill[r] && s.fill[r][c] || " ").trim();
+        if (ch === "#" || !a || a === "?") return;
+        any = true; if (f !== a) { bad++; if (!f) gap++; }
+      }); });
+      if (!any) return;
+      s.sub.res = bad ? "dnf" : "ok"; store.set(k, s);
+      if (P && P.id === p.id) P.stale = true;
+      add.push({ id: p.id, res: s.sub.res, bad: bad, gap: gap, time: s.time || 0 });
+    });
+    if (add.length) setNotes(notes().concat(add)); else bellDot();
+  }
+  $("bellBtn").addEventListener("click", function () {
+    var list = notes(), box = $("noteList");
+    box.innerHTML = "";
+    if (!list.length) { var e = document.createElement("p"); e.className = "sub"; e.textContent = "No notifications."; box.appendChild(e); }
+    list.forEach(function (n) {
+      var p = PUZZLES.filter(function (x) { return x.id === n.id; })[0];
+      if (!p) return;
+      var b = document.createElement("button"), t = document.createElement("b"), r = document.createElement("span");
+      b.type = "button"; b.className = "note-item " + n.res;
+      t.textContent = p.title.replace(/ No\. /, " ") + " has been checked";
+      r.textContent = n.res === "ok" ? "\u2713 Finished in " + fmt(n.time)
+        : "DNF in " + fmt(n.time) + ": " + (n.gap ? (n.bad > n.gap ? plural(n.bad - n.gap, "wrong square") + ", " : "") + n.gap + " blank" : plural(n.bad, "wrong square"));
+      b.appendChild(t); b.appendChild(r);
+      b.addEventListener("click", function () { closeNotes(); openPuzzle(p); });
+      box.appendChild(b);
+    });
+    if (list.some(function (n) { return !n.seen; })) setNotes(list.map(function (n) { return Object.assign({}, n, { seen: true }); }));
+    $("noteSheet").hidden = false;
+  });
+  function closeNotes() {
+    $("noteSheet").hidden = true;
+    var left = notes().filter(function (n) { return !n.seen; });  // any that arrived while the list was open stay
+    if (left.length !== notes().length) setNotes(left);
+  }
+  $("noteDone").addEventListener("click", closeNotes);
+  $("noteSheet").addEventListener("click", function (e) { if (e.target === this) closeNotes(); });
   function subDnf(p) {
     var s = store.get("crossword:" + p.id) || {}, flat = "", bad = false, w = p.grid[0].length;
     try { flat = p.solution ? unscramble(p.solution, p.id) : ""; } catch (e) {}

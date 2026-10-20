@@ -697,7 +697,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Hard: no hints, reveals or green; Check clears a wrong word whole, keeping only letters of words already checked right.
   // Champ: like Hard with no Check or hints. In both, a full grid finishes only when submitted (SUB), which locks and grades it.
   // A reveal makes a DNF except in Easy (by the mode recorded in USED).
-  // The mode belongs to each puzzle (chosen in its menu); the last choice is the default for puzzles not yet started.
+  // The mode belongs to each puzzle (chosen in its menu); the last choice for its series (the id less its number)
+  // is the default for puzzles not yet started. Older records hold only m, the last choice overall.
   // USED is the mode in force when the first letter went in (3: none yet), lowered by any easier mode switched to
   // before the end, so a solve is recorded at the most help it had. Champ ranks 4, as 3 already means none yet.
   var RANK = { easy: 0, medium: 1, hard: 2, champ: 4 }, MODES = ["easy", "medium", "hard", null, "champ"];
@@ -705,7 +706,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     m = RANK[m] === undefined ? "easy" : m;
     HARD = m === "hard" || m === "champ"; MED = m === "medium"; CHAMP = m === "champ"; MODE = m;
     if (!fromCloud) {
-      store.set("crossword:mode", { m: m, at: Date.now() });
+      var md = store.get("crossword:mode"), ser = md && md.s || {};
+      if (P) ser[series(P)] = m;
+      store.set("crossword:mode", { m: m, s: ser, at: Date.now() });
       // A solve is recorded at the most help it had; with no help used yet (no hints, checks or reveals), the
       // mode it is played in from here on is the one that counts.
       if (P && !solved && USED >= 0 && USED !== 3) {
@@ -721,6 +724,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     });
     if (P && $("home").hidden) render();
   }
+  function series(p) { return p.id.replace(/-\d+$/, ""); }
+  function lastMode(p) { var md = store.get("crossword:mode") || {}; return md.s && md.s[series(p)] || md.m || "easy"; }
   function linksFor(p) {
     if (Array.isArray(p.links)) return p.links;
     var groups = {};
@@ -828,8 +833,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null;
     startClock();
     build();
-    var dm = store.get("crossword:mode");
-    setMode(saved.mode || (dm && dm.m) || "easy", true);
+    setMode(saved.mode || lastMode(p), true);
     USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
     REV = !!saved.rev; REVW = saved.revw || {};
     if (SUB && !SUB.res) { grade(); if (SUB.res) save(); }  // answers arrived after it was submitted
@@ -2336,9 +2340,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function boot() {
     var lastId = store.get("crossword:last");
     var start = PUZZLES.filter(function (p) { return p.id === lastId; })[0] || PUZZLES[PUZZLES.length - 1];
-    var md = store.get("crossword:mode");
-    MODE = md && md.m || md || "easy";
-    setMode(MODE, true);
     load(start);
     showHome();
   }

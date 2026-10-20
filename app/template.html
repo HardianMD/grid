@@ -387,7 +387,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <button class="btn icon" id="hintBtn" type="button">Hint</button>
     <button class="btn solid" id="submitBtn" type="button" hidden>Submit puzzle</button>
   </div>
-  <div class="solvedbar pad" id="solvedBar" hidden><span id="solvedTxt"></span><a class="btn" id="blogLink" target="_blank" rel="noopener"></a></div>
+  <div class="solvedbar pad" id="solvedBar" hidden><span id="solvedTxt"></span><button class="btn" id="editBtn" type="button" hidden>Edit</button><a class="btn" id="blogLink" target="_blank" rel="noopener"></a></div>
   <div class="clues pad" id="clues">
     <div class="list"><h2>Across</h2><div id="acrossList"></div></div>
     <div class="list"><h2>Down</h2><div id="downList"></div></div>
@@ -1174,6 +1174,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
         : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
+      // A Hard grid submitted before its answers are out hasn't been marked, so it can still be reopened.
+      $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard");
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
     scrollClue(w.el);
@@ -1356,23 +1358,33 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return bad;
   }
   // A submitted grid can't be changed, so Submit asks first; in Hard and Champ, submitting with blank squares is giving up.
-  $("submitBtn").addEventListener("click", function () {
-    askMode = "submit";
+  // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
+  function confirmAsk(mode, title, text, yes) {
+    askMode = mode;
     $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = true;
     $("findBox").hidden = $("findBtn").hidden = $("ansRow").hidden = true;
     $("hintText").hidden = false;
-    $("hintTitle").textContent = BLANKS ? "Give up?" : "Submit puzzle?";
-    $("hintText").textContent = (BLANKS ? plural(BLANKS, "square") + (BLANKS === 1 ? " is" : " are") + " still blank, so this will be a DNF. " : "") +
-      "A submitted grid can't be changed. Are you sure?";
+    $("hintTitle").textContent = title; $("hintText").textContent = text;
     $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
-    $("hintYes").textContent = BLANKS ? "Give up" : "Submit";
+    $("hintYes").textContent = yes;
     $("hintAsk").hidden = false;
+  }
+  $("submitBtn").addEventListener("click", function () {
+    confirmAsk("submit", BLANKS ? "Give up?" : "Submit puzzle?",
+      (BLANKS ? plural(BLANKS, "square") + (BLANKS === 1 ? " is" : " are") + " still blank, so this will be a DNF. " : "") +
+      (MODE === "hard" && !words.some(known) ? "The answers aren't out yet, so until they are you can reopen it with Edit. Are you sure?" : "A submitted grid can't be changed. Are you sure?"),
+      BLANKS ? "Give up" : "Submit");
   });
   function submit() {
     stopClock(); solved = true; SUB = { at: Date.now() }; grade();
     save(); render();
     toast(SUB.res === "ok" ? "Finished in " + fmt(elapsed) : SUB.res === "dnf" ? "DNF" : "Submitted");
   }
+
+  $("editBtn").addEventListener("click", function () {
+    confirmAsk("unsubmit", "Edit your grid?", "The answers aren't out yet, so your grid hasn't been marked. It will open again for you to change, " +
+      "and the timer carries on from " + fmt(elapsed) + ". You'll need to submit it again.", "Edit grid");
+  });
 
   $("checkWordBtn").addEventListener("click", function () {
     var res = check([curWord()]);
@@ -2118,6 +2130,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("hintYes").addEventListener("click", function () {
     var w = curWord();
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
+    if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; startClock(); save(); render(); return; }
     if (askMode === "add") {
       var key = w.dir + w.num, letters = $("ansInput").value.toUpperCase().replace(/[^A-Z]/g, "");
       if (letters.length !== w.cells.length) return toast("The answer needs " + w.cells.length + " letters");

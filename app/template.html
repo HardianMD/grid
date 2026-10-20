@@ -371,7 +371,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>Once submitted</td><td>Once submitted</td></tr>
-        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit</td></tr>
+        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit, or give up with squares blank</td></tr>
         <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Submitted with wrong letters</td><td>Submitted with wrong letters</td></tr>
       </tbody>
     </table>
@@ -652,7 +652,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }, function () { WAITING = null; showStatus(); toast("Couldn’t reach GitHub. Try again later."); });
   }
 
-  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
+  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, BLANKS = 0, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
   var elapsed = 0, since = null, solved = false;
 
   // Linked groups: p.links ([["a1","a6"], ...], head first), else inferred from "See N" clues.
@@ -945,7 +945,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     w.cells.forEach(function (rc) { inWord[rc[0] + "," + rc[1]] = 1; });
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
-    var total = 0, done = 0, bad = 0, revDnf = REV && USED !== 0;
+    var total = 0, done = 0, bad = 0, gap = 0, revDnf = REV && USED !== 0;
     // A DNF shows why: wrong squares in red, revealed answers in amber.
     var rv = {};
     if (revDnf) words.forEach(function (x) { if (REVW[x.dir + x.num]) x.cells.forEach(function (rc) { rv[rc[0] + "," + rc[1]] = 1; }); });
@@ -953,7 +953,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (cells[r][c].b) continue;
       var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
       total++; if (fill[r][c]) done++;
-      if (a && fill[r][c] !== a) bad++;
+      if (a && fill[r][c] !== a) { bad++; if (!fill[r][c]) gap++; }
       el.classList.toggle("bad", !!a && fill[r][c] !== a);
       el.classList.toggle("rv", !!rv[k]);
       el.classList.toggle("word", !!inWord[k]);
@@ -979,7 +979,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
     $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
-    $("submitBtn").hidden = !HARD || solved || done < total;
+    $("submitBtn").hidden = !HARD || solved || (done < total && !(CHAMP && done));  // Champ can give up with squares left blank
+    BLANKS = total - done;
     $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
@@ -995,10 +996,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var nr = Object.keys(REVW).length;
       // Easy and Medium also say how much help the solve had.
       var help = USED === 0 || USED === 1 ? plural(HN, "hint") + " and " + (nr || !REV ? plural(nr, "reveal") : "reveals") : "";
-      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
+      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF in " + fmt(elapsed) + " - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
         : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + " - " + help
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
-        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + plural(bad, "wrong square") : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
+        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = (bl.exact ? "Read the blog" : "Find the blog") + " \u2197"; }
     }
@@ -1178,12 +1179,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     SUB.res = !any ? "" : bad ? "dnf" : "ok";
     return bad;
   }
-  // Two taps, as a submitted grid can't be changed.
+  // Two taps, as a submitted grid can't be changed; in Champ, submitting with blank squares is giving up.
   $("submitBtn").addEventListener("click", function () {
     var b = this;
     clearTimeout(b.t);
     if (b.textContent === "Submit puzzle") {
-      b.textContent = "Tap again to submit";
+      b.textContent = BLANKS ? "Give up with " + plural(BLANKS, "blank square") + "? Tap again" : "Tap again to submit";
       b.t = setTimeout(function () { b.textContent = "Submit puzzle"; }, 3000);
       return;
     }

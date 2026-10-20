@@ -109,8 +109,7 @@ header .timer.stopped { color: #1f7a33; }
 .panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.danger { color: #b3261e; border-color: currentColor; }
-.btn.out { background: #b3261e; border-color: #b3261e; color: #fff; padding: 10px; font-size: 14px; }
-#statsBtn { padding: 10px; font-size: 14px; }
+.btn.out { padding: 10px; font-size: 14px; }
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
 .fgrp .modesw { justify-self: start; }
@@ -377,7 +376,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span></div>
     <div class="problems" id="problems" role="status" hidden></div>
-    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
+    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button">Stats</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
       <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
       <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
@@ -390,20 +389,19 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 </div>
 <div class="sheet" id="setSheet" hidden>
   <div class="panel pad" role="dialog" aria-labelledby="setTitle">
-    <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Done</button></div>
+    <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Close</button></div>
     <div class="fgrp"><label for="setName">Username</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Shown on parsings you edit"></div>
     <div class="fgrp"><span>New puzzles start in</span>
       <div class="chips" id="setStart"><button type="button" class="chip" data-v="last">The last mode used for that series</button><button type="button" class="chip" data-v="fixed">The same mode every time</button></div>
       <div class="modesw" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div>
     </div>
     <p>Puzzles you have already started keep their own mode.</p>
-    <button class="btn" id="statsBtn" type="button">Stats</button>
-    <button class="btn out" id="syncBtn" type="button">Sign out</button>
+    <button class="btn danger out" id="syncBtn" type="button">Sign out</button>
   </div>
 </div>
 <div class="sheet" id="statSheet" hidden>
   <div class="panel pad" role="dialog" aria-labelledby="statTitle">
-    <div class="srow"><h3 id="statTitle">Stats</h3><button class="btn" id="statDone" type="button">Back</button></div>
+    <div class="srow"><h3 id="statTitle">Stats</h3><button class="btn" id="statDone" type="button">Close</button></div>
     <div id="statBody"></div>
   </div>
 </div>
@@ -2405,8 +2403,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   });
   $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });
   $("setDone").addEventListener("click", function () { $("setSheet").hidden = true; });
-  $("statsBtn").addEventListener("click", function () { $("setSheet").hidden = true; showStats(); });
-  $("statDone").addEventListener("click", function () { $("statSheet").hidden = true; showSettings(); });
+  $("statsBtn").addEventListener("click", showStats);
+  $("statDone").addEventListener("click", function () { $("statSheet").hidden = true; });
   ["setSheet", "statSheet"].forEach(function (id) {
     $(id).addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   });
@@ -2420,7 +2418,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var g = progressOf(p), key = ((pubOf(p) + " " + typeOf(p)).trim());
       if (!g.solved) { if (g.n) prog++; return; }
       if (g.sub && !g.sub.res) return;
-      [all, types[key] = types[key] || tally(), modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
+      [all, types[key] = types[key] || Object.assign(tally(), { p: p }), modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
         t.n++; t.time += g.time; t.hn += g.hn; t.rv += g.rv;
         if (g.dnf) { t.dnf++; return; }
         t.ok++; t.okTime += g.time; if (!t.best || g.time < t.best) t.best = g.time;
@@ -2443,6 +2441,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var c = document.createElement("div"), r = document.createElement("div"), l = document.createElement("span"), sm = document.createElement("small");
       c.className = "scard"; r.className = "srow";
       if (mode) { var i = document.createElement("i"); i.className = "mico"; i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
+      // Paper cards carry the paper's badge, as in the home list.
+      if (t.p && pubOf(t.p)) {
+        var tg = document.createElement("i"); tg.className = "src"; tg.style.fontStyle = "normal"; tg.textContent = pubOf(t.p);
+        if (t.p.badge) { tg.style.background = t.p.badge.bg; tg.style.color = t.p.badge.fg; }
+        l.appendChild(tg); name = typeOf(t.p);
+      }
       l.appendChild(document.createTextNode(name));
       sm.textContent = plural(t.ok, "solve") + (t.dnf ? " \u00b7 " + t.dnf + " DNF" : "");
       r.appendChild(l); r.appendChild(sm); c.appendChild(r);

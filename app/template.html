@@ -345,7 +345,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
-    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Check for new puzzles" aria-label="Check for new puzzles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></div>
+    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></div>
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span><button class="btn mini" id="syncBtn" type="button">Sign in with Google</button></div>
     <div class="problems" id="problems" role="status" hidden></div>
@@ -626,7 +626,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // own Firestore record). The new puzzles then arrive through the listener above.
   function runUpdate() {
     if (!FBUSER) return;
-    if (WAITING) { toast("Already checking for new puzzles\u2026"); return; }
+    if (WAITING) { toast("Refresh already syncing\u2026"); return; }
     WAITING = { at: new Date().toISOString().slice(0, 19), t: Date.now() }; showStatus();  // at once, so a second tap can't start another run
     var ref = DB.collection("users/" + FBUSER.uid + "/private").doc("github");
     ref.get().then(function (d) {
@@ -643,7 +643,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       method: "POST", body: JSON.stringify({ ref: "main" }),
       headers: { Authorization: "Bearer " + key, Accept: "application/vnd.github+json" }
     }).then(function (r) {
-      if (r.status === 204) { toast("Checking for new puzzles…"); return; }
+      if (r.status === 204) { toast("Refreshing data…"); return; }
       WAITING = null; showStatus();
       if (r.status === 401 || r.status === 403 || r.status === 404) {
         ref.delete();

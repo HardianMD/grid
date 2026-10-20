@@ -969,9 +969,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
     var total = 0, done = 0, bad = 0, gap = 0, revDnf = REV && USED !== 0;
-    // A DNF shows why: wrong squares in red, revealed answers in amber.
+    // Revealed squares are amber (a DNF also shows wrong squares in red). REVW lists, per revealed answer, the
+    // squares the reveal filled (1: all of them), so crossing letters already green stay green.
     var rv = {};
-    if (revDnf) words.forEach(function (x) { if (REVW[x.dir + x.num]) x.cells.forEach(function (rc) { rv[rc[0] + "," + rc[1]] = 1; }); });
+    words.forEach(function (x) {
+      var v = REVW[x.dir + x.num];
+      if (v) x.cells.forEach(function (rc, i) { if (v === 1 || v.indexOf(i) >= 0) rv[rc[0] + "," + rc[1]] = 1; });
+    });
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
       if (cells[r][c].b) continue;
       var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
@@ -1984,8 +1988,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("hintAsk").hidden = true;
     if (askMode === "parse") return;
     if (askMode === "reveal") {
-      w.cells.forEach(function (rc) { fill[rc[0]][rc[1]] = solAt(rc[0], rc[1]); ok[rc[0] + "," + rc[1]] = 1; });
-      REV = true; REVW[w.dir + w.num] = 1;
+      var nw = [];
+      w.cells.forEach(function (rc, i) {
+        if (!ok[rc[0] + "," + rc[1]]) nw.push(i);
+        fill[rc[0]][rc[1]] = solAt(rc[0], rc[1]); ok[rc[0] + "," + rc[1]] = 1;
+      });
+      REV = true; REVW[w.dir + w.num] = nw.length === w.cells.length ? 1 : nw;
       flash(w);
       render(); save();
       return;

@@ -118,6 +118,7 @@ header .timer.stopped { color: #1f7a33; }
 /* The example clue in Settings, drawn like the clue box above the keyboard. */
 .cprev { background: var(--nowbg); border-radius: 8px; padding: 8px 14px; font: calc(16px * var(--cz))/1.3 var(--f-clue); color: var(--ink); text-transform: none; letter-spacing: 0; }
 .cprev .tag { font-family: var(--f-ui); }
+html.nohints .cprev .ctype { display: none; } html.nohints .cprev u { text-decoration: none; }
 html.notint .bar .now, html.notint .cprev { box-shadow: inset 0 0 0 1px var(--rule); }
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
@@ -427,7 +428,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div class="fgrp"><span>Clue text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div></div>
     <div class="fgrp"><span>Clue font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div>
-      <div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt">Notes rearranged for a gem, perhaps (5)</span></div>
+      <div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt"><span class="ctype">Anagram</span>Notes rearranged for <u class="def">a gem, perhaps</u> (5)</span></div>
+      <label class="tog">Hide hints once a puzzle is solved<input type="checkbox" data-p="hideHints"></label>
     </div>
     <div class="fgrp"><span>Clue box colour</span><div class="chips" data-p="tint"><button type="button" class="chip" data-v="blue"><i class="sw" style="background:#cfe3f5"></i>Blue</button><button type="button" class="chip" data-v="green"><i class="sw" style="background:#d6eedb"></i>Green</button><button type="button" class="chip" data-v="amber"><i class="sw" style="background:#f8e6c4"></i>Amber</button><button type="button" class="chip" data-v="pink"><i class="sw" style="background:#f6d9e4"></i>Pink</button><button type="button" class="chip" data-v="grey"><i class="sw" style="background:#e6eaee"></i>Grey</button><button type="button" class="chip" data-v="none"><i class="sw" style="background:transparent"></i>None</button></div></div>
     <div class="fgrp"><span>Home list</span>
@@ -945,8 +947,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     });
     return out.sort(function (a, b) { return a[0] - b[0]; });
   }
+  // Settings can hide the hints of a finished puzzle (the parsing view still underlines its definition).
+  function noHints() { return solved && !!prefs().hideHints; }
   function clueInto(el, w, noType) {
     el.textContent = "";
+    if (!noType && noHints()) return el.appendChild(document.createTextNode(w.clue));
     if (!HARD && !noType && hinted[w.dir + w.num] >= 2) {
       var tg = document.createElement("span"); tg.className = "ctype"; tg.textContent = parseFor(w).type;
       el.appendChild(tg);
@@ -1086,11 +1091,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       el.classList.toggle("ok", !HARD && !!ok[k]);
       el.lastChild.textContent = fill[r][c];
     }
-    var fl = favs();
+    var fl = favs(), nh = noHints();
     words.forEach(function (x) {
       x.el.classList.toggle("on", x === w);
       x.el.classList.toggle("fav", isFav(fl, P.id, x.dir + x.num));
-      var k = x.dir + x.num, sig = [HARD, hinted[k] || 0, hinted[k] >= 2 ? parseFor(x).type : "", myDefs[k] || ""].join("|");
+      var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] >= 2 ? parseFor(x).type : "", myDefs[k] || ""].join("|");
       if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
@@ -2449,6 +2454,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var b = document.createElement("button"), p = PUZZLES.filter(function (x) { return kindOf(x) === k; })[0];
       b.type = "button"; b.className = "chip"; b.dataset.v = k;
       if (pubOf(p)) b.appendChild(badgeEl(p));
+      // A shown paper's chip takes its badge colours.
+      if (p.badge && (pf.hide || []).indexOf(k) < 0) { b.style.background = b.style.borderColor = p.badge.bg; b.style.color = p.badge.fg; }
       b.appendChild(document.createTextNode(pubOf(p) ? typeOf(p) : k)); $("setHide").appendChild(b);
     });
     // Chips: the saved choice, else the first; hide lists the crosswords not shown, so its chips are on when shown.
@@ -2497,6 +2504,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     st.setProperty("--nowbg", TINTS[pf.tint] || "var(--word)");
     document.documentElement.classList.toggle("notimer", !!pf.noTimer);
     document.documentElement.classList.toggle("notint", pf.tint === "none");
+    document.documentElement.classList.toggle("nohints", !!pf.hideHints);
+    if (P && solved && $("home").hidden) render();
     if (BOOTED && !$("home").hidden) showHome(true);
   }
   $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });

@@ -925,7 +925,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Hint level per clue: 1 = definition underlined, 2 = clue type shown too.
     if (Array.isArray(saved.hints)) saved.hints.forEach(function (k) { hinted[k] = 1; });
     else if (saved.hints) hinted = saved.hints;
-    HN = hintCount(saved);
+    HN = helpOf(saved).hn;
     myParses = saved.parses || {};
     myDefs = saved.defs || {};
     // Clues with no known answer yet are listed in p.unsolved; answers the solver adds fill the gaps.
@@ -1108,7 +1108,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     w.cells.forEach(function (rc) { inWord[rc[0] + "," + rc[1]] = 1; });
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
-    var total = 0, done = 0, bad = 0, gap = 0, revDnf = REV && USED !== 0;
+    var total = 0, done = 0, bad = 0, gap = 0, g = helpOf({ used: USED, mode: MODE, hn: HN, rev: REV, revw: REVW }), revDnf = g.rd;
     // Revealed squares are amber (a DNF also shows wrong squares in red). REVW lists, per revealed answer, the
     // squares the reveal filled (1: all of them), so crossing letters already green stay green.
     var rv = {};
@@ -1168,9 +1168,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("solvedBar").hidden = !solved;
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
     if (solved) {
-      var nr = Object.keys(REVW).length;
-      // Easy and Medium also say how much help the solve had.
-      var help = USED === 0 || USED === 1 ? plural(HN, "hint") + " and " + (nr || !REV ? plural(nr, "reveal") : "reveals") : "";
+      var nr = g.rv, help = helpText(g);
       $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF in " + fmt(elapsed) + " - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
         : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + " - " + help
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
@@ -2280,20 +2278,26 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return p.blog_search ? { url: p.blog_search, exact: false } : null;
   }
   // Records from before the mode was tracked (used -1) count at the mode the puzzle was played in.
-  // Hints given, read the same way by the finish bar and Stats; saves from before hn was kept count each clue's
-  // hint level (an old list of clues counts one each).
-  function hintCount(s) {
-    if (typeof s.hn === "number") return s.hn;
-    var h = s.hints || {};
-    return Array.isArray(h) ? h.length : Object.keys(h).reduce(function (n, k) { return n + (+h[k] || 0); }, 0);
+  // How much help a saved record had, read the same way by the finish bar and Stats (tools/check.js tests it).
+  // u: the recorded mode's rank; older records without one count at the mode played in. hn: hints given; saves
+  // from before hn was kept count each clue's hint level. rv: answers revealed; rf: any reveal, which older
+  // records kept without the list. rd: a DNF from a reveal (any mode but Easy); dnf also counts a wrong submit.
+  function helpOf(s) {
+    var h = s.hints || {}, u = s.used >= 0 ? s.used : RANK[s.mode], rd = !!s.rev && u !== 0;
+    return { u: u, rd: rd, dnf: rd || !!(s.sub && s.sub.res === "dnf"), rf: !!s.rev, rv: Object.keys(s.revw || {}).length,
+      hn: typeof s.hn === "number" ? s.hn : Array.isArray(h) ? h.length : Object.keys(h).reduce(function (n, k) { return n + (+h[k] || 0); }, 0) };
+  }
+  // The finish bar's help line, said on Easy and Medium only.
+  function helpText(g) {
+    return g.u === 0 || g.u === 1 ? plural(g.hn, "hint") + " and " + (g.rv || !g.rf ? plural(g.rv, "reveal") : "reveals") : "";
   }
   function progressOf(p) {
-    var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0, u = s.used >= 0 ? s.used : RANK[s.mode];
+    var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0, g = helpOf(s);
     p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
       if (ch === "#") return; t++;
       if (s.fill && s.fill[r] && (s.fill[r][c] || " ").trim()) n++;
     }); });
-    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[u], dnf: (!!s.rev && u !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: hintCount(s), rv: Object.keys(s.revw || {}).length, rf: !!s.rev };
+    return Object.assign(g, { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[g.u], sub: s.sub });
   }
   function dayLabel(d) {
     if (!d) return "Undated";

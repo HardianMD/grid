@@ -2279,13 +2279,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (p.blog) return { url: p.blog, exact: true };
     return p.blog_search ? { url: p.blog_search, exact: false } : null;
   }
+  // Records from before the mode was tracked (used -1) fall back to the mode the puzzle was last played in.
   function progressOf(p) {
     var s = store.get("crossword:" + p.id) || {}, n = 0, t = 0;
     p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, c) {
       if (ch === "#") return; t++;
       if (s.fill && s.fill[r] && (s.fill[r][c] || " ").trim()) n++;
     }); });
-    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used], dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: s.hn || 0, rv: Object.keys(s.revw || {}).length };
+    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used] || s.mode, dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: s.hn || 0, rv: Object.keys(s.revw || {}).length };
   }
   function dayLabel(d) {
     if (!d) return "Undated";

@@ -2502,6 +2502,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (keepScroll !== true) $("home").scrollTop = 0;
   }
   function openPuzzle(p) {
+    var nl = notes(), left = nl.filter(function (n) { return n.id !== p.id; });
+    if (left.length !== nl.length) setNotes(left);  // opening a puzzle, from the bell or the list, reviews its notification
     showList(false);
     $("home").hidden = true;
     if (!P || p.id !== P.id || P.stale) load(p); else { startClock(); render(); }
@@ -2599,7 +2601,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // is checked against any answers that have arrived since, and counts as a solve while none are known.
   var SOPEN = {};  // crossword cards open in Stats: 1 the latest solves, 2 all of them
   // Notifications: a submitted grid is marked as soon as its answers arrive, and the bell says how it went.
-  // Opening the list clears the red dot; closing it deletes what was shown.
+  // Opening the list clears the red dot; each notification stays until its puzzle is opened.
   function notes() { return (store.get("crossword:notes") || {}).list || []; }
   function setNotes(list) { store.set("crossword:notes", { list: list, at: Date.now() }); bellDot(); }
   function bellDot() { $("bellDot").hidden = !notes().some(function (n) { return !n.seen; }); }
@@ -2625,7 +2627,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("bellBtn").addEventListener("click", function () {
     var list = notes(), box = $("noteList");
     box.innerHTML = "";
-    if (!list.length) { var e = document.createElement("p"); e.className = "sub"; e.textContent = "No notifications."; box.appendChild(e); }
+    var e = document.createElement("p"); e.className = "sub";
+    e.textContent = list.length ? "Tap a puzzle to review it. Each notification stays here until its puzzle has been opened." : "No notifications.";
+    box.appendChild(e);
     list.forEach(function (n) {
       var p = PUZZLES.filter(function (x) { return x.id === n.id; })[0];
       if (!p) return;
@@ -2635,17 +2639,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       r.textContent = n.res === "ok" ? "\u2713 Finished in " + fmt(n.time)
         : "DNF in " + fmt(n.time) + ": " + (n.gap ? (n.bad > n.gap ? plural(n.bad - n.gap, "wrong square") + ", " : "") + n.gap + " blank" : plural(n.bad, "wrong square"));
       b.appendChild(t); b.appendChild(r);
-      b.addEventListener("click", function () { closeNotes(); openPuzzle(p); });
+      b.addEventListener("click", function () { $("noteSheet").hidden = true; openPuzzle(p); });
       box.appendChild(b);
     });
     if (list.some(function (n) { return !n.seen; })) setNotes(list.map(function (n) { return Object.assign({}, n, { seen: true }); }));
     $("noteSheet").hidden = false;
   });
-  function closeNotes() {
-    $("noteSheet").hidden = true;
-    var left = notes().filter(function (n) { return !n.seen; });  // any that arrived while the list was open stay
-    if (left.length !== notes().length) setNotes(left);
-  }
+  function closeNotes() { $("noteSheet").hidden = true; }
   $("noteDone").addEventListener("click", closeNotes);
   $("noteSheet").addEventListener("click", function (e) { if (e.target === this) closeNotes(); });
   function subDnf(p) {

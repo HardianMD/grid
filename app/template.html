@@ -123,7 +123,7 @@ html.notint .bar .now, html.notint .cprev { box-shadow: inset 0 0 0 1px var(--ru
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
 .fgrp .modesw { justify-self: start; }
-.fgrp .sub, .tog { font: 400 14px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
+.fgrp .sub, .fgrp .lbl, .tog { font: 400 14px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
 .fgrp .sub { font-size: 12px; color: var(--ink-soft); }
 .tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
 .tog input { -webkit-appearance: none; appearance: none; flex: 0 0 auto; position: relative; width: 44px; height: 26px; margin: 0; border-radius: 13px; background: var(--rule); cursor: pointer; transition: background .15s; }
@@ -131,6 +131,9 @@ html.notint .bar .now, html.notint .cprev { box-shadow: inset 0 0 0 1px var(--ru
 .tog input:checked { background: var(--easy); } .tog input:checked::after { transform: translateX(18px); }
 .krow { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 html.notimer #timer:not(.stopped) { display: none; }
+#homeList, .hprev { zoom: var(--hz, 1); }  /* puzzle list text size, from Settings */
+.hprev .hitem { margin: 0; cursor: default; }
+html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps long titles */
 .clue > span, .now .txt, .pview .pclue { font-family: var(--f-clue); overflow-wrap: anywhere; }
 .stiles, .sfig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
 .sfig { grid-template-columns: repeat(4, 1fr); }
@@ -430,15 +433,17 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       <label class="tog">Hide the timer while solving<input type="checkbox" data-p="noTimer"></label>
     </div>
     <div class="fgrp"><span>Clue display</span>
-      <span class="sub">Text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div>
-      <span class="sub">Font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div>
-      <span class="sub">Clue box colour</span><div class="chips" data-p="tint"><button type="button" class="chip" data-v="blue"><i class="sw" style="background:#cfe3f5"></i>Blue</button><button type="button" class="chip" data-v="green"><i class="sw" style="background:#d6eedb"></i>Green</button><button type="button" class="chip" data-v="amber"><i class="sw" style="background:#f8e6c4"></i>Amber</button><button type="button" class="chip" data-v="pink"><i class="sw" style="background:#f6d9e4"></i>Pink</button><button type="button" class="chip" data-v="grey"><i class="sw" style="background:#e6eaee"></i>Grey</button><button type="button" class="chip" data-v="none"><i class="sw" style="background:transparent"></i>None</button></div>
+      <span class="lbl">Text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div>
+      <span class="lbl">Font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div>
+      <span class="lbl">Clue box colour</span><div class="chips" data-p="tint"><button type="button" class="chip" data-v="blue"><i class="sw" style="background:#cfe3f5"></i>Blue</button><button type="button" class="chip" data-v="green"><i class="sw" style="background:#d6eedb"></i>Green</button><button type="button" class="chip" data-v="amber"><i class="sw" style="background:#f8e6c4"></i>Amber</button><button type="button" class="chip" data-v="pink"><i class="sw" style="background:#f6d9e4"></i>Pink</button><button type="button" class="chip" data-v="grey"><i class="sw" style="background:#e6eaee"></i>Grey</button><button type="button" class="chip" data-v="none"><i class="sw" style="background:transparent"></i>None</button></div>
       <div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt"><span class="ctype">Anagram</span>Notes rearranged for <u class="def">a gem, perhaps</u> (5)</span></div>
       <label class="tog">Hide hints once a puzzle is solved<input type="checkbox" data-p="hideHints"></label>
     </div>
-    <div class="fgrp"><span>Home list</span>
+    <div class="fgrp"><span>Puzzle list</span>
       <label class="tog">Hide finished puzzles<input type="checkbox" data-p="hideDone"></label>
-      <span class="sub">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
+      <span class="lbl">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
+      <span class="lbl">Text size</span><div class="chips" data-p="listSize"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div>
+      <div class="hprev" id="listPrev" aria-hidden="true"></div>
     </div>
     <div class="fgrp"><label for="setKey">Update key</label><div class="krow"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn" id="keySave" type="button">Save</button></div><span class="sub" id="keyNote"></span></div>
     <div class="fgrp"><button class="btn danger out" id="syncBtn" type="button">Sign out</button></div>
@@ -2483,6 +2488,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input"), function (x) { x.checked = !!pf[x.dataset.p]; });
     $("setMode").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
     Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });
+    // The example is the top puzzle of the list, as it stands.
+    var ex = $("homeList").querySelector(".hitem"); $("listPrev").innerHTML = ""; if (ex) $("listPrev").appendChild(ex.cloneNode(true));
     $("setSheet").hidden = false; keyNote();
   }
   $("setBtn").addEventListener("click", showSettings); $("setBtn2").addEventListener("click", showSettings);
@@ -2518,6 +2525,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function applyPrefs() {
     var pf = prefs(), st = document.documentElement.style;
     st.setProperty("--cz", SIZES[pf.size] || 1); st.setProperty("--f-clue", FONTS[pf.font] || "var(--f-ui)");
+    st.setProperty("--hz", SIZES[pf.listSize] || 1); document.documentElement.classList.toggle("bigl", !!SIZES[pf.listSize]);
     st.setProperty("--nowbg", TINTS[pf.tint] || "var(--word)");
     document.documentElement.classList.toggle("notimer", !!pf.noTimer);
     document.documentElement.classList.toggle("notint", pf.tint === "none");

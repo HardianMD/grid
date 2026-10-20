@@ -26,6 +26,7 @@
   --ok-word: #9fd8a6;
   --easy: #1f7a33; --medium: #c27c0e; --hard: #b3261e; --champ: #15191d;
   --f-ui: "Libre Franklin", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --f-clue: var(--f-ui); --cz: 1;  /* clue font and size scale, from Settings */
   color-scheme: light;
 }
 html, body { height: 100%; }
@@ -72,13 +73,13 @@ header .timer.stopped { color: #1f7a33; }
 .dock { background: var(--paper); border-top: 1px solid var(--rule); }
 .bar { display: flex; align-items: stretch; gap: 8px; padding-block: 4px; }
 .bar .nav { flex: 0 0 40px; min-height: 44px; font-size: 20px; color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
-.bar .now { flex: 1; min-width: 0; align-self: center; background: var(--word); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: 15px; line-height: 1.25; }
+.bar .now { flex: 1; min-width: 0; align-self: center; background: var(--word); border-radius: 8px; padding: 6px 12px; cursor: pointer; min-height: 44px; font-size: calc(15px * var(--cz)); line-height: 1.25; }
 .now .tag { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-right: 6px; }
 
 .clues { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-block: 0 12px; }
 .clues h2 { position: sticky; top: 0; margin: 0; padding: 4px 0; background: var(--paper); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
 .list { min-width: 0; }
-.clue { display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; font-size: 14px; line-height: 1.3; cursor: pointer; }
+.clue { display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; font-size: calc(14px * var(--cz)); line-height: 1.3; cursor: pointer; }
 .clue b { font-size: 12px; font-weight: 800; text-align: right; padding-top: 2px; font-variant-numeric: tabular-nums; }
 .clue.on { background: var(--word); }
 .clue.done { color: var(--ink-soft); }
@@ -94,7 +95,7 @@ header .timer.stopped { color: #1f7a33; }
 .favs .fm { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-soft); }
 .favs { margin-top: 12px; }
 .favs .fb { display: grid; gap: 6px; }
-.favs .pwp, .favs .pans { grid-column: 2 / 4; margin: 0; font-size: 14px; }
+.favs .pwp, .favs .pans { grid-column: 2 / 4; margin: 0; font-size: calc(14px * var(--cz)); }
 .favs .pans { font-weight: 800; letter-spacing: 0.06em; }
 
 .kb { background: var(--kb-bg); padding-block: 4px calc(4px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 4px; }
@@ -113,6 +114,15 @@ header .timer.stopped { color: #1f7a33; }
 .hbtns { display: flex; gap: 8px; }
 .fgrp button { text-transform: none; letter-spacing: 0; }
 .fgrp .modesw { justify-self: start; }
+.fgrp .sub, .tog { font: 400 14px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
+.fgrp .sub { font-size: 12px; color: var(--ink-soft); }
+.tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.tog input { -webkit-appearance: none; appearance: none; flex: 0 0 auto; position: relative; width: 44px; height: 26px; margin: 0; border-radius: 13px; background: var(--rule); cursor: pointer; transition: background .15s; }
+.tog input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
+.tog input:checked { background: var(--easy); } .tog input:checked::after { transform: translateX(18px); }
+.krow { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+html.notimer #timer:not(.stopped) { display: none; }
+.clue > span, .now .txt, .pview .pclue { font-family: var(--f-clue); overflow-wrap: anywhere; }
 .stiles, .sfig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
 .sfig { grid-template-columns: repeat(4, 1fr); }
 .stiles > div { background: var(--paper); border-radius: 10px; padding: 8px 4px; }
@@ -269,7 +279,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .ctype { display: inline-block; font: italic 600 12px var(--f-ui); color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 2px; }
 .pview { display: grid; gap: 8px; }
 .pview p { margin: 0; }
-.confirm .pview .pclue { font: 16px/1.4 var(--f-ui); color: var(--ink); }
+.confirm .pview .pclue { font: calc(16px * var(--cz))/1.4 var(--f-clue); color: var(--ink); }
 .confirm .pview .pans { font: 800 18px var(--f-ui); letter-spacing: 0.06em; color: var(--ink); }
 .confirm .pview .pwp { font: 15px/1.45 var(--f-ui); color: var(--ink); }
 .pwp > i { font-size: 13px; color: var(--accent); margin-right: 8px; }
@@ -310,10 +320,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .app.cl .bar { display: none; }
   .app.aw .bar { flex: 0 0 auto; }
   .app.aw .dock { justify-content: flex-end; }
-  .bar .now { display: flex; flex-direction: column; justify-content: center; gap: 2px; align-self: stretch; min-height: 0; overflow-y: auto; font-size: 16px; line-height: 1.3; padding: 8px 14px; }
+  .bar .now { display: flex; flex-direction: column; justify-content: center; gap: 2px; align-self: stretch; min-height: 0; overflow-y: auto; font-size: calc(16px * var(--cz)); line-height: 1.3; padding: 8px 14px; }
   .bar .now > :first-child { margin-top: auto; }
   .bar .now > :last-child { margin-bottom: auto; }
-  .bar .now.long { font-size: 14px; }
+  .bar .now.long { font-size: calc(14px * var(--cz)); }
   .now .tag { font-size: 11px; }
   .bar .nav { min-height: 0; flex-basis: 44px; font-size: 24px; }
   .kb { gap: 7px; padding-top: 8px; }
@@ -392,10 +402,23 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Close</button></div>
     <div class="fgrp"><label for="setName">Username</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Shown on parsings you edit"></div>
     <div class="fgrp"><span>New puzzles start in</span>
-      <div class="chips" id="setStart"><button type="button" class="chip" data-v="last">The last mode used for that series</button><button type="button" class="chip" data-v="fixed">The same mode every time</button></div>
+      <div class="chips" data-p="start"><button type="button" class="chip" data-v="last">The last mode used for that series</button><button type="button" class="chip" data-v="fixed">The same mode every time</button></div>
       <div class="modesw" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div>
     </div>
     <p>Puzzles you have already started keep their own mode.</p>
+    <div class="fgrp"><span>Solving</span>
+      <label class="tog">Skip squares already filled<input type="checkbox" data-p="skip"></label>
+      <label class="tog">Jump to the next clue when a word is complete<input type="checkbox" data-p="jump"></label>
+      <label class="tog">Show hints and reveals without asking<input type="checkbox" data-p="noAsk"></label>
+      <label class="tog">Hide the timer while solving<input type="checkbox" data-p="noTimer"></label>
+    </div>
+    <div class="fgrp"><span>Clue text size</span><div class="chips" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div></div>
+    <div class="fgrp"><span>Clue font</span><div class="chips" data-p="font"><button type="button" class="chip" data-v="franklin" style="font-family:var(--f-ui)">Franklin</button><button type="button" class="chip" data-v="arial" style="font-family:Arial, Helvetica, sans-serif">Arial</button><button type="button" class="chip" data-v="times" style="font-family:'Times New Roman', Times, serif">Times</button><button type="button" class="chip" data-v="georgia" style="font-family:Georgia, serif">Georgia</button></div></div>
+    <div class="fgrp"><span>Home list</span>
+      <label class="tog">Hide finished puzzles<input type="checkbox" data-p="hideDone"></label>
+      <span class="sub">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
+    </div>
+    <div class="fgrp"><label for="setKey">Update key</label><div class="krow"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn" id="keySave" type="button">Save</button></div><span class="sub" id="keyNote"></span></div>
     <button class="btn danger out" id="syncBtn" type="button">Sign out</button>
   </div>
 </div>
@@ -576,6 +599,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       CLOUD = col;
       if (Object.keys(cloudQ).length) cloudT = setTimeout(cloudFlush, 1500);
       if (cur) { load(P); size(); }  // also when the puzzle only sits behind the home list, so a later save keeps the synced letters
+      if (any) applyPrefs();
       if (any && P) render();
       if (any && !$("home").hidden) showHome(true);
       syncOk();
@@ -1061,6 +1085,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("favBtn").classList.toggle("on", fv); $("favBtn").setAttribute("aria-pressed", String(fv));
     clueInto($("nowTxt"), w);
     $("now").classList.toggle("long", $("nowTxt").textContent.length > 70);
+    // A clue that still overflows its box (large text on a small phone) steps down in size, to 12px at the least.
+    var nb = $("now"); nb.style.fontSize = "";
+    for (var fz = parseFloat(getComputedStyle(nb).fontSize); nb.scrollHeight > nb.clientHeight + 1 && fz > 12;) nb.style.fontSize = --fz + "px";
     // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
     $("dictBtn").hidden = !filled(w);
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
@@ -1175,9 +1202,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       return typeLetter(ch);
     }
     if (!lockedCell(k)) { if (fill[sel.r][sel.c] !== ch) delete ok[k]; fill[sel.r][sel.c] = ch; }
-    if (!wasFull && filled(w)) flash(w);
-    var rc = w.cells[idx + 1];
-    if (rc) sel = { r: rc[0], c: rc[1], dir: w.cdir[idx + 1] };
+    var pf = prefs(), nx2 = idx + 1;
+    if (!wasFull && filled(w)) { flash(w); if (pf.jump) { save(); return nextWord(1); } }
+    // Skip filled squares: the next empty one in the word, if any.
+    for (var j = nx2; pf.skip && j < w.cells.length; j++) if (!fill[w.cells[j][0]][w.cells[j][1]]) { nx2 = j; break; }
+    var rc = w.cells[nx2];
+    if (rc) sel = { r: rc[0], c: rc[1], dir: w.cdir[nx2] };
     render(); save();
   }
 
@@ -1681,7 +1711,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see the hint?";
       $("hintYes").textContent = "Show hint";
     }
-    $("hintAsk").hidden = false;
+    // Settings can skip the question, except when it also offers Find words.
+    if (prefs().noAsk && /^(hint|hint2|reveal)$/.test(act) && $("findBtn").hidden) $("hintYes").click();
+    else $("hintAsk").hidden = false;
   });
   // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
   // Clues whose definition and parsing came from the puzzle's blog (p.blog_keys: head-clue keys).
@@ -2175,6 +2207,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return p.publication || "";
   }
   function typeOf(p) { return p.type || "Other"; }
+  function kindOf(p) { return (pubOf(p) + " " + typeOf(p)).trim(); }
   // Exact blog post when known (p.blog), else a search on the usual blog for that paper.
   function blogFor(p) {
     if (p.blog) return { url: p.blog, exact: true };
@@ -2317,7 +2350,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var list = $("homeList"), last = null, todo = 0, done = 0;
     list.innerHTML = "";
     var all = PUZZLES.slice().sort(function (x, y) { return (y.date || "").localeCompare(x.date || "") || y.id.localeCompare(x.id); });
-    var match = all.filter(filterOk), nf = filterCount();
+    var pf = prefs(), hide = pf.hide || [];
+    var match = all.filter(function (p) { return filterOk(p) && hide.indexOf(kindOf(p)) < 0 && !(pf.hideDone && (store.get("crossword:" + p.id) || {}).solved); }), nf = filterCount();
     var from = match.length && !(match[0].date >= FROM) ? weeks2(match[0].date) : FROM;
     var shown = match.filter(function (p) { return p.date >= from; }), more = match[shown.length];
     $("filterSum").textContent = nf ? "Showing " + match.length + " of " + all.length : "";
@@ -2388,19 +2422,53 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function showSettings() {
     var pf = prefs(), start = pf.start || "last", m = pf.mode || "easy";
     $("setName").value = pf.name || "";
-    Array.prototype.forEach.call($("setStart").children, function (b) { b.classList.toggle("on", b.dataset.v === start); });
+    $("setHide").innerHTML = "";
+    uniq(kindOf).forEach(function (k) { var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.v = b.textContent = k; $("setHide").appendChild(b); });
+    // Chips: the saved choice, else the first; hide lists the crosswords not shown, so its chips are on when shown.
+    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .chips[data-p]"), function (box) {
+      var p = box.dataset.p, v = pf[p] || box.firstElementChild && box.firstElementChild.dataset.v;
+      Array.prototype.forEach.call(box.children, function (b) { b.classList.toggle("on", p === "hide" ? (pf.hide || []).indexOf(b.dataset.v) < 0 : b.dataset.v === v); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input"), function (x) { x.checked = !!pf[x.dataset.p]; });
     $("setMode").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
     Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });
-    $("setSheet").hidden = false;
+    $("setSheet").hidden = false; keyNote();
   }
   $("setBtn").addEventListener("click", showSettings);
   $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
-  $("setStart").addEventListener("click", function (e) {
-    var b = e.target.closest(".chip"); if (!b) return;
-    // Fixing a mode starts from the last one chosen overall.
-    if (b.dataset.v === "fixed" && !prefs().mode) setPref("mode", (store.get("crossword:mode") || {}).m || "easy");
-    setPref("start", b.dataset.v); showSettings();
+  $("setSheet").addEventListener("change", function (e) { if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); } });
+  $("setSheet").addEventListener("click", function (e) {
+    var b = e.target.closest(".chips[data-p] .chip"); if (!b) return;
+    var p = b.parentNode.dataset.p, v = b.dataset.v, h = (prefs().hide || []).filter(function (x) { return x !== v; });
+    if (p === "hide") { if (b.classList.contains("on")) h.push(v); setPref("hide", h); }
+    else {
+      // Fixing a mode starts from the last one chosen overall.
+      if (v === "fixed" && !prefs().mode) setPref("mode", (store.get("crossword:mode") || {}).m || "easy");
+      setPref(p, v);
+    }
+    applyPrefs(); showSettings();
   });
+  // The update key, kept in the owner's private Firestore record (never shown again once saved).
+  function keyRef() { return DB.collection("users/" + FBUSER.uid + "/private").doc("github"); }
+  function keyNote() {
+    if (!FBUSER) return;
+    keyRef().get().then(function (d) {
+      $("keyNote").textContent = d.exists && d.data().token ? "A key is saved. Paste a new one to replace it." : "No key saved yet.";
+    }, function () { $("keyNote").textContent = ""; });
+  }
+  $("keySave").addEventListener("click", function () {
+    var k = $("setKey").value.trim();
+    if (!k || !FBUSER) return toast("Paste the key first");
+    keyRef().set({ token: k }).then(function () { $("setKey").value = ""; toast("Update key saved"); keyNote(); }, function (e) { toast("Couldn\u2019t save the key: " + ((e && e.code) || "error")); });
+  });
+  // Clue size and font, the timer and the home list follow Settings.
+  var FONTS = { arial: "Arial, Helvetica, sans-serif", times: "\"Times New Roman\", Times, serif", georgia: "Georgia, serif" }, SIZES = { l: 1.15, xl: 1.3 };
+  function applyPrefs() {
+    var pf = prefs(), st = document.documentElement.style;
+    st.setProperty("--cz", SIZES[pf.size] || 1); st.setProperty("--f-clue", FONTS[pf.font] || "var(--f-ui)");
+    document.documentElement.classList.toggle("notimer", !!pf.noTimer);
+    if (BOOTED && !$("home").hidden) showHome(true);
+  }
   $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });
   $("setDone").addEventListener("click", function () { $("setSheet").hidden = true; });
   $("statsBtn").addEventListener("click", showStats);
@@ -2415,7 +2483,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var all = tally(), types = {}, modes = {}, prog = 0, box = $("statBody");
     function tally() { return { n: 0, ok: 0, dnf: 0, time: 0, okTime: 0, best: 0, hn: 0, rv: 0, free: 0 }; }
     PUZZLES.forEach(function (p) {
-      var g = progressOf(p), key = ((pubOf(p) + " " + typeOf(p)).trim());
+      var g = progressOf(p), key = kindOf(p);
       if (!g.solved) { if (g.n) prog++; return; }
       if (g.sub && !g.sub.res) return;
       [all, types[key] = types[key] || Object.assign(tally(), { p: p }), modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
@@ -2473,7 +2541,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var lastId = store.get("crossword:last");
     var start = PUZZLES.filter(function (p) { return p.id === lastId; })[0] || PUZZLES[PUZZLES.length - 1];
     load(start);
-    showHome();
+    applyPrefs(); showHome();
   }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(size);
   fbInit();

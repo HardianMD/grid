@@ -371,8 +371,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>Once submitted</td><td>Once submitted</td></tr>
-        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit, or give up with squares blank</td></tr>
-        <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Submitted with wrong letters</td><td>Submitted with wrong letters</td></tr>
+        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit, or give up</td><td>Submit, or give up</td></tr>
+        <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Submitted with wrong or blank squares</td><td>Submitted with wrong or blank squares</td></tr>
       </tbody>
     </table>
     <p>You can switch mode at any time. A finished puzzle is recorded at the easiest mode used after its first letter was typed in. Clearing the grid removes only the letters: the time, mode and any reveals stay. Once you have used a hint or revealed an answer, the puzzle can't be switched to Hard or Champ.</p>
@@ -979,7 +979,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
     $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
-    $("submitBtn").hidden = !HARD || solved || (done < total && !(CHAMP && done));  // Champ can give up with squares left blank
+    $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
     $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
@@ -1179,7 +1179,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     SUB.res = !any ? "" : bad ? "dnf" : "ok";
     return bad;
   }
-  // Two taps, as a submitted grid can't be changed; in Champ, submitting with blank squares is giving up.
+  // Two taps, as a submitted grid can't be changed; in Hard and Champ, submitting with blank squares is giving up.
   $("submitBtn").addEventListener("click", function () {
     var b = this;
     clearTimeout(b.t);

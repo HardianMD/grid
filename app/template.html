@@ -134,18 +134,19 @@ html.notimer #timer:not(.stopped) { display: none; }
 .clue > span, .now .txt, .pview .pclue { font-family: var(--f-clue); overflow-wrap: anywhere; }
 .stiles, .sfig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
 .sfig { grid-template-columns: repeat(4, 1fr); }
-.stiles > div { background: var(--paper); border-radius: 10px; padding: 8px 4px; }
+.stiles > div { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 4px; }
 /* Solved, DNF and in progress take the home list's green, amber and blue. */
-.stiles > div:nth-child(-n+3) { border: 1px solid; }
 .stiles > div:nth-child(1) { background: #eef7ef; border-color: var(--ok-word); } .stiles > div:nth-child(1) * { color: #1f7a33; }
 .stiles > div:nth-child(2) { background: #fbf3e6; border-color: #d9b77a; } .stiles > div:nth-child(2) * { color: #8a5a12; }
 .stiles > div:nth-child(3) { background: #edf3f9; border-color: var(--accent); } .stiles > div:nth-child(3) * { color: var(--accent); }
 .stiles b, .sfig b { display: block; font: 800 18px var(--f-ui); color: var(--ink); font-variant-numeric: tabular-nums; }
 .sfig b { font-size: 15px; }
 .stiles span, .sfig span { font-size: 11px; color: var(--ink-soft); }
-.scard { display: grid; gap: 8px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; }
+.scard { background: var(--sheet); display: grid; gap: 8px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; }
 .scard .srow small { font-weight: 400; font-size: 12px; color: var(--ink-soft); }
 .scard .srow span { display: flex; align-items: center; gap: 8px; }
+#statBody { margin-top: 12px; }
+#statBody p { margin: 12px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 #statBody h4 { margin: 16px 0 0; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
 [hidden] { display: none !important; }
 .home { position: fixed; inset: 0; background: var(--paper); z-index: 18; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
@@ -201,7 +202,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .syncbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
 .syncbar span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fbar { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
-.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
@@ -400,14 +401,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span></div>
     <div class="problems" id="problems" role="status" hidden></div>
-    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button">Stats</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
+    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
       <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
       <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
       <div class="fgrp"><label for="fSetter">Setter</label><select id="fSetter"></select></div>
       <div class="fgrp"><span>Date</span><div class="frange"><input type="date" id="fFrom" aria-label="From date"><span>to</span><input type="date" id="fTo" aria-label="To date"></div></div>
     </div>
-    <div id="homeList"></div><div class="favs" id="favList" hidden></div>
+    <div id="homeList"></div><div class="favs" id="favList" hidden></div><div class="stats" id="statBody" hidden></div>
     <p class="hnote">Progress is saved on this device and synced to your Google account.</p>
   </div>
 </div>
@@ -438,12 +439,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div class="fgrp"><label for="setKey">Update key</label><div class="krow"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"><button class="btn" id="keySave" type="button">Save</button></div><span class="sub" id="keyNote"></span></div>
     <div class="fgrp"><button class="btn danger out" id="syncBtn" type="button">Sign out</button></div>
-  </div>
-</div>
-<div class="sheet" id="statSheet" hidden>
-  <div class="panel pad" role="dialog" aria-labelledby="statTitle">
-    <div class="srow"><h3 id="statTitle">Stats</h3><button class="btn" id="statDone" type="button">Close</button></div>
-    <div id="statBody"></div>
   </div>
 </div>
 <div class="sheet" id="sheet" hidden>
@@ -2293,7 +2288,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function filterChanged() { store.set("crossword:filter", FILT); buildFilters(); showHome(true); }
   $("filterBtn").addEventListener("click", function () {
     var open = $("fpanel").hidden;
-    if (FAVTAB) { FAVTAB = false; showHome(true); }
+    if (TAB) { TAB = ""; showHome(true); }
     $("fpanel").hidden = !open; this.setAttribute("aria-expanded", String(open));
     if (open) buildFilters();
   });
@@ -2302,8 +2297,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("fTo").addEventListener("change", function () { FILT.to = this.value; filterChanged(); });
   $("filterClear").addEventListener("click", function () { FILT = {}; filterChanged(); });
   // Favourites tab: each starred clue with no hints; Parse shows its parsing in place, and tapping it opens the clue.
-  var FAVTAB = false;
-  $("favsBtn").addEventListener("click", function () { FAVTAB = !FAVTAB; showHome(); });
+  // Home tabs: "" (the puzzle list), "favs" or "stats"; tapping the open tab's button goes back to the list.
+  var TAB = "";
+  ["favs", "stats"].forEach(function (t) { $(t + "Btn").addEventListener("click", function () { TAB = TAB === t ? "" : t; showHome(); }); });
   // A favourite's answer, from the puzzle's grid and solution (or the solver's own answer), without loading the puzzle.
   function answerOf(p, k, clue) {
     var R0 = p.grid.length, C0 = p.grid[0].length, at = {}, n = 0, flat = "";
@@ -2371,9 +2367,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var FROM = weeks2(new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10));
   function showHome(keepScroll) {
     if (P) { save(); stopClock(); }
-    $("favsBtn").classList.toggle("on", FAVTAB); $("favsBtn").setAttribute("aria-pressed", String(FAVTAB));
-    $("homeList").hidden = FAVTAB; $("favList").hidden = !FAVTAB;
-    if (FAVTAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); showFavs(); }
+    ["favs", "stats"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
+    $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats";
+    if (TAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); if (TAB === "favs") showFavs(); else showStats(); }
     var list = $("homeList"), last = null, todo = 0, done = 0;
     list.innerHTML = "";
     var all = PUZZLES.slice().sort(function (x, y) { return (y.date || "").localeCompare(x.date || "") || y.id.localeCompare(x.id); });
@@ -2510,11 +2506,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
   $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });
   $("setDone").addEventListener("click", function () { $("setSheet").hidden = true; });
-  $("statsBtn").addEventListener("click", showStats);
-  $("statDone").addEventListener("click", function () { $("statSheet").hidden = true; });
-  ["setSheet", "statSheet"].forEach(function (id) {
-    $(id).addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
-  });
+  $("setSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   // Stats from the puzzle records: totals, then by paper and type, then by the mode each finish was recorded at.
   // Times count clean solves (not DNFs); hints and reveals are per finished puzzle. Submitted grids still waiting
   // for their answers are left out.
@@ -2565,11 +2557,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       Object.keys(types).sort(function (x, y) { return types[y].n - types[x].n || x.localeCompare(y); }).forEach(function (k) { card(k, types[k]); });
       head("By mode");
       MODES.forEach(function (m) { if (m && modes[m]) card(m.charAt(0).toUpperCase() + m.slice(1), modes[m], m); });
-      var n = document.createElement("p"); n.style.marginTop = "12px";
+      var n = document.createElement("p");
       n.textContent = "Averages and bests count solves without a DNF. Hints and reveals are averaged over every finished puzzle. A puzzle counts at the easiest mode used once its first letter went in.";
       box.appendChild(n);
     }
-    $("statSheet").hidden = false;
   }
 
   function boot() {

@@ -790,7 +790,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }, function () { WAITING = null; showStatus(); toast("Couldn’t reach GitHub. Try again later."); });
   }
 
-  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, BLANKS = 0, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
+  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, BLANKS = 0, EDITED = false, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
   var elapsed = 0, since = null, solved = false;
 
   // Linked groups: p.links ([["a1","a6"], ...], head first), else inferred from "See N" clues.
@@ -939,7 +939,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     (saved.ok || []).forEach(function (k) { ok[k] = 1; });
     if (!sel) { var w0 = words[0]; sel = { r: w0.cells[0][0], c: w0.cells[0][1], dir: w0.dir }; }
     store.set("crossword:last", p.id);
-    elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null;
+    elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null; EDITED = !!saved.ed;
     startClock();
     build();
     setMode(saved.mode || lastMode(p), true);
@@ -1014,7 +1014,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     var rec = {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
-      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
+      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, ed: EDITED, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
       sel: sel
     };
     var same = old && core(old) === core(rec);
@@ -1175,7 +1175,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
       // A Hard grid submitted before its answers are out hasn't been marked, so it can still be reopened.
-      $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard");
+      $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard" && !EDITED);  // once only
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
     scrollClue(w.el);
@@ -1372,7 +1372,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("submitBtn").addEventListener("click", function () {
     confirmAsk("submit", BLANKS ? "Give up?" : "Submit puzzle?",
       (BLANKS ? plural(BLANKS, "square") + (BLANKS === 1 ? " is" : " are") + " still blank, so this will be a DNF. " : "") +
-      (MODE === "hard" && !words.some(known) ? "The answers aren't out yet, so until they are you can reopen it with Edit. Are you sure?" : "A submitted grid can't be changed. Are you sure?"),
+      (MODE === "hard" && !words.some(known) && !EDITED ? "The answers aren't out yet, so until they are you can reopen it once with Edit. Are you sure?" : "A submitted grid can't be changed. Are you sure?"),
       BLANKS ? "Give up" : "Submit");
   });
   function submit() {
@@ -1383,7 +1383,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
   $("editBtn").addEventListener("click", function () {
     confirmAsk("unsubmit", "Edit your grid?", "The answers aren't out yet, so your grid hasn't been marked. It will open again for you to change, " +
-      "and the timer carries on from " + fmt(elapsed) + ". You'll need to submit it again.", "Edit grid");
+      "and the timer carries on from " + fmt(elapsed) + ". You can only do this once: after you submit again, the grid is final.", "Edit grid");
   });
 
   $("checkWordBtn").addEventListener("click", function () {
@@ -2130,7 +2130,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("hintYes").addEventListener("click", function () {
     var w = curWord();
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
-    if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; startClock(); save(); render(); return; }
+    if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
     if (askMode === "add") {
       var key = w.dir + w.num, letters = $("ansInput").value.toUpperCase().replace(/[^A-Z]/g, "");
       if (letters.length !== w.cells.length) return toast("The answer needs " + w.cells.length + " letters");

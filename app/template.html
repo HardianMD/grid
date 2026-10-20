@@ -232,6 +232,7 @@ header .more { flex: 0 0 auto; padding: 3px 8px; line-height: 1; }
 header .more svg { display: block; width: 20px; height: 22px; color: var(--accent); }
 
 .clue.see span { color: var(--ink-soft); font-style: italic; }
+.checks .noans { flex: 1; align-self: center; text-align: center; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
 .checks .btn.icon { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; }
 .btn.icon svg { width: 18px; height: 18px; display: block; }
 .wheel { box-sizing: border-box; position: absolute; left: 0; right: 0; z-index: 15; background: var(--paper); display: flex; flex-direction: column; gap: 10px; padding-block: 10px; overflow-y: auto; }
@@ -380,6 +381,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <button class="btn icon" id="cluesBtn" type="button" aria-label="All clues" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
     <button class="btn" id="checkWordBtn" type="button">Check word</button>
     <button class="btn" id="checkAllBtn" type="button">Check all</button>
+    <span class="noans" id="noAns" hidden>Answers not out yet</span>
     <button class="btn icon" id="wheelBtn" type="button" aria-label="Anagram wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.6" fill="currentColor"/><circle cx="18.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="5.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
     <button class="btn icon" id="dictBtn" type="button" hidden aria-label="Dictionary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3 4.5v14c4 0 7 .5 9 2 2-1.5 5-2 9-2v-14c-4 0-7 .5-9 2zM12 6.5v14"/></svg></button>
     <button class="btn icon" id="hintBtn" type="button">Hint</button>
@@ -1150,6 +1152,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
     $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
+    $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
     $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);

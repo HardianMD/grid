@@ -371,11 +371,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>Once submitted</td><td>Once submitted</td></tr>
-        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit</td></tr>
+        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>Submit</td><td>Submit, or give up with squares blank</td></tr>
         <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Submitted with wrong letters</td><td>Submitted with wrong letters</td></tr>
       </tbody>
     </table>
-    <p>You can switch mode at any time. A finished puzzle is recorded at the easiest mode used after its first letter was typed in. Clearing the grid removes only the letters: the time, mode and any reveals stay.</p>
+    <p>You can switch mode at any time. A finished puzzle is recorded at the easiest mode used after its first letter was typed in. Clearing the grid removes only the letters: the time, mode and any reveals stay. Once you have used a hint or revealed an answer, the puzzle can't be switched to Hard or Champ.</p>
     <div class="actions" id="actions">
       <button class="btn danger" id="clearBtn" type="button">Clear this grid</button>
       <button class="btn" id="closeBtn" type="button">Done</button>
@@ -652,7 +652,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }, function () { WAITING = null; showStatus(); toast("Couldn’t reach GitHub. Try again later."); });
   }
 
-  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
+  var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, BLANKS = 0, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
   var elapsed = 0, since = null, solved = false;
 
   // Linked groups: p.links ([["a1","a6"], ...], head first), else inferred from "See N" clues.
@@ -774,6 +774,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Hint level per clue: 1 = definition underlined, 2 = clue type shown too.
     if (Array.isArray(saved.hints)) saved.hints.forEach(function (k) { hinted[k] = 1; });
     else if (saved.hints) hinted = saved.hints;
+    // Hints given, for the finish bar; saves from before it was kept count each clue's hint level.
+    HN = typeof saved.hn === "number" ? saved.hn : Object.keys(hinted).reduce(function (n, k) { return n + (+hinted[k] || 0); }, 0);
     myParses = saved.parses || {};
     myDefs = saved.defs || {};
     // Clues with no known answer yet are listed in p.unsolved; answers the solver adds fill the gaps.
@@ -856,7 +858,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (!store.get("crossword:" + P.id) && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     store.set("crossword:" + P.id, {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
-      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
+      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
       sel: sel, at: Date.now()
     });
   }
@@ -943,7 +945,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     w.cells.forEach(function (rc) { inWord[rc[0] + "," + rc[1]] = 1; });
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
-    var total = 0, done = 0, bad = 0, revDnf = REV && USED !== 0;
+    var total = 0, done = 0, bad = 0, gap = 0, revDnf = REV && USED !== 0;
     // A DNF shows why: wrong squares in red, revealed answers in amber.
     var rv = {};
     if (revDnf) words.forEach(function (x) { if (REVW[x.dir + x.num]) x.cells.forEach(function (rc) { rv[rc[0] + "," + rc[1]] = 1; }); });
@@ -951,7 +953,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (cells[r][c].b) continue;
       var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
       total++; if (fill[r][c]) done++;
-      if (a && fill[r][c] !== a) bad++;
+      if (a && fill[r][c] !== a) { bad++; if (!fill[r][c]) gap++; }
       el.classList.toggle("bad", !!a && fill[r][c] !== a);
       el.classList.toggle("rv", !!rv[k]);
       el.classList.toggle("word", !!inWord[k]);
@@ -977,7 +979,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
     $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
-    $("submitBtn").hidden = !HARD || solved || done < total;
+    $("submitBtn").hidden = !HARD || solved || (done < total && !(CHAMP && done));  // Champ can give up with squares left blank
+    BLANKS = total - done;
     $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
@@ -991,9 +994,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
     if (solved) {
       var nr = Object.keys(REVW).length;
-      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed"
+      // Easy and Medium also say how much help the solve had.
+      var help = USED === 0 || USED === 1 ? plural(HN, "hint") + " and " + (nr || !REV ? plural(nr, "reveal") : "reveals") : "";
+      $("solvedTxt").textContent = revDnf && !(SUB && SUB.res === "dnf") ? (help ? "DNF in " + fmt(elapsed) + " - " + help : "DNF in " + fmt(elapsed) + ": " + (nr ? plural(nr, "answer") : "answers") + " revealed")
+        : !SUB && help ? "\u2713 Solved in " + fmt(elapsed) + " - " + help
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
-        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + plural(bad, "wrong square") : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
+        : SUB.res === "dnf" ? "DNF in " + fmt(elapsed) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = (bl.exact ? "Read the blog" : "Find the blog") + " \u2197"; }
     }
@@ -1173,12 +1179,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     SUB.res = !any ? "" : bad ? "dnf" : "ok";
     return bad;
   }
-  // Two taps, as a submitted grid can't be changed.
+  // Two taps, as a submitted grid can't be changed; in Champ, submitting with blank squares is giving up.
   $("submitBtn").addEventListener("click", function () {
     var b = this;
     clearTimeout(b.t);
     if (b.textContent === "Submit puzzle") {
-      b.textContent = "Tap again to submit";
+      b.textContent = BLANKS ? "Give up with " + plural(BLANKS, "blank square") + "? Tap again" : "Tap again to submit";
       b.t = setTimeout(function () { b.textContent = "Submit puzzle"; }, 3000);
       return;
     }
@@ -1550,7 +1556,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   });
   // Hint underlines the definition; once hinted, the same button becomes Reveal.
   function lockedCell(k) { return !!SUB || (!HARD && !!ok[k]); }
-  function locked(w) { if (HARD) return solved; return w.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }); }
+  // A finished grid offers no more hints or reveals.
+  function locked(w) { if (HARD || solved) return solved; return w.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }); }
   var askMode = "hint";
   $("hintBtn").addEventListener("click", function () {
     var w = curWord(), name = wordName(w);
@@ -1956,7 +1963,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       render(); save();
       return;
     }
-    hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1;
+    hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1; HN++;
     render(); save();
   });
   // Word finder: words from the word list that fit the answer's length and the letters already in the grid.
@@ -2058,7 +2065,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var confirming = false;
   function openSheet() {
     confirming = false; $("clearBtn").textContent = "Clear this grid"; $("clearBtn").hidden = solved;
-    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) { b.disabled = solved; });  // a finished puzzle keeps its mode
+    // A finished puzzle keeps its mode, and one that has had a hint or reveal can't move up to Hard or Champ.
+    var helped = HN > 0 || REV;
+    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) { b.disabled = solved || (helped && RANK[b.dataset.mode] >= 2); });
     $("sheet").hidden = false;
   }
   function closeSheet() { $("sheet").hidden = true; }

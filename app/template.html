@@ -109,6 +109,21 @@ header .timer.stopped { color: #1f7a33; }
 .panel p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-soft); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.danger { color: #b3261e; border-color: currentColor; }
+.btn.out { background: #b3261e; border-color: #b3261e; color: #fff; padding: 10px; font-size: 14px; }
+#statsBtn { padding: 10px; font-size: 14px; }
+.hbtns { display: flex; gap: 8px; }
+.fgrp button { text-transform: none; letter-spacing: 0; }
+.fgrp .modesw { justify-self: start; }
+.stiles, .sfig { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+.sfig { grid-template-columns: repeat(4, 1fr); }
+.stiles > div { background: var(--paper); border-radius: 10px; padding: 8px 4px; }
+.stiles b, .sfig b { display: block; font: 800 18px var(--f-ui); color: var(--ink); font-variant-numeric: tabular-nums; }
+.sfig b { font-size: 15px; }
+.stiles span, .sfig span { font-size: 11px; color: var(--ink-soft); }
+.scard { display: grid; gap: 8px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; }
+.scard .srow small { font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+.scard .srow span { display: flex; align-items: center; gap: 8px; }
+#statBody h4 { margin: 16px 0 0; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
 [hidden] { display: none !important; }
 .home { position: fixed; inset: 0; background: var(--paper); z-index: 18; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .hwrap { max-width: 640px; margin: 0 auto; }
@@ -358,9 +373,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
-    <div class="hhead"><h1>Crosswords</h1><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></div>
+    <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
-    <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span><button class="btn mini" id="syncBtn" type="button">Sign in with Google</button></div>
+    <div class="syncbar" id="syncBar" hidden><span id="syncTxt">Signed in</span></div>
     <div class="problems" id="problems" role="status" hidden></div>
     <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
@@ -371,6 +386,25 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div id="homeList"></div><div class="favs" id="favList" hidden></div>
     <p class="hnote">Progress is saved on this device and synced to your Google account.</p>
+  </div>
+</div>
+<div class="sheet" id="setSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="setTitle">
+    <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Done</button></div>
+    <div class="fgrp"><label for="setName">Username</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Shown on parsings you edit"></div>
+    <div class="fgrp"><span>New puzzles start in</span>
+      <div class="chips" id="setStart"><button type="button" class="chip" data-v="last">The last mode used for that series</button><button type="button" class="chip" data-v="fixed">The same mode every time</button></div>
+      <div class="modesw" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div>
+    </div>
+    <p>Puzzles you have already started keep their own mode.</p>
+    <button class="btn" id="statsBtn" type="button">Stats</button>
+    <button class="btn out" id="syncBtn" type="button">Sign out</button>
+  </div>
+</div>
+<div class="sheet" id="statSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="statTitle">
+    <div class="srow"><h3 id="statTitle">Stats</h3><button class="btn" id="statDone" type="button">Back</button></div>
+    <div id="statBody"></div>
   </div>
 </div>
 <div class="sheet" id="sheet" hidden>
@@ -482,9 +516,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     local: function (k, v) { MEM[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
     set: function (k, v) { store.local(k, v); cloudPut(k, v); }
   };
-  var CLOUD = null, cloudQ = {}, cloudT = null;
+  var CLOUD = null, cloudQ = {}, cloudT = null, KEEP = ["mode", "favs", "prefs"];  // KEEP: synced records besides puzzles
   function cloudId(k) {
-    if (k === "crossword:mode" || k === "crossword:favs") return k.slice(10);
+    if (/^crossword:(mode|favs|prefs)$/.test(k)) return k.slice(10);
     var m = /^crossword:(.+)$/.exec(k);
     return m && m[1] !== "last" && m[1] !== "filter" ? "p_" + m[1] : null;
   }
@@ -526,7 +560,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         var x = d.data(), val;
         if (!x || typeof x.v !== "string") return;
         try { val = JSON.parse(x.v); } catch (e) { return; }
-        var k = d.id === "mode" || d.id === "favs" ? "crossword:" + d.id : d.id.indexOf("p_") === 0 ? "crossword:" + d.id.slice(2) : null;
+        var k = KEEP.indexOf(d.id) >= 0 ? "crossword:" + d.id : d.id.indexOf("p_") === 0 ? "crossword:" + d.id.slice(2) : null;
         if (!k || !val) return;
         var loc = store.get(k), la = (loc && loc.at) || 0, ra = val.at || x.at || 0;
         // Newer wins, except that an empty grid never replaces one with letters in it.
@@ -536,7 +570,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
           if (P && k === "crossword:" + P.id) cur = true;
         } else if (la > ra || (rb && !lb)) cloudQ[d.id] = loc;
       });
-      PUZZLES.map(function (p) { return "p_" + p.id; }).concat(["mode", "favs"]).forEach(function (id) {
+      PUZZLES.map(function (p) { return "p_" + p.id; }).concat(KEEP).forEach(function (id) {
         var k = "crossword:" + id.replace(/^p_/, "");
         if (!seen[id]) { var loc = store.get(k); if (loc && typeof loc === "object" && (loc.at || 0) > since) cloudQ[id] = loc; }
       });
@@ -599,7 +633,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
           gate("Sign in to open your puzzles.", "Sign in with Google", "in");
           return;
         }
-        $("syncBar").hidden = false; $("syncTxt").textContent = "Syncing…"; $("syncBtn").textContent = "Sign out";
+        $("syncBar").hidden = false; $("syncTxt").textContent = "Syncing…";
         if (!BOOTED) gate("Loading puzzles…");
         var col = DB.collection("puzzles"), add = function (snap) {
           var top = "";
@@ -698,7 +732,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Champ: like Hard with no Check or hints. In both, a full grid finishes only when submitted (SUB), which locks and grades it.
   // A reveal makes a DNF except in Easy (by the mode recorded in USED).
   // The mode belongs to each puzzle (chosen in its menu); the last choice for its series (the id less its number)
-  // is the default for puzzles not yet started. Older records hold only m, the last choice overall.
+  // is the default for puzzles not yet started, unless Settings fixes one mode for every new puzzle (prefs.start).
+  // Older records hold only m, the last choice overall.
   // USED is the mode in force when the first letter went in (3: none yet), lowered by any easier mode switched to
   // before the end, so a solve is recorded at the most help it had. Champ ranks 4, as 3 already means none yet.
   var RANK = { easy: 0, medium: 1, hard: 2, champ: 4 }, MODES = ["easy", "medium", "hard", null, "champ"];
@@ -719,13 +754,20 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }
     document.documentElement.dataset.mode = m;
     $("modeIco").textContent = m.charAt(0).toUpperCase();
-    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll("#sheet .modesw button"), function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.mode === m));
     });
     if (P && $("home").hidden) render();
   }
   function series(p) { return p.id.replace(/-\d+$/, ""); }
-  function lastMode(p) { var md = store.get("crossword:mode") || {}; return md.s && md.s[series(p)] || md.m || "easy"; }
+  function lastMode(p) {
+    var pf = prefs(), md = store.get("crossword:mode") || {};
+    return pf.start === "fixed" ? pf.mode || "easy" : md.s && md.s[series(p)] || md.m || "easy";
+  }
+  // Settings, synced as one record: name (shown on the solver's own parsings), start ("last" or "fixed") and mode.
+  function prefs() { return store.get("crossword:prefs") || {}; }
+  function setPref(k, v) { var o = prefs(); o[k] = v; o.at = Date.now(); store.set("crossword:prefs", o); }
+  function editedBy() { return "Edited by " + (prefs().name || "you"); }
   function linksFor(p) {
     if (Array.isArray(p.links)) return p.links;
     var groups = {};
@@ -1756,8 +1798,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("pvType").textContent = r.type;
     markup($("pvWp"), r.wordplay);
     $("hintText").hidden = true; $("parseView").hidden = false;
-    $("parseNote").textContent = r.mine ? "Your parsing, saved on this device." : r.blog && fromBlog(w) ? "Parsing from the " + blogName() + " blog. " : "No parsing from the blog yet.";
-    if (!r.mine && r.blog && fromBlog(w)) {
+    var bl = r.blog && fromBlog(w);
+    $("parseNote").textContent = r.mine ? editedBy() + (bl ? ", from the " + blogName() + " blog\u2019s parsing. " : ".") : bl ? "Parsing from the " + blogName() + " blog. " : "No parsing from the blog yet.";
+    if (bl) {
       var a = document.createElement("a"); a.href = P.blog; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Read the post";
       $("parseNote").appendChild(a);
     }
@@ -2124,7 +2167,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     confirming = false; $("clearBtn").textContent = "Clear this grid"; $("clearBtn").hidden = solved;
     // A finished puzzle keeps its mode, and one that has had a hint or reveal can't move up to Hard or Champ.
     var helped = HN > 0 || REV;
-    Array.prototype.forEach.call(document.querySelectorAll(".modesw button"), function (b) { b.disabled = solved || (helped && RANK[b.dataset.mode] >= 2); });
+    Array.prototype.forEach.call(document.querySelectorAll("#sheet .modesw button"), function (b) { b.disabled = solved || (helped && RANK[b.dataset.mode] >= 2); });
     $("sheet").hidden = false;
   }
   function closeSheet() { $("sheet").hidden = true; }
@@ -2145,7 +2188,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (ch === "#") return; t++;
       if (s.fill && s.fill[r] && (s.fill[r][c] || " ").trim()) n++;
     }); });
-    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used], dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub };
+    return { n: n, t: t, solved: !!s.solved, time: s.time || 0, mode: MODES[s.used], dnf: (!!s.rev && s.used !== 0) || !!(s.sub && s.sub.res === "dnf"), sub: s.sub, hn: s.hn || 0, rv: Object.keys(s.revw || {}).length };
   }
   function dayLabel(d) {
     if (!d) return "Undated";
@@ -2241,6 +2284,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
         var t = document.createElement("i"); t.textContent = r.type; var wp = document.createElement("span"); markup(wp, r.wordplay || "");
         x.appendChild(t); x.appendChild(wp);
+        if (mine) { var by = document.createElement("small"); by.textContent = " \u00b7 " + editedBy(); x.appendChild(by); }
       }]].forEach(function (d) {
         var bt = document.createElement("button"); bt.type = "button"; bt.className = "btn mini"; bt.textContent = d[0];
         bt.addEventListener("click", function (e) {
@@ -2327,7 +2371,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
   $("homeBtn").addEventListener("click", showHome);
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest(".modesw button");
+    var b = e.target.closest && e.target.closest("#sheet .modesw button");
     if (b) setMode(b.dataset.mode);
   });
   $("menuBtn").addEventListener("click", openSheet);
@@ -2341,6 +2385,85 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   });
 
   window.addEventListener("resize", function () { size(); });
+
+  // Settings (the cog on the home page).
+  function showSettings() {
+    var pf = prefs(), start = pf.start || "last", m = pf.mode || "easy";
+    $("setName").value = pf.name || "";
+    Array.prototype.forEach.call($("setStart").children, function (b) { b.classList.toggle("on", b.dataset.v === start); });
+    $("setMode").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
+    Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });
+    $("setSheet").hidden = false;
+  }
+  $("setBtn").addEventListener("click", showSettings);
+  $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
+  $("setStart").addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    // Fixing a mode starts from the last one chosen overall.
+    if (b.dataset.v === "fixed" && !prefs().mode) setPref("mode", (store.get("crossword:mode") || {}).m || "easy");
+    setPref("start", b.dataset.v); showSettings();
+  });
+  $("setMode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { setPref("mode", b.dataset.mode); showSettings(); } });
+  $("setDone").addEventListener("click", function () { $("setSheet").hidden = true; });
+  $("statsBtn").addEventListener("click", function () { $("setSheet").hidden = true; showStats(); });
+  $("statDone").addEventListener("click", function () { $("statSheet").hidden = true; showSettings(); });
+  ["setSheet", "statSheet"].forEach(function (id) {
+    $(id).addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
+  });
+  // Stats from the puzzle records: totals, then by paper and type, then by the mode each finish was recorded at.
+  // Times count clean solves (not DNFs); hints and reveals are per finished puzzle. Submitted grids still waiting
+  // for their answers are left out.
+  function showStats() {
+    var all = tally(), types = {}, modes = {}, prog = 0, box = $("statBody");
+    function tally() { return { n: 0, ok: 0, dnf: 0, time: 0, okTime: 0, best: 0, hn: 0, rv: 0, free: 0 }; }
+    PUZZLES.forEach(function (p) {
+      var g = progressOf(p), key = ((pubOf(p) + " " + typeOf(p)).trim());
+      if (!g.solved) { if (g.n) prog++; return; }
+      if (g.sub && !g.sub.res) return;
+      [all, types[key] = types[key] || tally(), modes[g.mode] = modes[g.mode] || tally()].forEach(function (t) {
+        t.n++; t.time += g.time; t.hn += g.hn; t.rv += g.rv;
+        if (g.dnf) { t.dnf++; return; }
+        t.ok++; t.okTime += g.time; if (!t.best || g.time < t.best) t.best = g.time;
+        if (!g.hn && !g.rv) t.free++;
+      });
+    });
+    function hm(ms) { var m = Math.round(ms / 6e4); return m < 60 ? m + "m" : Math.floor(m / 60) + "h " + m % 60 + "m"; }
+    function avg(t) { return t.ok ? fmt(t.okTime / t.ok) : "\u2013"; }
+    function per(x, t) { return t.n ? (x / t.n).toFixed(1) : "\u2013"; }
+    function figs(cls, list) {
+      var d = document.createElement("div"); d.className = cls;
+      list.forEach(function (f) {
+        var c = document.createElement("div"), b = document.createElement("b"), sp = document.createElement("span");
+        b.textContent = f[0]; sp.textContent = f[1]; c.appendChild(b); c.appendChild(sp); d.appendChild(c);
+      });
+      return d;
+    }
+    function head(text) { var h = document.createElement("h4"); h.textContent = text; box.appendChild(h); }
+    function card(name, t, mode) {
+      var c = document.createElement("div"), r = document.createElement("div"), l = document.createElement("span"), sm = document.createElement("small");
+      c.className = "scard"; r.className = "srow";
+      if (mode) { var i = document.createElement("i"); i.className = "mico"; i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
+      l.appendChild(document.createTextNode(name));
+      sm.textContent = plural(t.ok, "solve") + (t.dnf ? " \u00b7 " + t.dnf + " DNF" : "");
+      r.appendChild(l); r.appendChild(sm); c.appendChild(r);
+      c.appendChild(figs("sfig", [[avg(t), "average"], [t.best ? fmt(t.best) : "\u2013", "best"], [per(t.hn, t), "hints each"], [per(t.rv, t), "reveals each"]]));
+      box.appendChild(c);
+    }
+    box.innerHTML = "";
+    if (!all.n) { var e = document.createElement("p"); e.textContent = "Finish a puzzle to see your stats here."; box.appendChild(e); }
+    else {
+      box.appendChild(figs("stiles", [[all.ok, "solved"], [all.dnf, "DNF"], [prog, "in progress"],
+        [hm(all.time), "total time"], [avg(all), "average solve"], [all.ok ? Math.round(100 * all.free / all.ok) + "%" : "\u2013", "solved with no help"]]));
+      head("By crossword");
+      Object.keys(types).sort(function (x, y) { return types[y].n - types[x].n || x.localeCompare(y); }).forEach(function (k) { card(k, types[k]); });
+      head("By mode");
+      MODES.forEach(function (m) { if (m && modes[m]) card(m.charAt(0).toUpperCase() + m.slice(1), modes[m], m); });
+      var n = document.createElement("p"); n.style.marginTop = "12px";
+      n.textContent = "Averages and bests count solves without a DNF. Hints and reveals are averaged over every finished puzzle. A puzzle counts at the easiest mode used once its first letter went in.";
+      box.appendChild(n);
+    }
+    $("statSheet").hidden = false;
+  }
 
   function boot() {
     var lastId = store.get("crossword:last");

@@ -608,7 +608,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         };
         col.get({ source: "cache" }).then(add, function () { return ""; }).then(function (top) {
           if (FBUSER !== u) return;
-          unsub.push(col.where("u", ">", top).onSnapshot(function (snap) {
+          unsub.push((top ? col.where("u", ">", top) : col).onSnapshot(function (snap) {
             add(snap);
             gotPuzzles(Object.keys(PZ).map(function (k) { return PZ[k]; }), snap.metadata.fromCache, u);
           }, denied));

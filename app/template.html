@@ -2610,9 +2610,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var add = [];
     PUZZLES.forEach(function (p) {
       var k = "crossword:" + p.id, s = store.get(k), m;
-      if (!s || !s.sub || s.sub.res || !p.solution) return;
+      // a DNF is marked again in case its answers were corrected since
+      if (!s || !s.sub || s.sub.res === "ok" || !p.solution) return;
       if (P && P.id === p.id && $("home").hidden) return;  // the open puzzle is marked on screen instead
-      if (!(m = markOf(p, s)).any) return;
+      if (!(m = markOf(p, s)).any || (m.bad ? "dnf" : "ok") === s.sub.res) return;
       s.sub.res = m.bad ? "dnf" : "ok"; store.set(k, s);
       if (P && P.id === p.id) P.stale = true;
       add.push({ id: p.id, res: s.sub.res, bad: m.bad, gap: m.gap, time: s.time || 0 });

@@ -486,7 +486,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         <tr><td>Check</td><td>Removes wrong letters*</td><td>Clears wrong words*</td><td>Clears wrong words*</td><td>No</td></tr>
         <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
-        <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>After submit</td><td>After submit</td></tr>
+        <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>On submit</td><td>On submit</td></tr>
         <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Incomplete / errors</td><td>Incomplete / errors</td></tr>
       </tbody>
@@ -1166,8 +1166,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("dictBtn").hidden = !filled(w);
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
-    $("checkWordBtn").hidden = CHAMP || !!SUB || !known(w);
-    $("checkAllBtn").hidden = CHAMP || !!SUB || !words.some(known);
+    $("checkWordBtn").hidden = CHAMP || !!SUB || solved || !known(w);
+    $("checkAllBtn").hidden = CHAMP || !!SUB || solved || !words.some(known);
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
@@ -1477,7 +1477,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var avail = Math.min(main.clientWidth - 32, h - 205, 300);  // room for the hint line too
     AW.size = Math.max(180, avail);
     $("ring").style.width = $("ring").style.height = AW.size + "px";
-    $("solveBtn").hidden = HARD && !solved;
+    $("solveBtn").hidden = HARD;
     $("finds").hidden = true; AW.found = null;
     buildSlots(); layoutTiles(false); wheelRender();
   }

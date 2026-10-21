@@ -751,6 +751,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       gate(null);
       cloudListen(DB.collection("users/" + u.uid + "/state"));
     } else if (!$("home").hidden) showHome(true);
+    else if (P && solved && PZ[P.id] !== P) { load(PZ[P.id]); size(); }  // a finished grid on screen picks up parsings as they arrive
   }
   // The update status: problems the last run met, and whether a run is going (the refresh button spins meanwhile).
   function showStatus() {
@@ -1172,7 +1173,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
-    $("hintBtn").hidden = CHAMP || (HARD && !solved) || (!SOL && !DEFS && !PARSES);
+    $("hintBtn").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
     if (SOL && !HARD && !solved && done === total && allRight()) {
@@ -2508,7 +2509,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (left.length !== nl.length) setNotes(left);  // opening a puzzle, from the bell or the list, reviews its notification
     showList(false);
     $("home").hidden = true;
-    if (!P || p.id !== P.id || P.stale) load(p); else { startClock(); render(); }
+    if (p !== P || P.stale) load(p); else { startClock(); render(); }  // a new copy (answers or parsings arrived) loads afresh
     size();
   }
   $("homeBtn").addEventListener("click", showHome);

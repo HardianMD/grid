@@ -1141,7 +1141,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       el.classList.toggle("word", !!inWord[k]);
       el.classList.toggle("cross", !inWord[k] && !!inCross[k]);
       el.classList.toggle("cur", r === sel.r && c === sel.c);
-      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && !!ok[k]);
+      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout
       el.lastChild.textContent = fill[r][c];
     }
     var fl = favs(), nh = noHints();
@@ -1151,7 +1151,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] >= 2 ? parseFor(x).type : "", myDefs[k] || ""].join("|");
       if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
       x.el.classList.toggle("done", filled(x));
-      x.el.classList.toggle("right", !HARD && x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }));
+      x.el.classList.toggle("right", !HARD && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
     });
     $("nowTag").textContent = wordName(w);
@@ -1177,6 +1177,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (SOL && !HARD && !solved && done === total && allRight()) {
       stopClock(); solved = true; save();
       toast("Solved in " + fmt(elapsed));
+      return render();
     }
     $("timer").classList.toggle("stopped", solved);
     var bl = solved && blogFor(P);

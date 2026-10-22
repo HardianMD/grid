@@ -120,7 +120,8 @@ header .timer.stopped { color: var(--good); }
 #setSheet .set, #setSheet .fgrp > .tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; padding: 6px 0; border-top: 1px solid var(--cross);
   font: 400 15px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
 #setSheet .fgrp > :nth-child(2) { border-top: 0; }
-#setSheet .cprev, #setSheet .hprev { margin: 2px 0 8px; }
+.pv { display: grid; gap: 6px; padding: 10px 0 8px; border-top: 1px solid var(--cross); }
+#setMode button { color: var(--mc); } #setMode [aria-pressed="true"] { background: var(--mc); color: var(--sheet); }
 .seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--cross); }
 .seg button, .seg .chip { font: 600 13px var(--f-ui); color: var(--ink-soft); background: none; border: 0; border-radius: 7px; padding: 6px 10px; cursor: pointer; }
 .seg .chip.on, .seg [aria-pressed="true"] { background: var(--sheet); color: var(--ink); border: 0; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
@@ -368,7 +369,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   /* Settings opens as a wide two-column dialog. */
   #setSheet { align-items: center; }
   #setSheet .panel { max-width: 980px; border-radius: 14px; max-height: 90%; }
-  .scols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; align-items: start; }
+  /* Solving beside Account, then Clues beside Puzzle list with their previews level at the foot of the row. */
+  .scols { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: dense; gap: 0 40px; }
+  .scols > :nth-child(1) { grid-area: 1 / 1; align-self: start; } .scols > :nth-child(4) { grid-area: 1 / 2; align-self: start; }
+  .scols > :nth-child(2) { grid-area: 2 / 1; } .scols > :nth-child(3) { grid-area: 2 / 2; }
+  .scols > .fgrp { display: flex; flex-direction: column; }
+  .scols .pv { margin-top: auto; min-height: 112px; align-content: start; }
   #noteSheet { align-items: center; }
   #noteSheet .panel { max-width: 520px; border-radius: 14px; max-height: 80%; }
   #nitchSheet { align-items: center; }
@@ -497,7 +503,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 <div class="sheet" id="setSheet" hidden>
   <div class="panel pad" role="dialog" aria-labelledby="setTitle">
     <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Close</button></div>
-    <div class="scols"><div>
+    <div class="scols">
     <div class="fgrp"><span>Solving</span>
       <div class="set"><span>Start mode</span><div class="chips seg" data-p="start"><button type="button" class="chip" data-v="last">Last used</button><button type="button" class="chip" data-v="fixed">Fixed</button></div></div>
       <div class="set" id="setModeRow"><span>Mode</span><div class="seg" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div></div>
@@ -510,23 +516,22 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       <div class="set"><span>Size</span><div class="chips seg" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">XL</button></div></div>
       <div class="set"><span>Font</span><div class="chips seg" data-p="font"><button type="button" class="chip" data-v="franklin">Franklin</button><button type="button" class="chip" data-v="arial">Arial</button><button type="button" class="chip" data-v="times">Times</button><button type="button" class="chip" data-v="georgia">Georgia</button></div></div>
       <div class="set"><span>Colour</span><div class="chips sws" data-p="tint"><button type="button" class="chip" data-v="blue" style="--c:#cfe3f5" aria-label="Blue"></button><button type="button" class="chip" data-v="green" style="--c:#d6eedb" aria-label="Green"></button><button type="button" class="chip" data-v="amber" style="--c:#f8e6c4" aria-label="Amber"></button><button type="button" class="chip" data-v="pink" style="--c:#f6d9e4" aria-label="Pink"></button><button type="button" class="chip" data-v="grey" style="--c:#e6eaee" aria-label="Grey"></button><button type="button" class="chip" data-v="none" style="--c:transparent" aria-label="None"></button></div></div>
-      <div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt"><span class="ctype">Anagram</span>Notes rearranged for <u class="def">a gem, perhaps</u> (5)</span></div>
       <label class="tog">Hide hints when solved<input type="checkbox" data-p="hideHints"></label>
+      <div class="pv"><span>Preview</span><div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt"><span class="ctype">Anagram</span>Notes rearranged for <u class="def">a gem, perhaps</u> (5)</span></div></div>
     </div>
-    </div><div>
     <div class="fgrp"><span>Puzzle list</span>
       <label class="tog">Hide finished<input type="checkbox" data-p="hideDone"></label>
       <label class="tog">Difficulty<input type="checkbox" data-p="listN"></label>
-      <div class="set" id="setNWhen"><span>Show</span><div class="chips seg" data-p="listNWhen"><button type="button" class="chip" data-v="done">When finished</button><button type="button" class="chip" data-v="always">Always</button></div></div>
+      <div class="set" id="setNWhen"><span>Show difficulty</span><div class="chips seg" data-p="listNWhen"><button type="button" class="chip" data-v="done">When finished</button><button type="button" class="chip" data-v="always">Always</button></div></div>
       <div class="set"><span>Size</span><div class="chips seg" data-p="listSize"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">XL</button></div></div>
-      <div class="hprev" id="listPrev" aria-hidden="true"></div>
+      <div class="pv"><span>Preview</span><div class="hprev" id="listPrev" aria-hidden="true"></div></div>
     </div>
     <div class="fgrp"><span>Account</span>
       <div class="set"><label for="setName">Name</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="On edited parsings"></div>
       <div class="set"><label for="setKey">Key</label><span class="krow"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste key"><button class="btn" id="keySave" type="button">Save</button></span></div>
       <div class="set"><button class="btn danger out" id="syncBtn" type="button">Sign out</button></div>
     </div>
-    </div></div>
+    </div>
   </div>
 </div>
 <div class="sheet" id="sheet" hidden>

@@ -5,7 +5,8 @@ page. Live at https://hardianmd.github.io/grid/ (Pages publishes every push to `
 
 ## Files
 - `app/template.html`: the whole page (CSS, markup, vanilla JS in one IIFE; no build step, no dependencies).
-- `tools/build.py OUT`: wraps the template into `OUT/index.html` and copies `site/` (icons, manifest, word list).
+- `tools/build.py OUT`: wraps the template into `OUT/index.html` under the page head (the font loads in the background,
+  so it never holds up sign-in) and copies `site/` (icons, manifest, word list).
 - `tools/check.js`: checks that the finish bar and Stats read every kind of saved record (old ones included) the same
   way (`helpOf`, `helpText`). Runs on each pull request (`check.yml`) and before each publish (`pages.yml`).
 - `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver and word finder.
@@ -14,6 +15,9 @@ page. Live at https://hardianmd.github.io/grid/ (Pages publishes every push to `
 Search for the function name; the comment above each says what it does.
 - Storage and sync: `store` (localStorage, then `cloudPut` to Firestore `users/{uid}/state`), `cloudListen` (merge by
   `at`, `rank`), `KEEP` (synced records besides puzzles: `mode`, `favs`, `prefs`, `notes`).
+- Speed: `store.peek` (a record for reading only, parsed again only when it changes), `pc` (facts worked out once per
+  copy of a puzzle: `solOf`, `jsonOf`, `linksFor`, clue starts, Quickfire clues), `progressOf` (kept per record),
+  `fmtDate` and `cmp` (date formats and text order, each made once).
 - Sign-in and data: `fbInit` (Firebase compat SDK from gstatic, puzzles read incrementally by `u`), `gotPuzzles`,
   `showStatus` (update problems, refresh spinner), `runUpdate`/`dispatch` (starts the updater with the saved key).
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.

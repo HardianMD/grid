@@ -1590,8 +1590,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     // On phones the wheel covers everything down to the clue box, which shrinks to fit its clue meanwhile.
     var main = $("main"), el = $("wheel");
     showList(false); $("app").classList.add("aw");
-    var h = isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
-    el.style.top = main.offsetTop + "px";
+    // In Quickfire it covers the clue and squares instead, from the header down to the keyboard.
+    var hd = $("app").querySelector("header"), kb = $("kb"), top = P.qf ? hd.offsetTop + hd.offsetHeight : main.offsetTop;
+    var h = P.qf ? (kb.offsetHeight ? kb.offsetTop : $("app").clientHeight) - top : isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
+    el.style.top = top + "px";
     el.style.height = h + "px";
     el.hidden = false; AW.open = true;
     $("wheelTitle").innerHTML = "";

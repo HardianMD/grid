@@ -346,10 +346,16 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 /* Wide screens: tablets in landscape, and any computer with a mouse whatever its window height. The grid fits the
    window beside the clue list, and the physical keyboard replaces the in-page one. */
 @media (min-width: 900px) and (min-height: 700px), (min-width: 900px) and (pointer: fine) {
-  .main { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 1fr; column-gap: 24px; align-content: start; }
+  .main { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto 1fr; column-gap: 24px; align-content: start; }
   .gridwrap { grid-column: 1; grid-row: 1; padding-left: max(16px, env(safe-area-inset-left, 0px)); }
   .checks { grid-column: 1; grid-row: 2; align-self: start; }
-  .clues { grid-column: 2; grid-row: 1 / 3; margin-top: 0; }
+  .solvedbar { grid-column: 1; grid-row: 3; align-self: start; }
+  /* The scores sheet opens as a wider dialog: field and you on the left, the curve on the right. */
+  #nitchSheet { align-items: center; }
+  #nitchSheet .panel { max-width: 860px; border-radius: 14px; max-height: 90%; }
+  #nitchBody { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "a b" "c b"; column-gap: 32px; align-items: start; }
+  #nitchBody > :nth-child(1) { grid-area: a; } #nitchBody > :nth-child(2) { grid-area: b; } #nitchBody > :nth-child(3) { grid-area: c; }
+  .clues { grid-column: 2; grid-row: 1 / 4; margin-top: 0; }
   .kb { display: none; }
 }
 #cluesBtn { display: none; }
@@ -1124,11 +1130,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (!P) return;
     var pad = getComputedStyle($("app").querySelector(".gridwrap"));
     var inner = $("app").clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
-    var side = inner;
-    if (isWide()) side = Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - 8);
-    side = Math.max(180, side);
-    var cs = Math.floor((side - 4 - (C - 1)) / C);
-    $("checks").style.maxWidth = isWide() ? (cs * C + C + 3) + "px" : "";
+    var wide = isWide(), bar = $("solvedBar"), cs;
+    // Wide screens: the grid fills the window's height above the buttons and, once finished, the finish bar (measured
+    // at the grid's width, so its height is known on the second pass).
+    for (var i = 0; i < (wide && !bar.hidden ? 2 : 1); i++) {
+      var side = wide ? Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - (i ? bar.offsetHeight + 8 : 0) - 8) : inner;
+      cs = Math.floor((Math.max(180, side) - 4 - (C - 1)) / C);
+      $("checks").style.maxWidth = bar.style.maxWidth = wide ? (cs * C + C + 3) + "px" : "";
+    }
     $("grid").style.setProperty("--cs", cs + "px");
     // Phones: a finished grid shrinks so the finish bar fits on screen with the clue box and keys.
     var over = isWide() || $("solvedBar").hidden ? 0 : $("main").scrollHeight - $("main").clientHeight;
@@ -1206,7 +1215,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var barWas = !$("solvedBar").hidden;
     $("solvedBar").hidden = !solved;
     $("nitchBtn").hidden = !(solved && P.nitch);
-    if (solved && P.nitch) { $("nitchBtn").textContent = "Diff: " + ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
+    if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
     if (solved) {
       var nr = g.rv, help = helpText(g);
@@ -2736,13 +2745,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var row = function (k, v) { return '<div class="nrow"><span>' + k + "</span>" + v + "</div>"; },
       md = n % 2 ? t[n >> 1] : (t[n / 2 - 1] + t[n / 2]) / 2, beat = Math.round(100 * t.filter(function (v) { return v > me; }).length / n);
     $("nitchTitle").textContent = p.title;
-    $("nitchBody").innerHTML = "<p>" + (x.f ? "Final" : "Still moving today") + " \u00b7 scored from " + x.c + " reference solvers; times from all " + n + "</p><h4>Field</h4>" +
-      row("NITCH \u00b7 " + ngrade(x.n, 1), nchip(x.n)) + row("Fastest", s(t[0])) + row("Median", s(md)) + row("Average", s(mean(t))) + row("Slowest", s(t[n - 1])) +
+    // Three blocks (field, where you sit, you): stacked on phones, two columns on wide screens.
+    $("nitchBody").innerHTML = "<div><p>" + (x.f ? "Final" : "Still moving today") + " \u00b7 scored from " + x.c + " reference solvers; times from all " + n + "</p><h4>Field</h4>" +
+      row("NITCH \u00b7 " + ngrade(x.n, 1), nchip(x.n)) + row("Fastest", s(t[0])) + row("Median", s(md)) + row("Average", s(mean(t))) + row("Slowest", s(t[n - 1])) + "</div><div>" +
       (m.g.dnf ? "" : '<h4>Where you sit</h4><div class="ncurve">' + ncurve(t, me) + "</div><p>" +
         (beat >= 50 ? "You beat " + beat + "% of solvers" : (100 - beat) + "% of solvers beat you") + "</p>") +
-      "<h4>You</h4>" + row("Your time", m.g.dnf ? '<b class="rv">DNF</b>' : s(me)) +
+      "</div><div><h4>You</h4>" + row("Your time", m.g.dnf ? '<b class="rv">DNF</b>' : s(me)) +
       row("Your usual (last 6 months)", m.u ? s(m.u) : '<span class="sub">after 5 clean solves</span>') +
-      (m.pn ? row("Personal NITCH", nchip(m.pn)) + row("WITCH", nchip(m.w)) : "");
+      (m.pn ? row("Personal NITCH", nchip(m.pn)) + row("WITCH", nchip(m.w)) : "") + "</div>";
     $("nitchSheet").hidden = false;
   }
   $("nitchBtn").addEventListener("click", function () { showNitch(P); });

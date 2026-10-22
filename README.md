@@ -25,6 +25,8 @@ Search for the function name; the comment above each says what it does.
   (`lookup`, `DICTS`).
 - Home: `showHome` (two weeks at a time, `FROM`), filters (`FILT`), Favourites (`showFavs`, `answerOf`), Stats
   (`showStats`, `helpOf`), bell (`checkSubs`, `markOf`, `notes`), Settings (`showSettings`, `applyPrefs`).
+- Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
+  pill and results sheet with `ncurve`), `nitchTable` (Stats).
 
 ## Rules
 - No paper, blog or source names anywhere here (code, README, commits, PR text): display names arrive as data

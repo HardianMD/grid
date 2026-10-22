@@ -1604,6 +1604,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     AW.size = Math.max(180, avail);
     $("ring").style.width = $("ring").style.height = AW.size + "px";
     $("solveBtn").hidden = HARD;
+    $("toGrid").textContent = P.qf ? "Fill squares" : "Put in grid";
     $("finds").hidden = true; AW.found = null;
     buildSlots(); layoutTiles(false); wheelRender();
   }
@@ -1883,7 +1884,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var b = this, s = wheelSet();
     if (s.have.length !== s.open) return toast(s.have.length < s.open ? "Put all " + s.open + " letters in the wheel first" : "The wheel has " + s.have.length + " letters for " + s.open + " empty boxes. Check it holds every letter already in the grid");
     clearTimeout(b.t);
-    if (b.textContent === "Solve") {
+    if (b.textContent === "Solve" && !P.qf) {  // Quickfire solves without asking
       b.textContent = "Show words?";
       b.t = setTimeout(function () { b.textContent = "Solve"; }, 3000);
       return;

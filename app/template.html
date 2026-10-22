@@ -2770,7 +2770,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var pf = prefs(), hideDone = pf.hideDone && !(FILT.status || []).length;
     var match = all.filter(function (p) { return filterOk(p) && !(hideDone && (store.get("crossword:" + p.id) || {}).solved); }), nf = filterCount();
     var from = match.length && !(match[0].date >= FROM) ? weeks2(match[0].date) : FROM;
-    var shown = match.filter(function (p) { return p.date >= from; }), more = match[shown.length];
+    var shown = nf ? match : match.filter(function (p) { return p.date >= from; }), more = match[shown.length];  // a filter shows every match
     $("filterClear").hidden = !nf; $("filterBtn").classList.toggle("on", !!nf);
     $("filterBtn").textContent = nf ? "Filter (" + nf + ")" : "Filter";
     if (!match.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No puzzles match these filters."; list.appendChild(e); }

@@ -570,8 +570,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div class="fgrp"><span>Account</span>
       <div class="set"><label for="setName">Name</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="On edited parsings"></div>
-      <div class="set"><label for="setKey">Key</label><span class="krow" id="keyIn"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste key"><span class="seg"><button type="button" id="keySave">Save</button></span></span>
-        <span class="sval" id="keyOk" hidden>Saved ✓<span class="seg"><button type="button" id="keyRep">Replace</button><button type="button" id="keyDel">Remove</button></span></span></div>
+      <div class="set"><label for="setKey">Key</label><span class="krow" id="keyIn"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste key"><span class="seg"><button type="button" id="keySave">Save</button><button type="button" id="keyUndo" hidden>Undo</button></span></span>
+        <span class="sval" id="keyOk" hidden>Saved ✓<span class="seg"><button type="button" id="keyRep">Replace</button></span></span></div>
       <div class="set"><span>Sync</span><span class="sval"><span id="syncTxt">Signed in</span><span class="seg"><button type="button" id="syncNow">Sync now</button></span></span></div>
       <div class="set"><span>Signed in with Google</span><span class="seg"><button type="button" id="syncBtn">Sign out</button></span></div>
       <div class="set"><span>App updated</span><span class="sval" id="appVer"></span></div>
@@ -2864,11 +2864,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (!FBUSER) return;
     keyRef().get().then(function (d) { keyShow(d.exists && !!d.data().token); });
   }
-  function keyShow(saved) { $("keyOk").hidden = !saved; $("keyIn").hidden = saved; }
-  $("keyRep").addEventListener("click", function () { keyShow(false); $("setKey").focus(); });
-  $("keyDel").addEventListener("click", function () {
-    if (sure(this, "Tap to remove")) keyRef().delete().then(function () { toast("Update key removed"); keyShow(false); }, function (e) { toast("Couldn\u2019t remove the key: " + ((e && e.code) || "error")); });
-  });
+  function keyShow(saved) { $("keyOk").hidden = !saved; $("keyIn").hidden = saved; $("keyUndo").hidden = true; }
+  // Replace opens the box with Undo beside Save, which goes back to the saved key untouched.
+  $("keyRep").addEventListener("click", function () { keyShow(false); $("keyUndo").hidden = false; $("setKey").focus(); });
+  $("keyUndo").addEventListener("click", function () { $("setKey").value = ""; keyShow(true); });
   $("syncNow").addEventListener("click", function () { cloudFlush(); syncOk(); toast("Synced"); });
   $("keySave").addEventListener("click", function () {
     var k = $("setKey").value.trim();

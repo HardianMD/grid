@@ -351,6 +351,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .checks { grid-column: 1; grid-row: 2; align-self: start; }
   .solvedbar { grid-column: 1; grid-row: 3; align-self: start; }
   /* The scores sheet opens as a wider dialog: field and you on the left, the curve on the right. */
+  /* Settings opens as a wide two-column dialog. */
+  #setSheet { align-items: center; }
+  #setSheet .panel { max-width: 980px; border-radius: 14px; max-height: 90%; display: block; column-count: 2; column-gap: 40px; }
+  #setSheet .panel > .srow { column-span: all; margin-bottom: 12px; }
+  #setSheet .fgrp { break-inside: avoid; margin-bottom: 16px; }
   #nitchSheet { align-items: center; }
   #nitchSheet .panel { max-width: 860px; border-radius: 14px; max-height: 90%; }
   #nitchBody { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "a b" "c b"; column-gap: 32px; align-items: start; }

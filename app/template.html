@@ -135,7 +135,8 @@ header .timer.stopped { color: var(--good); }
 .app.qf .main { order: 2; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 16px; margin-bottom: auto; }
 .app.qf .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; margin-inline: auto; }
 .checks .btn.qfa { padding-block: 0; font-size: 26px; line-height: 1; min-width: 40px; }
-.checks .btn.qfa:disabled { opacity: .35; cursor: default; }
+.checks .btn.qfa:disabled, .checks #qfSolve:disabled { opacity: .35; cursor: default; }
+.app.qf #hintBtn { min-width: 68px; }  /* Hint, Reveal and Parse at one width */
 .app.qf .kb { order: 3; }
 .app.qf .gridwrap { padding-inline: 16px; }
 .app.qf .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; background: none; border: 0; }
@@ -1336,7 +1337,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var barWas = !$("solvedBar").hidden;
     $("solvedBar").hidden = !solved || !!P.qf;
     $("app").classList.toggle("fin", solved && !P.qf);
-    $("qfSolve").hidden = locked(w);
+    $("qfSolve").disabled = locked(w);
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));

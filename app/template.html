@@ -165,6 +165,7 @@ html.bigl .hitem .ht span { white-space: normal; }  /* larger list text wraps lo
 /* Difficulty scores: a pill tinted by the score, its results list, and the Stats table. */
 .nb { font: 700 13px var(--f-ui); color: var(--ink); border: 1px solid rgba(0,0,0,.15); border-radius: 999px; padding: 4px 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 button.nb { cursor: pointer; padding: 6px 11px; }
+.hm .nb { margin-left: 6px; padding: 1px 8px; font-size: 12px; }
 .nrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; border-top: 1px solid var(--cross); font: 400 15px var(--f-ui); font-variant-numeric: tabular-nums; }
 #nitchBody h4 { margin: 14px 0 4px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
 #nitchBody .rv { color: var(--warn); }
@@ -506,6 +507,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div class="fgrp"><span>Puzzle list</span>
       <label class="tog">Hide finished puzzles<input type="checkbox" data-p="hideDone"></label>
+      <label class="tog">Show difficulty scores<input type="checkbox" data-p="listN"></label>
+      <span class="lbl" id="setNWhenL">Show it</span><div class="chips" data-p="listNWhen" id="setNWhen"><button type="button" class="chip" data-v="done">Once I’ve finished</button><button type="button" class="chip" data-v="always">Always, before solving too</button></div>
       <span class="lbl">Crosswords to show</span><div class="hidelist" id="setHide"></div>
       <span class="lbl">Text size</span><div class="chips" data-p="listSize"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div>
       <div class="hprev" id="listPrev" aria-hidden="true"></div>
@@ -2528,6 +2531,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       if (pub) ht.appendChild(badgeEl(p));
       var tt = document.createElement("span"); tt.textContent = pub ? p.title.replace(new RegExp("^(The )?" + pub + "\\s+", "i"), "") : p.title; ht.appendChild(tt);
       var hm = document.createElement("div"); hm.className = "hm"; hm.textContent = metaText(p);
+      if (pf.listN && p.nitch && (state === "done" || pf.listNWhen === "always"))
+        hm.insertAdjacentHTML("beforeend", '<span class="nb" style="background:' + ncol(p.nitch.n) + '">' + ngrade(p.nitch.n) + " \u00b7 " + p.nitch.n + "</span>");
       var hs = document.createElement("div"); hs.className = "hs";
       if (state === "done") {
         if (g.dnf) b.classList.add("dnf");
@@ -2601,6 +2606,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       Array.prototype.forEach.call(box.children, function (b) { b.classList.toggle("on", b.dataset.v === v); });
     });
     Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input[data-p]"), function (x) { x.checked = !!pf[x.dataset.p]; });
+    $("setNWhen").hidden = $("setNWhenL").hidden = !pf.listN;
     $("setMode").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
     Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });
     // The example is the top puzzle of the list, as it stands.
@@ -2614,7 +2620,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("setSheet").addEventListener("change", function (e) {
     var k = e.target.dataset.h;
     if (k) { setPref("hide", (prefs().hide || []).filter(function (x) { return x !== k; }).concat(e.target.checked ? [] : [k])); applyPrefs(); }
-    if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); } });
+    if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); if (e.target.dataset.p === "listN") showSettings(); } });
   $("setSheet").addEventListener("click", function (e) {
     var b = e.target.closest(".chips[data-p] .chip"); if (!b) return;
     var p = b.parentNode.dataset.p, v = b.dataset.v;

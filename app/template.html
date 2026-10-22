@@ -1918,10 +1918,12 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function blogName() {
     return P.blog_name || "the blog";
   }
+  // Older parsings name the letter-selection kinds separately; they all read as Letter selection now.
+  function ctype(t) { return String(t || "").replace(/\b(initial|first|final|last|alternate) letters\b/ig, "Letter selection"); }
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
     var x = mine || blog || { type: "Not parsed", wordplay: "The blog has no parsing for this clue. Tap Edit to add your own." };
-    return { mine: !!mine, blog: !!blog, type: x.type, wordplay: x.wordplay || "" };
+    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "" };
   }
   // Blog-style markup: _indicator_ in italics, ~letters~ struck through.
   function markup(el, text) {
@@ -2111,7 +2113,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (d.length) hinted[k] = Math.max(hinted[k] || 0, 1);
   }
   // Editor helpers: clue types as toggles, and a mark-up bar that acts on the selected text.
-  var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Subtraction", "Initial letters", "Final letters", "Alternate letters", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
+  var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Subtraction", "Letter selection", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
   function buildTypeChips(current) {
     var have = current.split(/\s*(?:,|\+)\s*/).filter(Boolean), box = $("typeChips");
     box.innerHTML = "";
@@ -2543,7 +2545,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         var mine = ((store.get("crossword:" + p.id) || {}).parses || {})[f.k], blog = null;
         try { blog = JSON.parse(unscramble(p.parses, p.id))[dir][num]; } catch (er) {}
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
-        var t = document.createElement("i"); t.textContent = r.type; var wp = document.createElement("span"); markup(wp, r.wordplay || "");
+        var t = document.createElement("i"); t.textContent = ctype(r.type); var wp = document.createElement("span"); markup(wp, r.wordplay || "");
         x.appendChild(t); x.appendChild(wp);
         if (mine) { var by = document.createElement("small"); by.textContent = " \u00b7 " + editedBy(); x.appendChild(by); }
       }]].forEach(function (d) {
@@ -2573,11 +2575,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var QF = null;  // {pool, c: the clue in play, name}
   // Parsed types mapped onto the editor's list; anything else is left out of the filter.
   function qfTypes(x) {
-    var out = [], wp = String(x && x.wordplay || "").toLowerCase();
-    String(x && x.type || "").replace(/\band lit\b/ig, "&lit").split(/\s*(?:,|\+|\band\b|\bwith\b)\s*/i).forEach(function (t) {
+    var out = [];
+    ctype(x && x.type).replace(/\band lit\b/ig, "&lit").split(/\s*(?:,|\+|\band\b|\bwith\b)\s*/i).forEach(function (t) {
       t = t.toLowerCase();
       if (t === "hidden reversal") return out.push("Hidden", "Reversal");
-      if (t === "letter selection") t = /alternate|odd|even/.test(wp) ? "alternate letters" : /last|final/.test(wp) ? "final letters" : "initial letters";
       t = TYPES.filter(function (y) { return y.toLowerCase() === t || y.toLowerCase() === t.replace(/ word$/, ""); })[0];
       if (t && out.indexOf(t) < 0) out.push(t);
     });

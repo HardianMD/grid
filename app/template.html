@@ -1906,8 +1906,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see the hint?";
       $("hintYes").textContent = "Show hint";
     }
-    // Settings can skip the question, except when it also offers Find words.
-    if (prefs().noAsk && /^(hint|hint2|reveal)$/.test(act) && $("findBtn").hidden) $("hintYes").click();
+    // Settings can skip the question, except when it also offers Find words; Quickfire never asks.
+    if ((prefs().noAsk || P.qf) && /^(hint|hint2|reveal)$/.test(act) && $("findBtn").hidden) $("hintYes").click();
     else $("hintAsk").hidden = false;
   });
   // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
@@ -2571,15 +2571,17 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // Quickfire: random clues from finished puzzles (solved or DNF), one at a time in a one-row grid with the Easy
   // tools. Nothing is saved, so its hints and reveals never count; the clue-type filter is kept on this device.
   var QF = null;  // {pool, c: the clue in play, name}
-  function qfTypes(t) {
-    var out = [];
-    String(t || "").split(/\s*(?:,|\band\b|\bwith\b)\s*/i).forEach(function (x) {
-      if (!x) return;
-      x = x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
-      x = x === "Hidden word" ? "Hidden" : /^(wordplay|parsing|linked|not parsed)$/i.test(x) ? "Other" : x;
-      if (out.indexOf(x) < 0) out.push(x);
+  // Parsed types mapped onto the editor's list; anything else is left out of the filter.
+  function qfTypes(x) {
+    var out = [], wp = String(x && x.wordplay || "").toLowerCase();
+    String(x && x.type || "").replace(/\band lit\b/ig, "&lit").split(/\s*(?:,|\+|\band\b|\bwith\b)\s*/i).forEach(function (t) {
+      t = t.toLowerCase();
+      if (t === "hidden reversal") return out.push("Hidden", "Reversal");
+      if (t === "letter selection") t = /alternate|odd|even/.test(wp) ? "alternate letters" : /last|final/.test(wp) ? "final letters" : "initial letters";
+      t = TYPES.filter(function (y) { return y.toLowerCase() === t || y.toLowerCase() === t.replace(/ word$/, ""); })[0];
+      if (t && out.indexOf(t) < 0) out.push(t);
     });
-    return out.length ? out : ["Unparsed"];
+    return out;
   }
   function qfPool() {
     var out = [];
@@ -2595,7 +2597,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
           // Only clues whose enumeration matches a fully known answer.
           if (!a || !/^[A-Z]+$/.test(a) || !m || m[1].split(/[,\-\s]+/).reduce(function (n, x) { return n + (+x || 0); }, 0) !== a.length) return;
           var b = blog[dir] && blog[dir][num], x = mine[k] || b;
-          out.push({ p: p, k: k, clue: clue, a: a, blog: b, mine: mine[k], t: qfTypes(x && x.type) });
+          out.push({ p: p, k: k, clue: clue, a: a, blog: b, mine: mine[k], t: qfTypes(x) });
         });
       });
     });
@@ -2642,7 +2644,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var pick = qfPick(), n = {}, box = $("qfTypes");
     QF.pool.forEach(function (c) { c.t.forEach(function (t) { n[t] = (n[t] || 0) + 1; }); });
     box.innerHTML = '<span>Clue types</span><div class="set"><span>Clues in play</span><span class="sval" id="qfCount"></span></div>';
-    Object.keys(n).sort(function (a, b) { return n[b] - n[a] || a.localeCompare(b); }).forEach(function (t) {
+    TYPES.forEach(function (t) {
+      if (!n[t]) return;
       var l = document.createElement("label"), v = document.createElement("span"), x = document.createElement("input");
       l.className = "tog"; l.textContent = t; v.className = "sval"; v.textContent = n[t];
       x.type = "checkbox"; x.dataset.t = t; x.checked = pick.indexOf(t) >= 0;

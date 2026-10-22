@@ -115,11 +115,23 @@ header .timer.stopped { color: var(--good); }
 .tog + .tog { border-top: 1px solid var(--cross); padding-top: 8px; }
 .chip .src { margin-right: 5px; }
 /* Settings: every item is one row, its name on the left and its control on the right, with a rule between rows. */
-#setSheet .fgrp { gap: 0; padding: 14px 0 4px; border-top: 1px solid var(--rule); }
-#setSheet .fgrp > span:first-child { padding-bottom: 2px; }
-#setSheet .set, #setSheet .fgrp > .tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; padding: 6px 0; border-top: 1px solid var(--cross);
+.rows .fgrp { gap: 0; padding: 14px 0 4px; border-top: 1px solid var(--rule); }
+.rows .fgrp > span:first-child { padding-bottom: 2px; }
+.rows .set, .rows .fgrp > .tog { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 46px; padding: 6px 0; border-top: 1px solid var(--cross);
   font: 400 15px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
-#setSheet .fgrp > :nth-child(2) { border-top: 0; }
+.rows .fgrp > :nth-child(2) { border-top: 0; }
+/* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
+.app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #checkWordBtn, .app.qf #checkAllBtn, .app.qf #noAns,
+.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app:not(.qf) .qfo { display: none !important; }
+/* The clue on top, then the squares and buttons, in one centred column (the keys stay at the foot on phones). */
+.app.qf .dock { display: contents; }
+.app.qf .bar { order: 1; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 680px; margin: 12px auto 0; }
+.app.qf .main { order: 2; flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 14px; }
+.app.qf .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; }
+.app.qf .kb { order: 3; }
+.app.qf .c .n { display: none; }
+.app.qf .gridwrap { padding-inline: 16px; }
+.grid.no .c { animation: no .7s; } @keyframes no { 0%, 50% { background: var(--warn-bg); } }
 .sval { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 14px; }
 .seg button.sure { background: var(--bad); color: #fff; }
 .pv { display: grid; gap: 6px; padding: 10px 0 8px; border-top: 1px solid var(--cross); }
@@ -367,7 +379,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .solvedbar { grid-column: 1; grid-row: 3; align-self: start; }
   /* The scores sheet opens as a wider dialog: field and you on the left, the curve on the right. */
   /* Settings opens as a wide two-column dialog. */
-  #setSheet { align-items: center; }
+  #setSheet, #qfSheet { align-items: center; }
+  #qfSheet .panel { max-width: 520px; border-radius: 14px; max-height: 90%; }
   #setSheet .panel { max-width: 980px; border-radius: 14px; max-height: 90%; }
   /* Solving beside Account, then Clues beside Puzzle list with their previews level at the foot of the row. */
   .scols { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: dense; gap: 0 40px; }
@@ -425,6 +438,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   <header class="pad">
     <button class="btn back" id="homeBtn" type="button" aria-label="All puzzles">‹</button>
     <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
+    <button class="btn qfo" id="qfFilt" type="button">Filter</button>
     <span class="timer" id="timer" aria-label="Time">0:00</span>
     <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
     <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"></button>
@@ -440,6 +454,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <button class="btn icon" id="dictBtn" type="button" hidden aria-label="Dictionary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3 4.5v14c4 0 7 .5 9 2 2-1.5 5-2 9-2v-14c-4 0-7 .5-9 2zM12 6.5v14"/></svg></button>
     <button class="btn icon" id="hintBtn" type="button">Hint</button>
     <button class="btn solid" id="submitBtn" type="button" hidden>Submit puzzle</button>
+    <button class="btn solid qfo" id="qfSolve" type="button">Solve</button><button class="btn qfo" id="qfNext" type="button">Next</button>
   </div>
   <div class="solvedbar pad" id="solvedBar" hidden><span id="solvedTxt"></span><span class="sbtns"><button class="nb" id="nitchBtn" type="button" hidden></button><button class="btn" id="editBtn" type="button" hidden>Edit</button><a class="btn" id="blogLink" target="_blank" rel="noopener"></a></span></div>
   <div class="clues pad" id="clues">
@@ -475,7 +490,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
     <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="problems" id="problems" role="status" hidden></div>
-    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
+    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><button class="btn" id="qfBtn" type="button">Quickfire</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
       <div class="fgrp"><span>Status</span><div class="chips" id="fStatus"></div></div>
       <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
@@ -499,8 +514,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     <div id="noteList" style="display:grid;gap:8px"></div>
   </div>
 </div>
+<div class="sheet" id="qfSheet" hidden>
+  <div class="panel pad rows" role="dialog" aria-labelledby="qfTitle">
+    <div class="srow"><h3 id="qfTitle">Quickfire filter</h3><button class="btn" id="qfDone" type="button">Done</button></div>
+    <div class="fgrp" id="qfTypes"></div>
+  </div>
+</div>
 <div class="sheet" id="setSheet" hidden>
-  <div class="panel pad" role="dialog" aria-labelledby="setTitle">
+  <div class="panel pad rows" role="dialog" aria-labelledby="setTitle">
     <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Close</button></div>
     <div class="scols">
     <div class="fgrp"><span>Solving</span>
@@ -925,6 +946,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     return Object.keys(groups).map(function (k) { return groups[k]; });
   }
   function wordName(w) {
+    if (P && P.qf) return QF.name;
     if (!w.parts) return w.num + (w.dir === "a" ? " Across" : " Down");
     var same = w.parts.every(function (x) { return x.dir === w.dir; });
     return same ? w.parts.map(function (x) { return x.num; }).join(", ") + (w.dir === "a" ? " Across" : " Down")
@@ -987,7 +1009,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     words.sort(function (x, y) { return x.dir === y.dir ? x.num - y.num : (x.dir === "a" ? -1 : 1); });
     words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
 
-    var saved = store.get("crossword:" + p.id) || {};
+    $("app").classList.toggle("qf", !!p.qf);
+    var saved = p.qf ? {} : store.get("crossword:" + p.id) || {};
     if (blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
     fill = [];
     for (r = 0; r < R; r++) { fill.push([]); for (c = 0; c < C; c++) fill[r].push((saved.fill && saved.fill[r] && saved.fill[r][c] || " ").trim()); }
@@ -1015,11 +1038,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     ok = {};
     (saved.ok || []).forEach(function (k) { ok[k] = 1; });
     if (!sel) { var w0 = words[0]; sel = { r: w0.cells[0][0], c: w0.cells[0][1], dir: w0.dir }; }
-    store.set("crossword:last", p.id);
+    if (!p.qf) store.set("crossword:last", p.id);
     elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null; EDITED = !!saved.ed;
     startClock();
     build();
-    setMode(saved.mode || lastMode(p), true);
+    setMode(p.qf ? "easy" : saved.mode || lastMode(p), true);
     USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
     if (USED < 0 && solved) USED = RANK[MODE];  // older finished records: the mode it was played in
     REV = !!saved.rev; REVW = saved.revw || {};
@@ -1087,6 +1110,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // The clock and the cursor alone don't date or upload the record: a device left open on a puzzle would otherwise
   // look newer than progress made since on another device and overwrite it.
   function save() {
+    if (P.qf) return;
     var k = "crossword:" + P.id, old = store.get(k);
     if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     var rec = {
@@ -1174,6 +1198,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       cs = Math.floor((Math.max(180, side) - 4 - (C - 1)) / C);
       $("checks").style.maxWidth = bar.style.maxWidth = wide ? (cs * C + C + 3) + "px" : "";
     }
+    if (P.qf) cs = Math.min(cs, 52);
     $("grid").style.setProperty("--cs", cs + "px");
     // Phones: a finished grid shrinks so the finish bar fits on screen with the clue box and keys.
     var over = isWide() || $("solvedBar").hidden ? 0 : $("main").scrollHeight - $("main").clientHeight;
@@ -1241,7 +1266,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("hintBtn").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
-    if (SOL && !HARD && !solved && done === total && allRight()) {
+    if (SOL && !HARD && !solved && !P.qf && done === total && allRight()) {
       stopClock(); solved = true; save();
       toast("Solved in " + fmt(elapsed));
       return render();
@@ -1249,8 +1274,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("timer").classList.toggle("stopped", solved);
     var bl = solved && blogFor(P);
     var barWas = !$("solvedBar").hidden;
-    $("solvedBar").hidden = !solved;
-    $("app").classList.toggle("fin", solved);
+    $("solvedBar").hidden = !solved || !!P.qf;
+    $("app").classList.toggle("fin", solved && !P.qf);
+    $("qfSolve").hidden = locked(w);
+    if (P.qf) $("meta").textContent = locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "";
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
@@ -1265,7 +1292,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard" && !EDITED);  // once only
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
-    if (solved || barWas) size();
+    if ((solved || barWas) && !P.qf) size();
     scrollClue(w.el);
   }
 
@@ -1994,7 +2021,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }
     $("parseNote").hidden = false;
     $("parseForm").hidden = true;
-    $("parseEdit").hidden = false; $("parseReset").hidden = !r.mine && !myDefs[key];
+    $("parseEdit").hidden = !!P.qf; $("parseReset").hidden = P.qf || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
   }
@@ -2309,7 +2336,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   });
 
   document.addEventListener("keydown", function (e) {
-    if (!$("home").hidden || !$("sheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!$("home").hidden || !$("sheet").hidden || !$("qfSheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key;
     if (AW.open) {
       if (k === "Escape") wheelClose();
@@ -2324,6 +2351,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     else if (k === "ArrowRight") move(0, 1);
     else if (k === "ArrowUp") move(-1, 0);
     else if (k === "ArrowDown") move(1, 0);
+    else if (k === "Enter" && P.qf) $("qfSolve").click();
     else if (k === "Tab" || k === "Enter") nextWord(e.shiftKey ? -1 : 1);
     else if (k === " ") tapCell(sel.r, sel.c);
     else return;
@@ -2465,7 +2493,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var TAB = "";
   ["favs", "stats"].forEach(function (t) { $(t + "Btn").addEventListener("click", function () { TAB = TAB === t ? "" : t; showHome(); }); });
   // A favourite's answer, from the puzzle's grid and solution (or the solver's own answer), without loading the puzzle.
-  function answerOf(p, k, clue) {
+  function rawAnswer(p, k) {
     var R0 = p.grid.length, C0 = p.grid[0].length, at = {}, n = 0, flat = "";
     var open = function (r, c) { return r >= 0 && r < R0 && c >= 0 && c < C0 && p.grid[r][c] !== "#"; };
     for (var r = 0; r < R0; r++) for (var c = 0; c < C0; c++) {
@@ -2477,7 +2505,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       for (var rr = rc[0], cc = rc[1]; open(rr, cc); rr += dr, cc += 1 - dr) s += flat[rr * C0 + cc] || "";
       return s;
     }).join(""));
-    if (!a || a.indexOf("?") >= 0) return "The answer isn\u2019t known yet.";
+    return a && a.indexOf("?") < 0 ? a : "";
+  }
+  function answerOf(p, k, clue) {
+    var a = rawAnswer(p, k);
+    if (!a) return "The answer isn\u2019t known yet.";
     var br = seps(parseEnum(joinEnum(clue)));
     return Array.from(a).map(function (ch, i) { return ch + (br[i] || ""); }).join("");
   }
@@ -2525,6 +2557,97 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       box.appendChild(el);
     });
   }
+  // Quickfire: random clues from finished puzzles (solved or DNF), one at a time in a one-row grid with the Easy
+  // tools. Nothing is saved, so its hints and reveals never count; the clue-type filter is kept on this device.
+  var QF = null;  // {pool, c: the clue in play, name}
+  function qfTypes(t) {
+    var out = [];
+    String(t || "").split(/\s*(?:,|\band\b|\bwith\b)\s*/i).forEach(function (x) {
+      if (!x) return;
+      x = x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+      x = x === "Hidden word" ? "Hidden" : /^(wordplay|parsing|linked|not parsed)$/i.test(x) ? "Other" : x;
+      if (out.indexOf(x) < 0) out.push(x);
+    });
+    return out.length ? out : ["Unparsed"];
+  }
+  function qfPool() {
+    var out = [];
+    PUZZLES.forEach(function (p) {
+      if (!/^(Solved|DNF)$/.test(statusOf(p))) return;
+      var mine = (store.get("crossword:" + p.id) || {}).parses || {}, blog = {}, tails = {};
+      try { blog = JSON.parse(unscramble(p.parses, p.id)); } catch (e) {}
+      linksFor(p).forEach(function (g) { g.slice(1).forEach(function (k) { tails[k] = 1; }); });
+      ["a", "d"].forEach(function (dir) {
+        var list = p[dir === "a" ? "across" : "down"] || {};
+        Object.keys(list).forEach(function (num) {
+          var k = dir + num, a = !tails[k] && rawAnswer(p, k), clue = joinEnum(list[num]), m = clue.match(/\(([\d,\-\s]+)\)\s*$/);
+          // Only clues whose enumeration matches a fully known answer.
+          if (!a || !/^[A-Z]+$/.test(a) || !m || m[1].split(/[,\-\s]+/).reduce(function (n, x) { return n + (+x || 0); }, 0) !== a.length) return;
+          var b = blog[dir] && blog[dir][num], x = mine[k] || b;
+          out.push({ p: p, k: k, clue: clue, a: a, blog: b, mine: mine[k], t: qfTypes(x && x.type) });
+        });
+      });
+    });
+    return out;
+  }
+  function qfPick() { return (store.get("crossword:qf") || {}).types || []; }
+  function qfMatch() {
+    var pick = qfPick();
+    return QF.pool.filter(function (c) { return !pick.length || c.t.some(function (t) { return pick.indexOf(t) >= 0; }); });
+  }
+  function openQuickfire() {
+    QF = { pool: qfPool() };
+    if (!QF.pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
+    showList(false); $("home").hidden = true;
+    qfNext();
+  }
+  function qfNext() {
+    var pool = qfMatch().filter(function (c) { return c !== QF.c; });
+    if (!pool.length) pool = qfMatch();
+    if (!pool.length) return toast("No clues of these types yet");
+    var c = QF.c = pool[Math.floor(Math.random() * pool.length)], dir = c.k[0], num = c.k.slice(1), d = null, rec = store.get("crossword:" + c.p.id) || {};
+    QF.name = num + (dir === "a" ? " Across" : " Down");
+    try { d = JSON.parse(unscramble(c.p.hints, c.p.id))[dir][num]; } catch (e) {}
+    load({ id: "quickfire", qf: 1, title: "Quickfire", grid: [c.a.replace(/./g, ".")], across: { 1: c.clue },
+      blog: c.p.blog, blog_name: c.p.blog_name, blog_keys: (c.p.blog_keys || []).indexOf(c.k) >= 0 ? ["a1"] : [] });
+    SOL = [c.a]; DEFS = d ? { a: { 1: d } } : null; PARSES = c.blog ? { a: { 1: c.blog } } : null;
+    myParses = c.mine ? { a1: c.mine } : {}; myDefs = (rec.defs || {})[c.k] ? { a1: rec.defs[c.k] } : {};
+    render();
+  }
+  $("qfBtn").addEventListener("click", openQuickfire);
+  $("qfNext").addEventListener("click", qfNext);
+  $("qfSolve").addEventListener("click", function () {
+    var w = words[0];
+    if (!filled(w)) return toast("Fill every square first");
+    if (allRight()) { w.cells.forEach(function (rc) { ok[rc[0] + "," + rc[1]] = 1; }); solved = true; flash(w); toast("Correct"); }
+    else {
+      w.cells.forEach(function (rc) { fill[rc[0]][rc[1]] = ""; }); sel = { r: 0, c: 0, dir: "a" }; toast("Incorrect, try again");
+      $("grid").classList.remove("no"); void $("grid").offsetWidth; $("grid").classList.add("no");
+    }
+    render();
+  });
+  // The filter: a switch per clue type, read from the parsings (none on: every type).
+  function qfFilter() {
+    var pick = qfPick(), n = {}, box = $("qfTypes");
+    QF.pool.forEach(function (c) { c.t.forEach(function (t) { n[t] = (n[t] || 0) + 1; }); });
+    box.innerHTML = '<span>Clue types</span><div class="set"><span>Clues in play</span><span class="sval" id="qfCount"></span></div>';
+    Object.keys(n).sort(function (a, b) { return n[b] - n[a] || a.localeCompare(b); }).forEach(function (t) {
+      var l = document.createElement("label"), v = document.createElement("span"), x = document.createElement("input");
+      l.className = "tog"; l.textContent = t; v.className = "sval"; v.textContent = n[t];
+      x.type = "checkbox"; x.dataset.t = t; x.checked = pick.indexOf(t) >= 0;
+      v.appendChild(x); l.appendChild(v); box.appendChild(l);
+    });
+    $("qfCount").textContent = qfMatch().length + (pick.length ? "" : ", all types");
+  }
+  $("qfFilt").addEventListener("click", function () { QF.was = qfPick().join(); qfFilter(); $("qfSheet").hidden = false; });
+  $("qfTypes").addEventListener("change", function (e) {
+    var t = e.target.dataset.t, pick = qfPick().filter(function (x) { return x !== t; });
+    store.local("crossword:qf", { types: e.target.checked ? pick.concat([t]) : pick });
+    $("qfCount").textContent = qfMatch().length + (qfPick().length ? "" : ", all types");
+  });
+  function qfDone() { $("qfSheet").hidden = true; if (qfPick().join() !== QF.was) qfNext(); }
+  $("qfDone").addEventListener("click", qfDone);
+  $("qfSheet").addEventListener("click", function (e) { if (e.target === this) qfDone(); });
   // The list shows two weeks, from today or from the newest puzzle the filters match; each View more adds the two
   // weeks before the newest puzzle still hidden.
   function weeks2(d) { var a = new Date(d + "T12:00:00"); a.setDate(a.getDate() - 13); return d ? a.toISOString().slice(0, 10) : ""; }

@@ -2744,7 +2744,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     ["favs", "stats"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
     $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats";
     if (TAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); if (TAB === "favs") showFavs(); else showStats(); }
-    var list = $("homeList"), last = null, todo = 0, done = 0;
+    var list = $("homeList"), last = null;
     list.innerHTML = "";
     var all = PUZZLES.slice().sort(function (x, y) { return (y.date || "").localeCompare(x.date || "") || y.id.localeCompare(x.id); });
     var pf = prefs(), hideDone = pf.hideDone && !(FILT.status || []).length;
@@ -2762,7 +2762,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
         var h = document.createElement("h2"); h.className = "hday"; h.textContent = dayLabel(p.date); list.appendChild(h);
       }
       var b = document.createElement("button"), state = g.solved ? "done" : g.n ? "prog" : "new";
-      if (state === "done") done++; else if (state === "new") todo++;
       b.type = "button"; b.className = "hitem " + state;
       var ht = document.createElement("div"); ht.className = "ht";
       if (pub) ht.appendChild(badgeEl(p));
@@ -2790,6 +2789,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       mb.addEventListener("click", function () { FROM = weeks2(more.date); showHome(true); });
       list.appendChild(mb);
     }
+    // The summary counts every puzzle, not just those in view.
+    var todo = 0, done = 0;
+    PUZZLES.forEach(function (p) { var g = progressOf(p); if (g.solved) done++; else if (!g.n) todo++; });
     $("homeSum").textContent = todo + " new \u00b7 " + done + " completed";
     $("home").hidden = false;
     if (keepScroll !== true) $("home").scrollTop = 0;

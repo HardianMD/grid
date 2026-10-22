@@ -25,6 +25,8 @@ Search for the function name; the comment above each says what it does.
   (`lookup`, `DICTS`).
 - Home: `showHome` (two weeks at a time, `FROM`), filters (`FILT`), Favourites (`showFavs`, `answerOf`), Stats
   (`showStats`, `helpOf`), bell (`checkSubs`, `markOf`, `notes`), Settings (`showSettings`, `applyPrefs`).
+- Quickfire: `qfPool` (clues from finished puzzles, with `rawAnswer` and `qfTypes`), `qfNext` (loads one clue as a one-row
+  puzzle, `P.qf`: Easy tools, nothing saved), the clue-type filter (`crossword:qf`, this device only).
 - Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
   pill and results sheet with `ncurve`), `nitchTable` (Stats).
 

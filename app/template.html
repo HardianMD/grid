@@ -122,11 +122,10 @@ header .timer.stopped { color: var(--good); }
 .rows .fgrp > :nth-child(2) { border-top: 0; }
 /* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
 .app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #checkWordBtn, .app.qf #checkAllBtn, .app.qf #noAns,
-.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead, .home .qfo { display: none !important; }
-/* The home page's heading, summary and tabs move to the top of Quickfire, with its Filter under the icons. */
+.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead { display: none !important; }
+/* The home page's heading, summary and tabs move to the top of Quickfire; there the Filter tab opens Quickfire's own filter. */
 .qfhead { flex: 0 0 auto; padding-top: env(safe-area-inset-top, 0px); }
 .hsum.qft { font-weight: 700; color: var(--ink); }
-.hsub .qfo { margin-block: -6px; }  /* the tabs stay where the home page has them */
 /* The clue, then the squares and buttons, centred on the screen in one column (the keys stay at the foot on phones).
    The clue is drawn like the Settings preview; the squares are tiles in a row, with a wider gap between words. */
 .app.qf .dock { display: contents; }
@@ -505,7 +504,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
     <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
-    <div class="hsub"><span class="hsum" id="homeSum"></span><button class="btn qfo" id="qfFilt" type="button">Filter</button></div>
+    <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="problems" id="problems" role="status" hidden></div>
     <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><button class="btn" id="qfBtn" type="button">Quickfire</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
@@ -2542,8 +2541,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   }
   function filterChanged() { store.set("crossword:filter", FILT); buildFilters(); showHome(true); }
   $("filterBtn").addEventListener("click", function () {
+    if ($("home").hidden) { QF.was = qfPick().join(); qfFilter(); $("qfSheet").hidden = false; return; }  // Quickfire's own filter
     var open = $("fpanel").hidden;
-    if (TAB || $("home").hidden) { TAB = ""; showHome(true); }
+    if (TAB) { TAB = ""; showHome(true); }
     $("fpanel").hidden = !open; this.setAttribute("aria-expanded", String(open));
     if (open) buildFilters();
   });
@@ -2710,7 +2710,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     });
     $("qfCount").textContent = qfMatch().length + (pick.length ? "" : ", all types");
   }
-  $("qfFilt").addEventListener("click", function () { QF.was = qfPick().join(); qfFilter(); $("qfSheet").hidden = false; });
   $("qfTypes").addEventListener("change", function (e) {
     var t = e.target.dataset.t, pick = qfPick().filter(function (x) { return x !== t; });
     store.local("crossword:qf", { types: e.target.checked ? pick.concat([t]) : pick });

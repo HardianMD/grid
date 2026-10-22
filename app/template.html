@@ -286,7 +286,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .fbar { display: flex; align-items: center; gap: clamp(6px, 2vw, 10px); margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
 .fbar .btn { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding-inline: clamp(8px, 2.6vw, 12px); }  /* the four tabs fit a phone's width */
-.hsub #filterClear { margin-block: -4px; } .qfhead #filterClear { display: none; }
+.fhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .fhead .btn { margin-block: -4px; }
 .fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
@@ -515,11 +515,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
     <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
-    <div class="hsub"><span class="hsum" id="homeSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
+    <div class="hsub"><span class="hsum" id="homeSum"></span></div>
     <div class="problems" id="problems" role="status" hidden></div>
     <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><button class="btn" id="qfBtn" type="button">Quickfire</button></div>
     <div class="fpanel" id="fpanel" hidden>
-      <div class="fgrp"><span>Status</span><div class="chips" id="fStatus"></div></div>
+      <div class="fgrp"><div class="fhead"><span>Status</span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div><div class="chips" id="fStatus"></div></div>
       <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
       <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
       <div class="fgrp"><label for="fSetter">Setter</label><select id="fSetter"></select></div>

@@ -2790,9 +2790,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       list.appendChild(mb);
     }
     // The summary counts every puzzle, not just those in view.
-    var todo = 0, done = 0;
-    PUZZLES.forEach(function (p) { var g = progressOf(p); if (g.solved) done++; else if (!g.n) todo++; });
-    $("homeSum").textContent = todo + " new \u00b7 " + done + " completed";
+    var todo = 0, prog = 0, done = 0;
+    PUZZLES.forEach(function (p) { var g = progressOf(p); if (g.solved) done++; else if (g.n) prog++; else todo++; });
+    $("homeSum").textContent = todo + " new \u00b7 " + prog + " in progress \u00b7 " + done + " completed";
     $("home").hidden = false;
     if (keepScroll !== true) $("home").scrollTop = 0;
   }

@@ -1121,7 +1121,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   // The clock and the cursor alone don't date or upload the record: a device left open on a puzzle would otherwise
   // look newer than progress made since on another device and overwrite it.
   function save() {
-    if (P.qf) return;
+    if (P.qf) return qfSave();
     var k = "crossword:" + P.id, old = store.get(k);
     if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     var rec = {
@@ -1132,6 +1132,18 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var same = old && core(old) === core(rec);
     rec.at = same ? old.at : Date.now();
     (same ? store.local : store.set)(k, rec);
+  }
+  // Quickfire saves only parsing edits, into the clue's own puzzle record.
+  function qfSave() {
+    var k = "crossword:" + QF.c.p.id, old = store.get(k) || {}, rec = Object.assign({}, old);
+    [["parses", myParses], ["defs", myDefs]].forEach(function (f) {
+      var m = Object.assign({}, old[f[0]]);
+      if (f[1].a1) m[QF.c.k] = f[1].a1; else delete m[QF.c.k];
+      if (old[f[0]] || f[1].a1) rec[f[0]] = m;
+    });
+    if (core(rec) === core(old)) return;
+    rec.at = Date.now(); store.set(k, rec);
+    QF.c.mine = myParses.a1; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
   }
   function core(v) {
     var o = {}; Object.keys(v).forEach(function (k) { if (k !== "time" && k !== "sel" && k !== "at") o[k] = v[k]; });
@@ -1267,6 +1279,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     for (var fz = parseFloat(getComputedStyle(nb).fontSize); nb.scrollHeight > nb.clientHeight + 1 && fz > 12;) nb.style.fontSize = --fz + "px";
     // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
     $("dictBtn").hidden = !filled(w);
+    $("wheelBtn").hidden = P.qf && locked(w);  // a solved or revealed Quickfire clue swaps the wheel for the dictionary
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = CHAMP || !!SUB || solved || !known(w);
@@ -1907,7 +1920,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       $("hintYes").textContent = "Show hint";
     }
     // Settings can skip the question, except when it also offers Find words; Quickfire never asks.
-    if ((prefs().noAsk || P.qf) && /^(hint|hint2|reveal)$/.test(act) && $("findBtn").hidden) $("hintYes").click();
+    if (/^(hint|hint2|reveal)$/.test(act) && (P.qf || prefs().noAsk && $("findBtn").hidden)) $("hintYes").click();
     else $("hintAsk").hidden = false;
   });
   // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
@@ -1918,8 +1931,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function blogName() {
     return P.blog_name || "the blog";
   }
-  // Older parsings name the letter-selection kinds separately; they all read as Letter selection now.
-  function ctype(t) { return String(t || "").replace(/\b(initial|first|final|last|alternate) letters\b/ig, "Letter selection"); }
+  // Older names for the editor's clue types.
+  function ctype(t) {
+    return String(t || "").replace(/\b(initial|first|final|last|alternate) letters\b/ig, "Letter selection").replace(/\bhidden reversal\b/ig, "Hidden, Reversal")
+      .replace(/\bhidden word\b/ig, "Hidden").replace(/\bsubtraction\b/ig, "Deletion").replace(/\b(letter swap|letter move|substitution)\b/ig, "Letter change");
+  }
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
     var x = mine || blog || { type: "Not parsed", wordplay: "The blog has no parsing for this clue. Tap Edit to add your own." };
@@ -2034,7 +2050,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     }
     $("parseNote").hidden = false;
     $("parseForm").hidden = true;
-    $("parseEdit").hidden = !!P.qf; $("parseReset").hidden = P.qf || !r.mine && !myDefs[key];
+    $("parseEdit").hidden = false; $("parseReset").hidden = !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
   }
@@ -2113,7 +2129,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     if (d.length) hinted[k] = Math.max(hinted[k] || 0, 1);
   }
   // Editor helpers: clue types as toggles, and a mark-up bar that acts on the selected text.
-  var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Subtraction", "Letter selection", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
+  var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Letter selection", "Letter change", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
   function buildTypeChips(current) {
     var have = current.split(/\s*(?:,|\+)\s*/).filter(Boolean), box = $("typeChips");
     box.innerHTML = "";
@@ -2577,9 +2593,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function qfTypes(x) {
     var out = [];
     ctype(x && x.type).replace(/\band lit\b/ig, "&lit").split(/\s*(?:,|\+|\band\b|\bwith\b)\s*/i).forEach(function (t) {
-      t = t.toLowerCase();
-      if (t === "hidden reversal") return out.push("Hidden", "Reversal");
-      t = TYPES.filter(function (y) { return y.toLowerCase() === t || y.toLowerCase() === t.replace(/ word$/, ""); })[0];
+      t = TYPES.filter(function (y) { return y.toLowerCase() === t.toLowerCase(); })[0];
       if (t && out.indexOf(t) < 0) out.push(t);
     });
     return out;

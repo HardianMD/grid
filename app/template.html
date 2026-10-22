@@ -123,14 +123,25 @@ header .timer.stopped { color: var(--good); }
 /* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
 .app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #checkWordBtn, .app.qf #checkAllBtn, .app.qf #noAns,
 .app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app:not(.qf) .qfo { display: none !important; }
-/* The clue on top, then the squares and buttons, in one centred column (the keys stay at the foot on phones). */
+/* The clue, then the squares and buttons, centred on the screen in one column (the keys stay at the foot on phones).
+   The clue is drawn like the Settings preview; the squares are tiles in a row, with a wider gap between words. */
 .app.qf .dock { display: contents; }
-.app.qf .bar { order: 1; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 680px; margin: 12px auto 0; }
-.app.qf .main { order: 2; flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 14px; }
+.app.qf .bar { order: 1; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 680px; margin: auto auto 0; }
+.app.qf .bar .now { flex: 1; align-self: stretch; display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: visible; padding: 10px 14px; font: calc(16px * var(--cz))/1.3 var(--f-clue); }
+.app.qf .now .tag { font-family: var(--f-ui); }
+.app.qf .main { order: 2; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 16px; margin-bottom: auto; }
 .app.qf .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; }
 .app.qf .kb { order: 3; }
-.app.qf .c .n { display: none; }
 .app.qf .gridwrap { padding-inline: 16px; }
+.app.qf .grid { display: flex; gap: 4px; background: none; border: 0; }
+.app.qf .c { box-sizing: border-box; width: var(--cs); height: var(--cs); border: 1.5px solid var(--rule); border-radius: 8px; background: var(--sheet); }
+.app.qf .c.word { background: var(--sheet); }
+.app.qf .c.word.cur { border-color: var(--accent); background: var(--word); }
+.app.qf .c.word.ok { border-color: var(--ok-word); background: var(--good-bg); color: var(--good); }
+.app.qf .c.word.rv { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn); }
+.app.qf .c .n, .app.qf .c.br::after { display: none; }
+.app.qf .c.br, .app.qf .c.hr { margin-right: 8px; }
+.app.qf .c.hr .l::after { right: -8px; width: 6px; background: var(--ink-soft); transform: translate(0, -50%); }
 .grid.no .c { animation: no .7s; } @keyframes no { 0%, 50% { background: var(--warn-bg); } }
 .sval { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 14px; }
 .seg button.sure { background: var(--bad); color: #fff; }
@@ -1198,7 +1209,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       cs = Math.floor((Math.max(180, side) - 4 - (C - 1)) / C);
       $("checks").style.maxWidth = bar.style.maxWidth = wide ? (cs * C + C + 3) + "px" : "";
     }
-    if (P.qf) cs = Math.min(cs, 52);
+    if (P.qf) cs = Math.min(52, Math.floor((inner - 4 * (C - 1) - 8 * words[0].breaks.length) / C));
     $("grid").style.setProperty("--cs", cs + "px");
     // Phones: a finished grid shrinks so the finish bar fits on screen with the clue box and keys.
     var over = isWide() || $("solvedBar").hidden ? 0 : $("main").scrollHeight - $("main").clientHeight;

@@ -114,6 +114,10 @@ header .timer.stopped { color: var(--good); }
 .btn.out { justify-self: start; }
 #setSheet .fgrp { border-top: 1px solid var(--rule); padding-top: 12px; }
 .tog + .tog { border-top: 1px solid var(--cross); padding-top: 8px; }
+.hidelist { display: grid; gap: 8px; }
+.hidehead { margin-top: 6px; }
+/* Settings: a divider above every item but the first in each group. */
+#setSheet .fgrp > .lbl:not(:nth-child(2)), #setSheet .fgrp > .tog:not(:nth-child(2)), .hidehead:not(:first-child) { border-top: 1px solid var(--cross); padding-top: 8px; }
 .chip .src { margin-right: 5px; }
 .chip .sw { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; border: 1px solid var(--rule); vertical-align: -1px; }
 /* The example clue in Settings, drawn like the clue box above the keyboard. */
@@ -502,7 +506,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     </div>
     <div class="fgrp"><span>Puzzle list</span>
       <label class="tog">Hide finished puzzles<input type="checkbox" data-p="hideDone"></label>
-      <span class="lbl">Crosswords to show</span><div class="chips" data-p="hide" id="setHide"></div>
+      <span class="lbl">Crosswords to show</span><div class="hidelist" id="setHide"></div>
       <span class="lbl">Text size</span><div class="chips" data-p="listSize"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">Extra large</button></div>
       <div class="hprev" id="listPrev" aria-hidden="true"></div>
     </div>
@@ -2578,20 +2582,25 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var pf = prefs(), start = pf.start || "last", m = pf.mode || "easy";
     $("setName").value = pf.name || "";
     $("setHide").innerHTML = "";
-    uniq(kindOf).forEach(function (k) {
-      var b = document.createElement("button"), p = PUZZLES.filter(function (x) { return kindOf(x) === k; })[0];
-      b.type = "button"; b.className = "chip"; b.dataset.v = k;
-      if (pubOf(p)) b.appendChild(badgeEl(p));
-      // A shown paper's chip takes its badge colours.
-      if (p.badge && (pf.hide || []).indexOf(k) < 0) { b.style.background = b.style.borderColor = p.badge.bg; b.style.color = p.badge.fg; }
-      b.appendChild(document.createTextNode(pubOf(p) ? typeOf(p) : k)); $("setHide").appendChild(b);
+    // Crosswords to show: each paper's badge, then a switch per crossword (puzzles with no paper last, as Other).
+    var last = null;
+    uniq(kindOf).sort(function (a, b) { return !pubOf(firstOf(a)) - !pubOf(firstOf(b)); }).forEach(function (k) {
+      var p = firstOf(k), pub = pubOf(p) || "Other", l = document.createElement("label"), x = document.createElement("input");
+      if (pub !== last) {
+        var h = document.createElement("div"); h.className = "hidehead";
+        h.appendChild(pubOf(p) ? badgeEl(p) : Object.assign(document.createElement("i"), { className: "src", textContent: "Other" }));
+        $("setHide").appendChild(h); last = pub;
+      }
+      l.className = "tog"; l.textContent = pubOf(p) ? typeOf(p) : k;
+      x.type = "checkbox"; x.dataset.h = k; x.checked = (pf.hide || []).indexOf(k) < 0;
+      l.appendChild(x); $("setHide").appendChild(l);
     });
-    // Chips: the saved choice, else the first; hide lists the crosswords not shown, so its chips are on when shown.
+    // Chips: the saved choice, else the first.
     Array.prototype.forEach.call(document.querySelectorAll("#setSheet .chips[data-p]"), function (box) {
       var p = box.dataset.p, v = pf[p] || box.firstElementChild && box.firstElementChild.dataset.v;
-      Array.prototype.forEach.call(box.children, function (b) { b.classList.toggle("on", p === "hide" ? (pf.hide || []).indexOf(b.dataset.v) < 0 : b.dataset.v === v); });
+      Array.prototype.forEach.call(box.children, function (b) { b.classList.toggle("on", b.dataset.v === v); });
     });
-    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input"), function (x) { x.checked = !!pf[x.dataset.p]; });
+    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input[data-p]"), function (x) { x.checked = !!pf[x.dataset.p]; });
     $("setMode").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
     Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });
     // The example is the top puzzle of the list, as it stands.
@@ -2601,16 +2610,17 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   $("title").addEventListener("click", function () { this.parentNode.classList.toggle("full"); size(); });
   $("setBtn").addEventListener("click", showSettings); $("setBtn2").addEventListener("click", showSettings);
   $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
-  $("setSheet").addEventListener("change", function (e) { if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); } });
+  function firstOf(k) { return PUZZLES.filter(function (x) { return kindOf(x) === k; })[0]; }
+  $("setSheet").addEventListener("change", function (e) {
+    var k = e.target.dataset.h;
+    if (k) { setPref("hide", (prefs().hide || []).filter(function (x) { return x !== k; }).concat(e.target.checked ? [] : [k])); applyPrefs(); }
+    if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); } });
   $("setSheet").addEventListener("click", function (e) {
     var b = e.target.closest(".chips[data-p] .chip"); if (!b) return;
-    var p = b.parentNode.dataset.p, v = b.dataset.v, h = (prefs().hide || []).filter(function (x) { return x !== v; });
-    if (p === "hide") { if (b.classList.contains("on")) h.push(v); setPref("hide", h); }
-    else {
-      // Fixing a mode starts from the last one chosen overall.
-      if (v === "fixed" && !prefs().mode) setPref("mode", (store.get("crossword:mode") || {}).m || "easy");
-      setPref(p, v);
-    }
+    var p = b.parentNode.dataset.p, v = b.dataset.v;
+    // Fixing a mode starts from the last one chosen overall.
+    if (v === "fixed" && !prefs().mode) setPref("mode", (store.get("crossword:mode") || {}).m || "easy");
+    setPref(p, v);
     applyPrefs(); showSettings();
   });
   // The update key, kept in the owner's private Firestore record (never shown again once saved).

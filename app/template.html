@@ -140,7 +140,7 @@ header .timer.stopped { color: var(--good); }
 .app.qf .qbr { flex-basis: 100%; height: 0; margin-top: -4px; }
 .app.qf .c { box-sizing: border-box; width: var(--cs); height: var(--cs); border: 1.5px solid var(--rule); border-radius: 8px; background: var(--sheet); }
 .app.qf .c.word { background: var(--sheet); }
-.app.qf .c.word.cur { border-color: var(--accent); background: var(--word); }
+.app.qf .c.word.cur { border-color: var(--accent); background: var(--nowbg); }  /* the clue box's tint from Settings */
 .app.qf .c.word.ok { border-color: var(--ok-word); background: var(--good-bg); color: var(--good); }
 .app.qf .c.word.rv { border-color: var(--warn-line); background: var(--warn-bg); color: var(--warn); }
 .app.qf .c .n, .app.qf .c.br::after { display: none; }
@@ -1309,7 +1309,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var nb = $("now"); nb.style.fontSize = "";
     for (var fz = parseFloat(getComputedStyle(nb).fontSize); nb.scrollHeight > nb.clientHeight + 1 && fz > 12;) nb.style.fontSize = --fz + "px";
     // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
-    $("dictBtn").hidden = !filled(w);
+    $("dictBtn").hidden = !filled(w) && !P.qf;  // Quickfire always shows it, and asks for the squares first
     $("wheelBtn").hidden = P.qf && locked(w);  // a solved or revealed Quickfire clue swaps the wheel for the dictionary
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
@@ -2056,7 +2056,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       read: function (data, w) { var e = (data || [])[0]; if (!e || e.word.toLowerCase() !== w) return [];
         return (e.defs || []).map(function (x) { var t = x.split("\t"); return { pos: POSNAME[t[0]] != null ? POSNAME[t[0]] : t[0], def: t[1] || "" }; }); } }
   ];
-  $("dictBtn").addEventListener("click", function () { var w = curWord(); if (w && filled(w)) openDict(w); });
+  $("dictBtn").addEventListener("click", function () { var w = curWord(); if (w && filled(w)) openDict(w); else if (P.qf) toast("Fill the squares to search"); });
   $("dictClose").addEventListener("click", function () { $("dictDlg").hidden = true; });
   $("dictDlg").addEventListener("click", function (e) { if (e.target === $("dictDlg")) $("dictDlg").hidden = true; });
   // What follows each square of an answer: " " between words, "-" at a hyphen.

@@ -122,7 +122,11 @@ header .timer.stopped { color: var(--good); }
 .rows .fgrp > :nth-child(2) { border-top: 0; }
 /* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
 .app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #checkWordBtn, .app.qf #checkAllBtn, .app.qf #noAns,
-.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app:not(.qf) .qfo { display: none !important; }
+.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead, .home .qfo { display: none !important; }
+/* The home page's heading, summary and tabs move to the top of Quickfire, with its Filter under the icons. */
+.qfhead { flex: 0 0 auto; padding-top: env(safe-area-inset-top, 0px); }
+.hsum.qft { font-weight: 700; color: var(--ink); }
+.hsub .qfo { margin-block: -6px; }  /* the tabs stay where the home page has them */
 /* The clue, then the squares and buttons, centred on the screen in one column (the keys stay at the foot on phones).
    The clue is drawn like the Settings preview; the squares are tiles in a row, with a wider gap between words. */
 .app.qf .dock { display: contents; }
@@ -259,7 +263,7 @@ button.nb { cursor: pointer; padding: 6px 11px; }
 .hitem.done .hs { color: var(--good); }
 .hitem.done.dnf { background: var(--warn-bg); border-color: var(--warn-line); }
 .hitem.done.dnf .hs { color: var(--warn); }
-.hsub { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-soft); }
+.hsub { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-soft); }
 .modesw { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); flex: 0 0 auto; }
 .modesw button { font: 700 13px var(--f-ui); color: var(--ink-soft); background: none; border: 0; border-radius: 999px; padding: 6px 10px; cursor: pointer; }
 .modesw button[aria-pressed="true"] { background: var(--mc); color: var(--sheet); }
@@ -279,7 +283,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .solvedbar a { text-decoration: none; background: var(--sheet); white-space: nowrap; }
 .solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .fbar { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
-.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
@@ -448,10 +452,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 </style>
 
 <div class="app" id="app">
+  <div class="qfhead pad" id="qfHead"><div class="hwrap"></div></div>
   <header class="pad">
     <button class="btn back" id="homeBtn" type="button" aria-label="All puzzles">‹</button>
     <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
-    <button class="btn qfo" id="qfFilt" type="button">Filter</button>
     <span class="timer" id="timer" aria-label="Time">0:00</span>
     <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
     <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"></button>
@@ -501,7 +505,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 <div class="home" id="home" hidden>
   <div class="hwrap pad">
     <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
-    <div class="hsub"><span class="hsum" id="homeSum"></span></div>
+    <div class="hsub"><span class="hsum" id="homeSum"></span><button class="btn qfo" id="qfFilt" type="button">Filter</button></div>
     <div class="problems" id="problems" role="status" hidden></div>
     <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><button class="btn" id="qfBtn" type="button">Quickfire</button><span id="filterSum"></span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div>
     <div class="fpanel" id="fpanel" hidden>
@@ -1297,7 +1301,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       x.el.classList.toggle("right", !HARD && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
     });
-    $("nowTag").textContent = wordName(w);
+    $("nowTag").textContent = !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
     var fv = isFav(fl, P.id, w.dir + w.num);
     $("favBtn").classList.toggle("on", fv); $("favBtn").setAttribute("aria-pressed", String(fv));
     clueInto($("nowTxt"), w);
@@ -1329,7 +1333,6 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("solvedBar").hidden = !solved || !!P.qf;
     $("app").classList.toggle("fin", solved && !P.qf);
     $("qfSolve").hidden = locked(w);
-    if (P.qf) $("meta").textContent = locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "";
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
@@ -1619,7 +1622,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     var main = $("main"), el = $("wheel");
     showList(false); $("app").classList.add("aw");
     // In Quickfire it covers the clue and squares instead, from the header down to the keyboard.
-    var hd = $("app").querySelector("header"), kb = $("kb"), top = P.qf ? hd.offsetTop + hd.offsetHeight : main.offsetTop;
+    var hd = $("qfHead"), kb = $("kb"), top = P.qf ? hd.offsetTop + hd.offsetHeight : main.offsetTop;
     var h = P.qf ? (kb.offsetHeight ? kb.offsetTop : $("app").clientHeight) - top : isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
     el.style.top = top + "px";
     el.style.height = h + "px";
@@ -2540,7 +2543,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function filterChanged() { store.set("crossword:filter", FILT); buildFilters(); showHome(true); }
   $("filterBtn").addEventListener("click", function () {
     var open = $("fpanel").hidden;
-    if (TAB) { TAB = ""; showHome(true); }
+    if (TAB || $("home").hidden) { TAB = ""; showHome(true); }
     $("fpanel").hidden = !open; this.setAttribute("aria-expanded", String(open));
     if (open) buildFilters();
   });
@@ -2657,7 +2660,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function openQuickfire() {
     QF = { pool: qfPool() };
     if (!QF.pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
-    showList(false); $("home").hidden = true;
+    showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
     qfNext();
   }
   function qfNext() {
@@ -2673,7 +2676,15 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     myParses = c.mine ? { a1: c.mine } : {}; myDefs = (rec.defs || {})[c.k] ? { a1: rec.defs[c.k] } : {};
     render();
   }
-  $("qfBtn").addEventListener("click", openQuickfire);
+  // Quickfire is a home tab: the home page's heading, summary and tabs move above it, and back when it closes.
+  function qfHead(on) {
+    var h = $("home").querySelector(".hwrap"), q = $("qfHead").firstChild;
+    if (on && !q.firstChild) [".hhead", ".hsub", ".fbar"].forEach(function (c) { q.appendChild(h.querySelector(c)); });
+    if (!on && q.firstChild) { h.insertBefore(q.firstChild, $("problems")); h.insertBefore(q.firstChild, $("problems")); h.insertBefore(q.firstChild, $("fpanel")); }
+    $("homeSum").classList.toggle("qft", on); $("qfBtn").classList.toggle("on", on);
+    if (on) $("homeSum").textContent = "Quickfire";
+  }
+  $("qfBtn").addEventListener("click", function () { if ($("home").hidden) showHome(); else openQuickfire(); });
   $("qfNext").addEventListener("click", qfNext);
   $("qfSolve").addEventListener("click", function () {
     var w = words[0];
@@ -2714,6 +2725,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   var FROM = weeks2(new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10));
   function showHome(keepScroll) {
     if (P) { save(); stopClock(); }
+    qfHead(false);
     checkSubs();
     ["favs", "stats"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
     $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats";
@@ -2771,7 +2783,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   function openPuzzle(p) {
     var nl = notes(), left = nl.filter(function (n) { return n.id !== p.id; });
     if (left.length !== nl.length) setNotes(left);  // opening a puzzle, from the bell or the list, reviews its notification
-    showList(false);
+    showList(false); qfHead(false);
     $("home").hidden = true;
     if (p !== P || P.stale) load(p); else { startClock(); render(); }  // a new copy (answers or parsings arrived) loads afresh
     size();

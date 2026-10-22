@@ -11,7 +11,11 @@ HEAD = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="robots" content="noindex, nofollow, noarchive"><title>Crosswords</title>'
         '<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"><link rel="icon" type="image/png" href="favicon.png">'
         '<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest">'
-        '<meta name="apple-mobile-web-app-title" content="Crosswords"><meta name="theme-color" content="#1f7a33"></head><body>\n')
+        '<meta name="apple-mobile-web-app-title" content="Crosswords"><meta name="apple-mobile-web-app-capable" content="yes">'
+        '<meta name="theme-color" content="#1f7a33"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        # The font loads without holding up the page (and the sign-in it starts): text shows in a system font until then.
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap" media="print" onload="this.media=\'all\'">'
+        '</head><body>\n')
 
 out = pathlib.Path(sys.argv[1])
 page = re.sub(r"<title>.*?</title>", "", (ROOT / "app" / "template.html").read_text(), count=1)  # the title is in HEAD

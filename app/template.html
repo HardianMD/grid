@@ -320,6 +320,8 @@ header .more svg { display: block; width: 20px; height: 22px; color: var(--accen
 .slot.gap { margin-left: 8px; }
 .slot.dash { margin-left: 10px; position: relative; }
 .slot.dash::before { content: ""; position: absolute; left: -9px; top: 50%; width: 6px; height: 2px; background: var(--ink); }
+.wclue { margin: 0; text-align: center; font: calc(15px * var(--cz))/1.45 var(--f-clue); }
+.wclue .wl { cursor: pointer; border-radius: 3px; } .wclue .wl:hover { background: var(--word); } .wclue .wl.used { opacity: .35; cursor: default; }
 .wheel .hint { margin: 0; text-align: center; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
 .wheel .actions { justify-content: center; }
 .finds { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
@@ -486,6 +488,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   </div>
   <div class="wheel pad" id="wheel" hidden role="dialog" aria-label="Anagram wheel">
     <div class="top"><h3 id="wheelTitle">Anagram</h3><button class="btn" id="wheelClose" type="button">Close</button></div>
+    <p class="wclue" id="wheelClue"></p>
     <div class="ring" id="ring"></div>
     <p class="hint" id="wheelHint"></p>
     <div class="slots" id="slots"></div>
@@ -1637,7 +1640,14 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     $("wheelTitle").appendChild(document.createTextNode(wordName(w)));
     var sm = document.createElement("small"); sm.textContent = "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")";
     $("wheelTitle").appendChild(sm);
-    var avail = Math.min(main.clientWidth - 32, h - 205, el.classList.contains("mid") ? 460 : 300);  // room for the hint line too
+    // The clue, its letters tappable into the wheel.
+    var wc = $("wheelClue"); wc.textContent = "";
+    w.clue.split("").forEach(function (ch) {
+      var L = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+      if (!/^[A-Z]$/.test(L)) return wc.appendChild(document.createTextNode(ch));
+      var sp = document.createElement("span"); sp.className = "wl"; sp.textContent = ch; sp.dataset.l = L; wc.appendChild(sp);
+    });
+    var avail = Math.min(main.clientWidth - 32, h - 205 - wc.offsetHeight, el.classList.contains("mid") ? 460 : 300);  // room for the hint line too
     AW.size = Math.max(180, avail);
     $("ring").style.width = $("ring").style.height = AW.size + "px";
     $("solveBtn").hidden = HARD;
@@ -1711,7 +1721,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     });
     if (AW.found && AW.found !== wheelSet().key) { $("finds").hidden = true; AW.found = null; }
     var set = Object.keys(coveredTiles()).length;
-    $("wheelHint").textContent = !AW.tiles.length ? "Type the anagram letters on the keyboard to add them to the wheel." :
+    $("wheelHint").textContent = !AW.tiles.length ? "Type the anagram letters, or tap them in the clue, to add them to the wheel." :
       set ? "Grey letters are already in the grid." : "";
     $("wheelHint").hidden = !$("wheelHint").textContent;
   }
@@ -1766,7 +1776,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
       }
       var last = AW.tiles.length - 1; if (last < 0) return;
       AW.order = null;
-      AW.tiles.pop().el.remove();
+      var gone = AW.tiles.pop(); gone.el.remove();
+      if (gone.src) gone.src.classList.remove("used");
       layoutTiles(false);
       return;
     }
@@ -1788,6 +1799,13 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
     wheelRender();
   }
   $("wheelBtn").addEventListener("click", wheelOpen);
+  $("wheelClue").addEventListener("click", function (e) {
+    var sp = e.target.closest(".wl");
+    if (!sp || sp.classList.contains("used")) return;
+    if (AW.tiles.length >= AW.slots.length) return toast("The wheel already has all " + AW.slots.length + " letters");
+    addTile(sp.dataset.l); AW.tiles[AW.tiles.length - 1].src = sp; sp.classList.add("used");
+    layoutTiles(false);
+  });
   // Anagram solver, only inside the wheel so the letters have to be worked out first: answers from the word list
   // (words.txt, UKACD) using exactly the wheel letters around any letters fixed by crossing answers.
   var WORDS = null;

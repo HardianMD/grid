@@ -277,7 +277,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .fbar { display: flex; align-items: center; gap: clamp(6px, 2vw, 10px); margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
 .fbar .btn { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding-inline: clamp(8px, 2.6vw, 12px); }  /* the four tabs fit a phone's width */
-.fhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .fhead .btn { margin-block: -4px; }
+.fhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }  /* Clear beside the first row of Status chips */
 .fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }

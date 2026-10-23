@@ -7,11 +7,14 @@ page.
 - `app/style.css`, `app/page.html`, `app/js/*.js`: the page's styles, markup and vanilla JS (no dependencies). The JS
   files share one scope: the build joins them in name order inside one function.
 - `tools/build.py [--min] OUT`: joins them into `OUT/index.html` under the page head (the font loads in the background,
-  so it never holds up sign-in) and copies `site/` (icons, manifest, word list). Publishing uses `--min`, which shrinks
+  so it never holds up sign-in) and copies `site/` (icons, manifest, offline helper, word list). Publishing uses `--min`, which shrinks
   the styles and script with esbuild (pinned in `build.py`, fetched by npx); the app test checks the two builds match.
 - `tools/check.js`: checks that the finish bar and Stats read every kind of saved record (old ones included) the same
   way (`helpOf`, `helpText`). Runs on each pull request (`check.yml`) and before each publish (`pages.yml`).
-- `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver and word finder.
+- `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver and word finder;
+  the build splits it by letter count into `words/N.txt`, and the app reads only the lengths it needs.
+- `site/sw.js`: keeps the page, the Firebase SDK, the font and fetched word lists so the app opens with no signal
+  (the page from the network when it answers within 3 seconds); a new build drops the old copies.
 
 ## Map of `app/js`
 Search for the function name; the comment above each says what it does.

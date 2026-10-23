@@ -4,14 +4,15 @@ Private crossword app, requiring sign in with Google. Puzzles and progress live 
 page. Live at https://hardianmd.github.io/grid/ (Pages publishes every push to `main`).
 
 ## Files
-- `app/template.html`: the whole page (CSS, markup, vanilla JS in one IIFE; no build step, no dependencies).
-- `tools/build.py OUT`: wraps the template into `OUT/index.html` under the page head (the font loads in the background,
-  so it never holds up sign-in) and copies `site/` (icons, manifest, word list).
+- `app/style.css`, `app/page.html`, `app/js/*.js`: the page's styles, markup and vanilla JS (no dependencies). The JS
+  files share one scope: the build joins them in name order inside one function.
+- `tools/build.py OUT`: joins them into `OUT/index.html` under the page head (the font loads in the background, so it
+  never holds up sign-in) and copies `site/` (icons, manifest, word list).
 - `tools/check.js`: checks that the finish bar and Stats read every kind of saved record (old ones included) the same
   way (`helpOf`, `helpText`). Runs on each pull request (`check.yml`) and before each publish (`pages.yml`).
 - `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver and word finder.
 
-## Map of `app/template.html`
+## Map of `app/js`
 Search for the function name; the comment above each says what it does.
 - Storage and sync: `store` (localStorage, then `cloudPut` to Firestore `users/{uid}/state`), `cloudListen` (merge by
   `at`, `rank`), `KEEP` (synced records besides puzzles: `mode`, `favs`, `prefs`, `notes`).

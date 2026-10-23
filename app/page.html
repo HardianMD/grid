@@ -1,0 +1,220 @@
+
+<div class="app" id="app">
+  <div class="qfhead pad" id="qfHead"><div class="hwrap"></div></div>
+  <header class="pad">
+    <button class="btn back" id="homeBtn" type="button" aria-label="All puzzles">‹</button>
+    <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
+    <span class="timer" id="timer" aria-label="Time">0:00</span>
+    <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
+    <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"></button>
+  </header>
+  <div class="main" id="main">
+  <div class="gridwrap"><div class="grid" id="grid" role="grid" aria-label="Crossword grid"></div></div>
+  <div class="checks pad" id="checks">
+    <button class="btn icon qfo qfa" id="qfPrev" type="button" aria-label="Previous clue">‹</button>
+    <button class="btn icon" id="cluesBtn" type="button" aria-label="All clues" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+    <button class="btn" id="checkWordBtn" type="button">Check word</button>
+    <button class="btn" id="checkAllBtn" type="button">Check all</button>
+    <span class="noans" id="noAns" hidden>Answers not out yet</span>
+    <button class="btn icon" id="wheelBtn" type="button" aria-label="Anagram wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.6" fill="currentColor"/><circle cx="18.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="5.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
+    <button class="btn icon" id="dictBtn" type="button" hidden aria-label="Dictionary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3 4.5v14c4 0 7 .5 9 2 2-1.5 5-2 9-2v-14c-4 0-7 .5-9 2zM12 6.5v14"/></svg></button>
+    <button class="btn icon" id="hintBtn" type="button">Hint</button>
+    <button class="btn solid" id="submitBtn" type="button" hidden>Submit puzzle</button>
+    <button class="btn solid qfo" id="qfSolve" type="button">Solve</button><button class="btn icon qfo qfa" id="qfNext" type="button" aria-label="Next clue">›</button>
+  </div>
+  <div class="solvedbar pad" id="solvedBar" hidden><span id="solvedTxt"></span><span class="sbtns"><button class="nb" id="nitchBtn" type="button" hidden></button><button class="btn" id="editBtn" type="button" hidden>Edit</button><a class="btn" id="blogLink" target="_blank" rel="noopener"></a></span></div>
+  <div class="clues pad" id="clues">
+    <div class="list"><h2>Across</h2><div id="acrossList"></div></div>
+    <div class="list"><h2>Down</h2><div id="downList"></div></div>
+  </div>
+  </div>
+  <div class="wheel pad" id="wheel" hidden role="dialog" aria-label="Anagram wheel">
+    <div class="top"><h3 id="wheelTitle">Anagram</h3><button class="btn" id="wheelClose" type="button">Close</button></div>
+    <p class="wclue" id="wheelClue"></p>
+    <div class="ring" id="ring"></div>
+    <p class="hint" id="wheelHint"></p>
+    <div class="slots" id="slots"></div>
+    <div class="actions">
+      <button class="btn" id="shuffleBtn" type="button">Shuffle</button>
+      <button class="btn" id="slotsClear" type="button">Clear boxes</button>
+      <button class="btn" id="toGrid" type="button">Put in grid</button>
+      <button class="btn" id="solveBtn" type="button">Solve</button>
+    </div>
+    <div class="finds" id="finds" hidden></div>
+  </div>
+  <div class="dock">
+  <div class="bar pad">
+    <button class="nav" id="prevBtn" type="button" aria-label="Previous clue">‹</button>
+    <div class="now" id="now" role="button" tabindex="0" aria-live="polite"><span class="tag"><span id="nowTag"></span><button class="star" id="favBtn" type="button" aria-label="Favourite clue" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></button></span><span class="txt" id="nowTxt"></span></div>
+    <button class="nav" id="nextBtn" type="button" aria-label="Next clue">›</button>
+  </div>
+  <div class="kb pad" id="kb" aria-label="Keyboard"></div>
+  </div>
+</div>
+
+<div class="home" id="home" hidden>
+  <div class="hwrap pad">
+    <div class="hhead"><h1>Crosswords</h1><span class="hbtns"><button class="btn upd" id="setBtn" type="button" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><button class="btn upd" id="bellBtn" type="button" title="Notifications" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><i class="dot" id="bellDot" hidden></i></button><button class="btn upd" id="updBtn" type="button" title="Refresh data" aria-label="Refresh data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button></span></div>
+    <div class="hsub"><span class="hsum" id="homeSum"></span></div>
+    <div class="problems" id="problems" role="status" hidden></div>
+    <div class="fbar"><button class="btn" id="filterBtn" type="button" aria-expanded="false">Filter</button><button class="btn" id="favsBtn" type="button" aria-pressed="false">Favourites</button><button class="btn" id="statsBtn" type="button" aria-pressed="false">Stats</button><button class="btn" id="qfBtn" type="button">Quickfire</button></div>
+    <div class="fpanel" id="fpanel" hidden>
+      <div class="fgrp"><div class="fhead"><span>Status</span><button class="btn mini" id="filterClear" type="button" hidden>Clear</button></div><div class="chips" id="fStatus"></div></div>
+      <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
+      <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
+      <div class="fgrp"><label for="fSetter">Setter</label><select id="fSetter"></select></div>
+      <div class="fgrp"><span>Date</span><div class="frange"><input type="date" id="fFrom" aria-label="From date"><span>to</span><input type="date" id="fTo" aria-label="To date"></div></div>
+    </div>
+    <div id="homeList"></div><div class="favs" id="favList" hidden></div><div class="stats" id="statBody" hidden></div>
+    <p class="hnote">Progress is saved on this device and synced to your Google account.</p>
+  </div>
+</div>
+<div class="sheet" id="nitchSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="nitchTitle">
+    <div class="srow"><h3 id="nitchTitle"></h3><button class="btn" id="nitchDone" type="button">Done</button></div>
+    <div id="nitchBody"></div>
+  </div>
+</div>
+<div class="sheet" id="noteSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="noteTitle">
+    <div class="srow"><h3 id="noteTitle">Notifications</h3><button class="btn" id="noteDone" type="button">Close</button></div>
+    <div id="noteList" style="display:grid;gap:8px"></div>
+  </div>
+</div>
+<div class="sheet" id="qfSheet" hidden>
+  <div class="panel pad rows" role="dialog" aria-labelledby="qfTitle">
+    <div class="srow"><h3 id="qfTitle">Quickfire filter</h3><button class="btn" id="qfDone" type="button">Done</button></div>
+    <div class="fgrp" id="qfTypes"></div>
+  </div>
+</div>
+<div class="sheet" id="setSheet" hidden>
+  <div class="panel pad rows" role="dialog" aria-labelledby="setTitle">
+    <div class="srow"><h3 id="setTitle">Settings</h3><button class="btn" id="setDone" type="button">Close</button></div>
+    <div class="scols">
+    <div class="fgrp"><span>Solving</span>
+      <div class="set"><span>Start mode</span><div class="chips seg" data-p="start"><button type="button" class="chip" data-v="last">Last used</button><button type="button" class="chip" data-v="fixed">Fixed</button></div></div>
+      <div class="set" id="setModeRow"><span>Mode</span><div class="seg" id="setMode" role="group" aria-label="Starting mode"><button type="button" data-mode="easy" aria-pressed="false">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div></div>
+      <label class="tog">Skip filled squares<input type="checkbox" data-p="skip"></label>
+      <label class="tog">Jump to next clue<input type="checkbox" data-p="jump"></label>
+      <label class="tog">Hints without asking<input type="checkbox" data-p="noAsk"></label>
+      <label class="tog">Hide timer<input type="checkbox" data-p="noTimer"></label>
+    </div>
+    <div class="fgrp"><span>Clues</span>
+      <div class="set"><span>Size</span><div class="chips seg" data-p="size"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">XL</button></div></div>
+      <div class="set"><span>Font</span><div class="chips seg" data-p="font"><button type="button" class="chip" data-v="franklin">Franklin</button><button type="button" class="chip" data-v="arial">Arial</button><button type="button" class="chip" data-v="times">Times</button><button type="button" class="chip" data-v="georgia">Georgia</button></div></div>
+      <div class="set"><span>Colour</span><div class="chips sws" data-p="tint"><button type="button" class="chip" data-v="blue" style="--c:#cfe3f5" aria-label="Blue"></button><button type="button" class="chip" data-v="green" style="--c:#d6eedb" aria-label="Green"></button><button type="button" class="chip" data-v="amber" style="--c:#f8e6c4" aria-label="Amber"></button><button type="button" class="chip" data-v="pink" style="--c:#f6d9e4" aria-label="Pink"></button><button type="button" class="chip" data-v="grey" style="--c:#e6eaee" aria-label="Grey"></button><button type="button" class="chip" data-v="none" style="--c:transparent" aria-label="None"></button></div></div>
+      <label class="tog">Hide hints when solved<input type="checkbox" data-p="hideHints"></label>
+      <div class="pv"><span>Preview</span><div class="now cprev" aria-hidden="true"><span class="tag">1 Across</span><span class="txt"><span class="ctype">Anagram</span>Notes rearranged for <u class="def">a gem, perhaps</u> (5)</span></div></div>
+    </div>
+    <div class="fgrp"><span>Puzzle list</span>
+      <label class="tog">Hide finished<input type="checkbox" data-p="hideDone"></label>
+      <label class="tog">Difficulty<input type="checkbox" data-p="listN"></label>
+      <div class="set" id="setNWhen"><span>Show difficulty</span><div class="chips seg" data-p="listNWhen"><button type="button" class="chip" data-v="done">When finished</button><button type="button" class="chip" data-v="always">Always</button></div></div>
+      <div class="set"><span>Size</span><div class="chips seg" data-p="listSize"><button type="button" class="chip" data-v="n">Normal</button><button type="button" class="chip" data-v="l">Large</button><button type="button" class="chip" data-v="xl">XL</button></div></div>
+      <div class="pv"><span>Preview</span><div class="hprev" id="listPrev" aria-hidden="true"></div></div>
+    </div>
+    <div class="fgrp"><span>Account</span>
+      <div class="set"><label for="setName">Name</label><input id="setName" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="On edited parsings"></div>
+      <div class="set"><label for="setKey">Key</label><span class="krow" id="keyIn"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste key"><span class="seg"><button type="button" id="keySave">Save</button><button type="button" id="keyUndo" hidden>Undo</button></span></span>
+        <span class="sval" id="keyOk" hidden>Saved ✓<span class="seg"><button type="button" id="keyRep">Replace</button></span></span></div>
+      <div class="set"><span>Sync</span><span class="sval"><span id="syncTxt">Signed in</span><span class="seg"><button type="button" id="syncNow">Sync now</button></span></span></div>
+      <div class="set"><span>Signed in with Google</span><span class="seg"><button type="button" id="syncBtn">Sign out</button></span></div>
+      <div class="set"><span>App updated</span><span class="sval" id="appVer"></span></div>
+    </div>
+    </div>
+  </div>
+</div>
+<div class="sheet" id="sheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="sheetTitle">
+    <h3 id="sheetTitle">Difficulty Mode</h3>
+    <div class="srow"><span>Mode</span><div class="modesw" role="group" aria-label="Difficulty"><button type="button" data-mode="easy" aria-pressed="true">Easy</button><button type="button" data-mode="medium" aria-pressed="false">Medium</button><button type="button" data-mode="hard" aria-pressed="false">Hard</button><button type="button" data-mode="champ" aria-pressed="false">Champ</button></div></div>
+    <table class="mtab">
+      <thead><tr><th></th><th data-mode="easy">Easy</th><th data-mode="medium">Medium</th><th data-mode="hard">Hard</th><th data-mode="champ">Champ</th></tr></thead>
+      <tbody>
+        <tr><td>Check</td><td>Removes wrong letters*</td><td>Clears wrong words*</td><td>Clears wrong words*</td><td>No</td></tr>
+        <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>On submit</td><td>On submit</td></tr>
+        <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Incomplete / errors</td><td>Incomplete / errors</td></tr>
+      </tbody>
+    </table>
+    <p class="sub">* When parsings are available</p>
+    <p>A new puzzle opens in the last mode you used for that crossword, or in the mode set in Settings. You can switch mode until the puzzle is finished. Until you use a check, hint or reveal, a solve counts at the mode you finish in; after that it counts at the easiest mode used. Once you have used a hint or reveal, Hard and Champ are locked for that puzzle. Clearing the grid removes only the letters: the time, mode and any reveals stay.</p>
+    <div class="actions" id="actions">
+      <button class="btn danger" id="clearBtn" type="button">Clear this grid</button>
+      <button class="btn" id="closeBtn" type="button">Done</button>
+    </div>
+  </div>
+</div>
+<div class="confirm" id="hintAsk" hidden role="dialog" aria-labelledby="hintTitle">
+  <div class="box">
+    <h3 id="hintTitle">Show a hint?</h3>
+    <p id="hintText">The definition part of this clue will be underlined. Are you sure you want to see the hint?</p>
+    <div class="pview" id="parseView" hidden>
+      <p class="pclue" id="pvClue"></p>
+      <p class="pans" id="pvAns"></p>
+      <p class="pwp"><i id="pvType"></i><span id="pvWp"></span></p>
+    </div>
+    <p class="note" id="parseNote" hidden></p>
+    <div class="pedit" id="parseForm" hidden>
+      <div class="pedit" id="ansRow" hidden>
+        <label for="ansInput">Your answer</label>
+        <input id="ansInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+      </div>
+      <div class="lrow"><label>Definition <span class="sub">tap the words that define the answer</span></label><button class="btn mini" id="defClear" type="button">Clear</button></div>
+      <div class="defpick" id="defPick"></div>
+      <label>Clue type <span class="sub">tap all that apply</span></label>
+      <div class="chips" id="typeChips"></div>
+      <input id="parseType" type="hidden">
+      <div class="lrow"><label for="parseText">Wordplay</label><span class="lbtns"><button class="btn mini" id="useClue" type="button">From clue</button><button class="btn mini" id="lettersBtn" type="button" aria-pressed="false">Letters</button><button class="btn mini" id="typeBtn" type="button">Type</button><button class="btn mini danger" id="wpClear" type="button">Delete all</button><button class="info" id="parseInfo" type="button" aria-label="How to type parsings" aria-expanded="false">i</button></span></div>
+      <div class="selbar" id="selBar">
+        <div class="selrow"><span class="sub" id="selHint">Tap a word, then tap another to select a run, then pick what they do.</span><span class="lbtns"><button class="btn mini" id="undoBtn" type="button" hidden>Undo</button><button class="btn mini" id="selClear" type="button" hidden aria-label="Clear selection">×</button></span></div>
+        <div class="chips" id="markChips"></div>
+      </div>
+      <div class="wptok" id="wpTok"></div>
+      <textarea id="parseText" rows="4" hidden></textarea>
+      <p class="pprev" id="parsePrev"></p>
+      <div class="phelp" id="parseHelp" hidden>
+        <p><b>Two special marks</b></p>
+        <p><code>_word_</code> shows an indicator in <i>italics</i>. <code>~X~</code> shows letters <s>struck out</s> as removed.</p>
+        <p><b>How to write each type</b></p>
+        <dl>
+          <dt>Anagram</dt><dd><code>(LISTEN)* _broken_</code></dd>
+          <dt>Charade</dt><dd><code>CAR (vehicle) + PET (favourite)</code></dd>
+          <dt>Container</dt><dd><code>PA(R)T: R inside PAT, _holding_</code></dd>
+          <dt>Reversal</dt><dd><code>(STAR)< _back_</code></dd>
+          <dt>Hidden</dt><dd><code>_some_ aPE Time</code>, answer letters in capitals</dd>
+          <dt>Deletion</dt><dd><code>~B~RAIN (mind) _headless_</code></dd>
+          <dt>Initial letters</dt><dd><code>_first of_ Every Very Excited Nurse</code></dd>
+          <dt>Homophone</dt><dd><code>NEW, _sounds like_ KNEW</code></dd>
+          <dt>Double definition</dt><dd><code>PUNCH (hit) / PUNCH (drink)</code></dd>
+          <dt>Cryptic definition</dt><dd>A sentence explaining the pun</dd>
+        </dl>
+        <p>Put the clue type, such as Anagram, in the Clue type box. The definition is underlined for you, so you don't need to write it.</p>
+      </div>
+    </div>
+    <div class="pfind" id="findBox" hidden><p class="note" id="findNote"></p><div class="chips" id="findList"></div></div>
+    <div class="actions">
+      <button class="btn" id="findBtn" type="button" hidden>Find words</button>
+      <button class="btn" id="parseReset" type="button" hidden>Use original</button>
+      <button class="btn" id="parseEdit" type="button" hidden>Edit</button>
+      <button class="btn" id="hintNo" type="button">Not yet</button>
+      <button class="btn solid" id="hintYes" type="button">Show hint</button>
+    </div>
+  </div>
+</div>
+<div class="confirm" id="dictDlg" hidden role="dialog" aria-labelledby="dictWord">
+  <div class="box">
+    <h3 id="dictWord" class="dword"></h3>
+    <div id="dictBody" class="dbody"></div>
+    <p class="note" id="dictNote"></p>
+    <div class="actions">
+      <a class="btn" id="dictExt" target="_blank" rel="noopener">Chambers</a>
+      <button class="btn solid" id="dictClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<div class="gate" id="gate"><div><h1>Crosswords</h1><p id="gateTxt">Loading…</p><button class="btn" id="gateBtn" type="button" hidden>Sign in with Google</button></div></div>

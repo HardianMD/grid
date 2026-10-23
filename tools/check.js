@@ -1,7 +1,7 @@
 // Checks how saved records are read for the finish bar and Stats: node tools/check.js
-// Pulls the shared helpers out of app/template.html and runs them on every kind of record the app has saved.
-const fs = require("fs"), vm = require("vm");
-const src = fs.readFileSync(__dirname + "/../app/template.html", "utf8");
+// Pulls the shared helpers out of app/js and runs them on every kind of record the app has saved.
+const fs = require("fs"), vm = require("vm"), dir = __dirname + "/../app/js/";
+const src = fs.readdirSync(dir).sort().map((f) => fs.readFileSync(dir + f, "utf8")).join("");
 function grab(name) {
   const i = src.indexOf("function " + name + "(");
   if (i < 0) throw new Error("missing " + name);

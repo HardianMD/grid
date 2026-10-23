@@ -1,8 +1,9 @@
 """Build the site: python3 tools/build.py OUT_DIR
 
-Wraps app/template.html in a full HTML document as OUT_DIR/index.html, stamped with the build time (shown in
-Settings), and copies the icons, manifest and word list from site/. The page holds no puzzles: it loads them from Firestore after Google sign-in."""
-import pathlib, re, shutil, sys
+Joins app/style.css, app/page.html and app/js/*.js (in name order, inside one function) into a full HTML document as
+OUT_DIR/index.html, stamped with the build time (shown in Settings), and copies the icons, manifest and word list from
+site/. The page holds no puzzles: it loads them from Firestore after Google sign-in."""
+import pathlib, shutil, sys
 from datetime import datetime, timezone
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -18,7 +19,10 @@ HEAD = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '</head><body>\n')
 
 out = pathlib.Path(sys.argv[1])
-page = re.sub(r"<title>.*?</title>", "", (ROOT / "app" / "template.html").read_text(), count=1)  # the title is in HEAD
+app = ROOT / "app"
+js = "".join(f.read_text() for f in sorted((app / "js").glob("*.js")))
+page = ("\n<style>\n" + (app / "style.css").read_text() + "</style>\n" + (app / "page.html").read_text() +
+        '<script>\n(function () {\n  "use strict";\n' + js + "})();\n</script>\n")
 page = page.replace("__BUILT__", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), 1)
 out.mkdir(parents=True, exist_ok=True)
 for f in (ROOT / "site").iterdir():

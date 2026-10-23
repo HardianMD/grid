@@ -1,5 +1,7 @@
   var PUZZLES = [];  // filled from Firestore once signed in
   var $ = function (id) { return document.getElementById(id); };
+  // A new element, with its class and text when given.
+  function mk(tag, cls, text) { var e = document.createElement(tag); if (cls != null) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
   $("setBtn2").innerHTML = $("setBtn").innerHTML;  // the Settings cog, drawn once in the page
   // Progress lives in browser storage and, once signed in with Google, in Firestore, so it survives the
   // browser clearing its storage and follows the user between devices.

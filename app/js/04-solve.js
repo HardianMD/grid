@@ -14,8 +14,8 @@
         d.setAttribute("role", "gridcell");
         d.dataset.r = r; d.dataset.c = c;
         if (!cell.b) {
-          if (cell.num) { var n = document.createElement("span"); n.className = "n"; n.textContent = cell.num; d.appendChild(n); }
-          var l = document.createElement("span"); l.className = "l"; d.appendChild(l);
+          if (cell.num) d.appendChild(mk("span", "n", cell.num));
+          d.appendChild(mk("span", "l"));
         }
         g.appendChild(d); cellEls[r].push(d);
       }
@@ -41,8 +41,8 @@
     SEES.forEach(function (t) {
       var el = document.createElement("div"), h = t.head;
       el.className = "clue see"; el.tabIndex = 0; el.dataset.i = words.indexOf(h);
-      var b = document.createElement("b"); b.textContent = t.num;
-      var s = document.createElement("span"); s.textContent = "See " + h.num + (h.dir !== t.dir ? (h.dir === "a" ? " Across" : " Down") : "");
+      var b = mk("b", null, t.num);
+      var s = mk("span", null, "See " + h.num + (h.dir !== t.dir ? (h.dir === "a" ? " Across" : " Down") : ""));
       el.appendChild(b); el.appendChild(s); items.push({ dir: t.dir, num: t.num, el: el });
     });
     items.sort(function (x, y) { return x.num - y.num; }).forEach(function (it) {
@@ -95,7 +95,7 @@
       var gaps = line.filter(function (i) { return ends.indexOf(i) >= 0 && i !== line[line.length - 1]; }).length;
       cs = Math.min(cs, Math.floor((inner - 4 * (line.length - 1) - 8 * gaps) / line.length));
       if (!n) return;
-      var br = document.createElement("i"); br.className = "qbr";
+      var br = mk("i", "qbr");
       g.insertBefore(br, cellEls[0][line[0]]); cellEls[0][line[0] - 1].classList.add("eol");
     });
     return cs;
@@ -431,7 +431,7 @@
   // Keyboard
   var ROWS = ["QWERTYUIOP", "ASDFGHJKL", "↕ZXCVBNM⌫"];
   ROWS.forEach(function (row) {
-    var d = document.createElement("div"); d.className = "row";
+    var d = mk("div", "row");
     Array.from(row).forEach(function (k) {
       var b = document.createElement("button");
       b.type = "button"; b.className = "key"; b.textContent = k; b.dataset.k = k;

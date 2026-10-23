@@ -180,14 +180,14 @@
     el.textContent = "";
     if (!noType && noHints()) return el.appendChild(document.createTextNode(w.clue));
     if (!HARD && !noType && hinted[w.dir + w.num] >= 2) {
-      var tg = document.createElement("span"); tg.className = "ctype"; tg.textContent = parseFor(w).type;
+      var tg = mk("span", "ctype", parseFor(w).type);
       el.appendChild(tg);
     }
     // In Hard mode only the solver's own definitions are underlined.
     var k = w.dir + w.num, spans = (HARD && !noType) ? (myDefs[k] ? defSpans(w, myDefs[k]) : []) : hinted[k] ? defSpans(w, defsFor(w)) : [], pos = 0;
     spans.forEach(function (sp) {
       el.appendChild(document.createTextNode(w.clue.slice(pos, sp[0])));
-      var u = document.createElement("u"); u.className = "def"; u.textContent = w.clue.slice(sp[0], sp[1]); el.appendChild(u);
+      el.appendChild(mk("u", "def", w.clue.slice(sp[0], sp[1])));
       pos = sp[1];
     });
     el.appendChild(document.createTextNode(w.clue.slice(pos)));

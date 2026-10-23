@@ -18,32 +18,32 @@
     var shown = nf ? match : match.filter(function (p) { return p.date >= from; }), more = match[shown.length];  // a filter shows every match
     $("filterClear").hidden = !nf; $("filterBtn").classList.toggle("on", !!nf);
     $("filterBtn").textContent = nf ? "Filter (" + nf + ")" : "Filter";
-    if (!match.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No puzzles match these filters."; list.appendChild(e); }
+    if (!match.length) list.appendChild(mk("p", "hempty", "No puzzles match these filters."));
     shown.forEach(function (p) {
       var g = progressOf(p), pub = pubOf(p);
       if (p.date !== last) {
         last = p.date;
-        var h = document.createElement("h2"); h.className = "hday"; h.textContent = dayLabel(p.date); list.appendChild(h);
+        list.appendChild(mk("h2", "hday", dayLabel(p.date)));
       }
       var b = document.createElement("button"), state = g.solved ? "done" : g.n ? "prog" : "new";
       b.type = "button"; b.className = "hitem " + state;
-      var ht = document.createElement("div"); ht.className = "ht";
+      var ht = mk("div", "ht");
       if (pub) ht.appendChild(badgeEl(p));
-      var tt = document.createElement("span"); tt.textContent = pub ? p.title.replace(new RegExp("^(The )?" + pub + "\\s+", "i"), "") : p.title; ht.appendChild(tt);
-      var hm = document.createElement("div"); hm.className = "hm"; hm.textContent = metaText(p);
+      ht.appendChild(mk("span", null, pub ? p.title.replace(new RegExp("^(The )?" + pub + "\\s+", "i"), "") : p.title));
+      var hm = mk("div", "hm", metaText(p));
       if (pf.listN && p.nitch && (state === "done" || pf.listNWhen === "always"))
         hm.insertAdjacentHTML("beforeend", '<span class="nb" style="background:' + ncol(p.nitch.n) + '">' + ngrade(p.nitch.n) + " \u00b7 " + p.nitch.n + "</span>");
-      var hs = document.createElement("div"); hs.className = "hs";
+      var hs = mk("div", "hs");
       if (state === "done") {
         if (g.dnf) b.classList.add("dnf");
         hs.textContent = g.dnf ? "DNF" : g.sub && !g.sub.res ? "Submitted" : "\u2713 Solved";
         var sm = document.createElement("small");
         sm.textContent = (g.mode ? g.mode.charAt(0).toUpperCase() + g.mode.slice(1) + " \u00b7 " : "") + fmt(g.time); hs.appendChild(sm);
       }
-      else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; var sm2 = document.createElement("small"); sm2.textContent = fmt(g.time); hs.appendChild(sm2); }
-      else { var st = document.createElement("span"); st.className = "st"; st.textContent = "New"; hs.appendChild(st); }
+      else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; hs.appendChild(mk("small", null, fmt(g.time))); }
+      else hs.appendChild(mk("span", "st", "New"));
       // Parsed means a blog's explanations are in; until then any parsings are unverified.
-      if (!p.blog) { var pz = document.createElement("small"); pz.className = "pz"; pz.textContent = "Unparsed"; hs.appendChild(pz); }
+      if (!p.blog) hs.appendChild(mk("small", "pz", "Unparsed"));
       b.appendChild(ht); b.appendChild(hm); b.appendChild(hs);
       b.addEventListener("click", function () { openPuzzle(p); });
       list.appendChild(b);

@@ -17,18 +17,18 @@
     function avg(t) { return t.ok ? fmt(t.okTime / t.ok) : "\u2013"; }
     function per(x, t) { return t.n ? (x / t.n).toFixed(1) : "\u2013"; }
     function figs(cls, list) {
-      var d = document.createElement("div"); d.className = cls;
+      var d = mk("div", cls);
       list.forEach(function (f) {
         var c = document.createElement("div"), b = document.createElement("b"), sp = document.createElement("span");
         b.textContent = f[0]; sp.textContent = f[1]; c.appendChild(b); c.appendChild(sp); d.appendChild(c);
       });
       return d;
     }
-    function head(text) { var h = document.createElement("h4"); h.textContent = text; box.appendChild(h); }
+    function head(text) { box.appendChild(mk("h4", null, text)); }
     function card(name, t, mode) {
       var c = document.createElement("div"), r = document.createElement("div"), l = document.createElement("span"), sm = document.createElement("small");
       c.className = "scard"; r.className = "srow";
-      if (mode) { var i = document.createElement("i"); i.className = "mico"; i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
+      if (mode) { var i = mk("i", "mico"); i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
       // Paper cards carry the paper's badge, as in the home list.
       if (t.p && pubOf(t.p)) { l.appendChild(badgeEl(t.p)); name = typeOf(t.p); }
       l.appendChild(document.createTextNode(name));
@@ -66,12 +66,12 @@
       if (ok.length > 1) {
         var ts = ok.map(function (x) { return x.g.time; }), lo = Math.min.apply(null, ts), hi = Math.max.apply(null, ts) || 1;
         var pts = ts.map(function (v, i) { return (i * 300 / (ts.length - 1)).toFixed(1) + "," + (40 - 36 * (v - lo) / (hi - lo || 1)).toFixed(1); });
-        var sv = document.createElement("div"); sv.className = "spark";
+        var sv = mk("div", "spark");
         sv.innerHTML = '<svg viewBox="-4 0 308 44" preserveAspectRatio="none"><polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>';
         c.appendChild(sv);
       }
       var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dots = function (n, cl) { return n ? '<span class="' + cl + '">' + "\u25cf".repeat(Math.min(n, 8)) + (n > 8 ? "+" : "") + "</span>" : ""; };
-      var tb = document.createElement("table"); tb.className = "htab";
+      var tb = mk("table", "htab");
       tb.innerHTML = '<tr><th>Date and setter</th><th>Time</th><th></th><th><span class="hh">Hints</span> <span class="rv">Reveals</span></th></tr>' + shown.map(function (x) {
         var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "";
         return "<tr>" + hdt(x.p, d) + '<td class="' + (g.dnf ? "rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + "</td><td>" +
@@ -82,7 +82,7 @@
       if (shown.length < rows.length) { var all = document.createElement("button"); all.type = "button"; all.className = "btn mini hall"; all.textContent = "Show all " + rows.length; c.appendChild(all); }
     }
     box.innerHTML = "";
-    if (!all.n) { var e = document.createElement("p"); e.textContent = "Finish a puzzle to see your stats here."; box.appendChild(e); }
+    if (!all.n) box.appendChild(mk("p", null, "Finish a puzzle to see your stats here."));
     else {
       box.appendChild(figs("stiles", [[all.ok, "solved"], [all.dnf, "DNF"], [prog, "in progress"],
         [hm(all.time), "total time"], [avg(all), "average solve"], [all.ok ? Math.round(100 * all.free / all.ok) + "%" : "\u2013", "solved with no help"]]));

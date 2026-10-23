@@ -27,7 +27,7 @@
   function typeOf(p) { return p.type || "Other"; }
   // The paper's coloured tag, as on the home list.
   function badgeEl(p) {
-    var tg = document.createElement("i"); tg.className = "src"; tg.style.fontStyle = "normal"; tg.textContent = pubOf(p);
+    var tg = mk("i", "src"); tg.style.fontStyle = "normal"; tg.textContent = pubOf(p);
     if (p.badge) { tg.style.background = p.badge.bg; tg.style.color = p.badge.fg; }
     return tg;
   }
@@ -160,22 +160,22 @@
     box.innerHTML = "";
     PUZZLES.forEach(function (p) { byId[p.id] = p; });
     var list = favs().filter(function (f) { return byId[f.p]; });
-    if (!list.length) { var e = document.createElement("p"); e.className = "hempty"; e.textContent = "No favourites yet. Tap the star by a clue to add it."; box.appendChild(e); }
+    if (!list.length) { var e = mk("p", "hempty", "No favourites yet. Tap the star by a clue to add it."); box.appendChild(e); }
     list.forEach(function (f) {
       var p = byId[f.p], dir = f.k[0], num = f.k.slice(1);
-      var el = document.createElement("div"); el.className = "clue";
-      var b = document.createElement("b"); b.className = "fn"; b.textContent = num;
+      var el = mk("div", "clue");
+      var b = mk("b", "fn", num);
       var s = document.createElement("span"); s.textContent = (p[dir === "a" ? "across" : "down"] || {})[num] || "";
-      var m = document.createElement("small"); m.className = "fm"; m.textContent = (dir === "a" ? "Across" : "Down") + " \u00b7 " + p.title + " \u00b7 " + metaText(p); s.appendChild(m);
-      var fb = document.createElement("div"); fb.className = "fb";
+      s.appendChild(mk("small", "fm", (dir === "a" ? "Across" : "Down") + " \u00b7 " + p.title + " \u00b7 " + metaText(p)));
+      var fb = mk("div", "fb");
       // Each button shows its line under the clue, or hides it again; the answer line stays above the parsing.
       [["Solution", "pans", function (x) { x.textContent = answerOf(p, f.k, s.firstChild.textContent); }],
        ["Parse", "pwp", function (x) {
         var mine = ((store.peek("crossword:" + p.id) || {}).parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
-        var t = document.createElement("i"); t.textContent = ctype(r.type); var wp = document.createElement("span"); markup(wp, r.wordplay || "");
+        var t = mk("i", null, ctype(r.type)); var wp = document.createElement("span"); markup(wp, r.wordplay || "");
         x.appendChild(t); x.appendChild(wp);
-        if (mine) { var by = document.createElement("small"); by.textContent = " \u00b7 " + editedBy(); x.appendChild(by); }
+        if (mine) x.appendChild(mk("small", null, " \u00b7 " + editedBy()));
       }]].forEach(function (d) {
         var bt = document.createElement("button"); bt.type = "button"; bt.className = "btn mini"; bt.textContent = d[0];
         bt.addEventListener("click", function (e) {

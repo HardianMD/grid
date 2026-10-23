@@ -23,8 +23,7 @@
     el.hidden = false; AW.open = true;
     $("wheelTitle").innerHTML = "";
     $("wheelTitle").appendChild(document.createTextNode(wordName(w)));
-    var sm = mk("small", null, "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")");
-    $("wheelTitle").appendChild(sm);
+    $("wheelTitle").appendChild(mk("small", null, "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")"));
     // The clue, its letters tappable into the wheel.
     var wc = $("wheelClue"); wc.textContent = "";
     w.clue.split("").forEach(function (ch) {
@@ -42,8 +41,7 @@
   }
   function wheelClose() { $("wheel").hidden = true; AW.open = false; $("app").classList.remove("aw"); }
   function addTile(ch) {
-    var t = { ch: ch, x: 0, y: 0, el: document.createElement("div") };
-    t.el.className = "tile"; t.el.textContent = ch;
+    var t = { ch: ch, x: 0, y: 0, el: mk("div", "tile", ch) };
     $("ring").appendChild(t.el);
     AW.tiles.push(t);
     bindTile(t);
@@ -92,7 +90,8 @@
     return out;
   }
   function wheelRender() {
-    var used = coveredTiles();
+    var grey = Object.keys(coveredTiles()), used = {};
+    grey.forEach(function (i) { used[i] = 1; });
     AW.slots.forEach(function (ti) { if (ti >= 0) used[ti] = 1; });
     AW.tiles.forEach(function (t, i) {
       t.el.style.left = t.x + "px"; t.el.style.top = t.y + "px";
@@ -105,9 +104,8 @@
       d.classList.toggle("pick", i === AW.pick);
     });
     if (AW.found && AW.found !== wheelSet().key) { $("finds").hidden = true; AW.found = null; }
-    var set = Object.keys(coveredTiles()).length;
     $("wheelHint").textContent = !AW.tiles.length ? "Type the anagram letters, or tap them in the clue, to add them to the wheel." :
-      set ? "Grey letters are already in the grid." : "";
+      grey.length ? "Grey letters are already in the grid." : "";
     $("wheelHint").hidden = !$("wheelHint").textContent;
   }
   function placeTile(i) {

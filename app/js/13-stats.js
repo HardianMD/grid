@@ -19,15 +19,13 @@
     function figs(cls, list) {
       var d = mk("div", cls);
       list.forEach(function (f) {
-        var c = document.createElement("div"), b = document.createElement("b"), sp = document.createElement("span");
-        b.textContent = f[0]; sp.textContent = f[1]; c.appendChild(b); c.appendChild(sp); d.appendChild(c);
+        var c = mk("div"); c.appendChild(mk("b", null, f[0])); c.appendChild(mk("span", null, f[1])); d.appendChild(c);
       });
       return d;
     }
     function head(text) { box.appendChild(mk("h4", null, text)); }
     function card(name, t, mode) {
-      var c = document.createElement("div"), r = document.createElement("div"), l = document.createElement("span"), sm = document.createElement("small");
-      c.className = "scard"; r.className = "srow";
+      var c = mk("div", "scard"), r = mk("div", "srow"), l = mk("span"), sm = mk("small");
       if (mode) { var i = mk("i", "mico"); i.dataset.mode = mode; i.textContent = name[0]; l.appendChild(i); }
       // Paper cards carry the paper's badge, as in the home list.
       if (t.p && pubOf(t.p)) { l.appendChild(badgeEl(t.p)); name = typeOf(t.p); }
@@ -56,9 +54,8 @@
         ok = list.filter(function (x) { return !x.g.dnf; }), k = Math.min(5, Math.floor(ok.length / 2));
       var mean = function (a) { return a.reduce(function (n, x) { return n + x.g.time; }, 0) / a.length; };
       if (k >= 2) {
-        var a0 = mean(ok.slice(0, k)), a1 = mean(ok.slice(-k)), pc = Math.round(100 * (a1 - a0) / a0), hl = document.createElement("div"), b = document.createElement("b");
-        hl.className = "srow shl"; hl.textContent = "First " + k + " vs last " + k + ": " + fmt(a0) + " \u2192 " + fmt(a1);
-        b.className = pc > 0 ? "up" : "down"; b.textContent = (pc > 0 ? "\u25b2 " : "\u25bc ") + Math.abs(pc) + "%";
+        var a0 = mean(ok.slice(0, k)), a1 = mean(ok.slice(-k)), pc = Math.round(100 * (a1 - a0) / a0), hl = mk("div", "srow shl", "First " + k + " vs last " + k + ": " + fmt(a0) + " \u2192 " + fmt(a1)),
+          b = mk("b", pc > 0 ? "up" : "down", (pc > 0 ? "\u25b2 " : "\u25bc ") + Math.abs(pc) + "%");
         hl.appendChild(b); c.appendChild(hl);
       }
       var nl = list.filter(function (x) { return x.p.nitch; });
@@ -94,9 +91,7 @@
       Object.keys(types).sort(function (x, y) { return types[y].n - types[x].n || cmp(x, y); }).forEach(function (k) { card(k, types[k]); });
       head("By mode");
       MODES.forEach(function (m) { if (m && modes[m]) card(m.charAt(0).toUpperCase() + m.slice(1), modes[m], m); });
-      var n = document.createElement("p");
-      n.textContent = "Averages and bests count solves without a DNF. Hints and reveals are averaged over every finished puzzle. A solve counts at the mode it was finished in, or at the easiest mode used once a check, hint or reveal was used.";
-      box.appendChild(n);
+      box.appendChild(mk("p", null, "Averages and bests count solves without a DNF. Hints and reveals are averaged over every finished puzzle. A solve counts at the mode it was finished in, or at the easiest mode used once a check, hint or reveal was used."));
     }
   }
 

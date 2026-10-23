@@ -75,7 +75,7 @@
       if (!r) { box.innerHTML = "<p>No dictionary has this word. Tap Chambers to look it up.</p>"; return; }
       box.innerHTML = "";
       r.senses.forEach(function (x) {
-        var p = document.createElement("p");
+        var p = mk("p");
         if (x.pos) p.appendChild(mk("b", null, x.pos));
         p.appendChild(document.createTextNode(x.def)); box.appendChild(p);
       });

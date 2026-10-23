@@ -1,7 +1,7 @@
 # Grid
 
 Private crossword app, requiring sign in with Google. Puzzles and progress live in Firestore; this repo holds only the
-page. Live at https://hardianmd.github.io/grid/ (Pages publishes every push to `main`).
+page. 
 
 ## Files
 - `app/style.css`, `app/page.html`, `app/js/*.js`: the page's styles, markup and vanilla JS (no dependencies). The JS

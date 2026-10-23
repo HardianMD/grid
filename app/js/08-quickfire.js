@@ -37,9 +37,9 @@
     return QF.pool.filter(function (c) { return !pick.length || c.t.some(function (t) { return pick.indexOf(t) >= 0; }); });
   }
   function openQuickfire() {
-    QF = { pool: qfPool(), seen: [], at: -1 };
+    // The screen switches only once the first clue's puzzle is read, so the last grid never shows meanwhile.
+    QF = { pool: qfPool(), seen: [], at: -1, first: true };
     if (!QF.pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
-    showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
     qfNext();
   }
   // › moves on (back through any clues ‹ stepped over, then a new one); ‹ goes back to the clues seen before.
@@ -53,7 +53,11 @@
   }
   function qfShow(c) {
     QF.want = c; $("qfPrev").disabled = !QF.at;
-    full(c.h).then(function (p) { if (QF.want === c) { QF.c = c; qfLoad(c, p); } }, function () { toast("Couldn\u2019t load that clue. Check your connection."); });
+    full(c.h).then(function (p) {
+      if (QF.want !== c) return;
+      if (QF.first) { QF.first = false; showList(false); $("home").hidden = true; TAB = ""; qfHead(true); }
+      QF.c = c; qfLoad(c, p);
+    }, function () { toast("Couldn\u2019t load that clue. Check your connection."); });
   }
   function qfLoad(c, p) {
     var dir = c.k[0], num = c.k.slice(1), d = ((jsonOf(p, "hints") || {})[dir] || {})[num], rec = store.get("crossword:" + p.id) || {};

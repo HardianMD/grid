@@ -4,7 +4,7 @@
   var FROM = weeks2(new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10));
   function showHome(keepScroll) {
     if (P) { save(); stopClock(); }
-    qfHead(false);
+    qfHead(false); mergeMade();
     checkSubs();
     ["favs", "stats", "make"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
     $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats"; $("makeList").hidden = TAB !== "make";
@@ -42,7 +42,7 @@
       else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; hs.appendChild(mk("small", null, fmt(g.time))); }
       else hs.appendChild(mk("span", "st", "New"));
       // Parsed means a blog's explanations are in; until then any parsings are unverified.
-      if (!p.blog) hs.appendChild(mk("small", "pz", "Unparsed"));
+      if (!p.blog && !p.made) hs.appendChild(mk("small", "pz", "Unparsed"));
       b.appendChild(ht); b.appendChild(hm); b.appendChild(hs);
       b.addEventListener("click", function () { openPuzzle(p); });
       list.appendChild(b);

@@ -88,7 +88,7 @@
       if (!BOOTED && !fromCache) gate("No puzzles yet.", "Check for new puzzles", "update");
       return;
     }
-    PUZZLES = list;
+    SHARED = list; mergeMade();
     checkSubs();
     if (!BOOTED) {
       BOOTED = true;
@@ -101,7 +101,7 @@
   var FULL = {};
   function full(h) {
     var f = FULL[h.id], ref = DB.collection("puzzles").doc(h.id);
-    if (f && f.u === h.u) return Promise.resolve(f);
+    if (h.made || f && f.u === h.u) return Promise.resolve(h.made ? h : f);  // a created puzzle is whole already
     var got = function (d) { var x = d.exists && d.data(); if (!x || x.u < h.u) throw new Error("not here"); var p = JSON.parse(x.j); p.u = x.u; return FULL[h.id] = p; };
     return ref.get({ source: "cache" }).then(got).catch(function () { return ref.get().then(got); });
   }

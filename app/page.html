@@ -5,6 +5,7 @@
     <button class="btn back" id="homeBtn" type="button" aria-label="All puzzles">‹</button>
     <div class="ttl"><h1 id="title">Crossword</h1><div class="meta"><span id="meta"></span></div></div>
     <span class="timer" id="timer" aria-label="Time">0:00</span>
+    <button class="btn more info" id="infoBtn" type="button" aria-label="About this puzzle" hidden>i</button>
     <button class="btn more" id="menuBtn" type="button" aria-label="Puzzle options and mode"><span class="mico" id="modeIco" aria-hidden="true">E</span></button>
     <button class="btn more edo" id="edMenu" type="button" aria-label="Puzzle details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
     <button class="btn more" id="setBtn2" type="button" title="Settings" aria-label="Settings"></button>
@@ -67,6 +68,7 @@
       <div class="fgrp"><span>Status</span><div class="fhead"><div class="chips" id="fStatus"></div><button class="chip del" id="filterClear" type="button" hidden>Clear</button></div></div>
       <div class="fgrp"><span>Publication</span><div class="chips" id="fPub"></div></div>
       <div class="fgrp"><span>Type</span><div class="chips" id="fType"></div></div>
+      <div class="fgrp"><span>Created puzzles</span><div class="chips" id="fMade"></div></div>
       <div class="fgrp"><label for="fSetter">Setter</label><select id="fSetter"></select></div>
       <div class="fgrp"><span>Date</span><div class="frange"><input type="date" id="fFrom" aria-label="From date"><span>to</span><input type="date" id="fTo" aria-label="To date"></div></div>
     </div>
@@ -99,6 +101,7 @@
       <div class="set"><label for="edName">Title</label><input id="edName" type="text" maxlength="40" autocomplete="off" spellcheck="false"></div>
       <div class="set"><label for="edNote">Note</label><textarea id="edNote" rows="2" maxlength="500" placeholder="A rule or theme"></textarea></div>
       <label class="tog">Symmetric squares<input type="checkbox" id="edSym"></label>
+      <div class="set"><span>Puzzle list</span><span class="seg"><button type="button" id="edAdd">Add to puzzles</button></span><span class="sval" id="edAdded" hidden>Added ✓</span></div>
       <div class="set"><span>Grid</span><span class="seg"><button type="button" id="edLayout">Change grid</button></span></div>
       <div class="set"><span>Delete puzzle</span><span class="seg"><button type="button" id="edDel">Delete</button></span></div>
     </div>
@@ -224,6 +227,9 @@
       <textarea id="clueText" rows="3" maxlength="300" placeholder="The clue, without its letter count"></textarea>
       <label for="clueAns">Answer <span class="sub" id="clueLen"></span></label>
       <input id="clueAns" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Spaces and hyphens set the word breaks">
+      <label>Answer runs on into <span class="sub">tap the other parts in order</span></label>
+      <div class="chips" id="clueLink"></div>
+      <div class="lrow"><span></span><button class="btn mini" id="clueParse" type="button">Parsing and definition</button></div>
     </div>
     <div class="pfind" id="findBox" hidden><p class="note" id="findNote"></p><div class="chips" id="findList"></div></div>
     <div class="actions">

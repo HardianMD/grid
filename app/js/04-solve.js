@@ -1,6 +1,7 @@
   function build() {
     $("title").textContent = P.title.replace(/ No\. /, " ");
     $("meta").textContent = metaText(P);
+    $("infoBtn").hidden = !P.note || !!P.ed;
     var g = $("grid");
     g.innerHTML = ""; g.classList.remove("no");  // a wrong Quickfire answer's flash would replay on the new cells
     g.style.gridTemplateColumns = "repeat(" + C + ", var(--cs))";

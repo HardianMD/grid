@@ -85,11 +85,12 @@
     if (FILT.pub && FILT.pub.length && FILT.pub.indexOf(pubOf(p)) < 0) return false;
     if (FILT.type && FILT.type.length && FILT.type.indexOf(typeOf(p)) < 0) return false;
     if (FILT.setter && (p.setter || "") !== FILT.setter) return false;
+    if (FILT.made && p.made) return false;
     if (FILT.from && (p.date || "") < FILT.from) return false;
     if (FILT.to && (p.date || "9999") > FILT.to) return false;
     return true;
   }
-  function filterCount() { return (FILT.status || []).length + (FILT.pub || []).length + (FILT.type || []).length + (FILT.setter ? 1 : 0) + (FILT.from || FILT.to ? 1 : 0); }
+  function filterCount() { return (FILT.status || []).length + (FILT.pub || []).length + (FILT.type || []).length + (FILT.setter ? 1 : 0) + (FILT.from || FILT.to ? 1 : 0) + (FILT.made ? 1 : 0); }
   function chipSet(box, values, key) {
     box.innerHTML = "";
     values.forEach(function (v) {
@@ -108,6 +109,13 @@
     chipSet($("fStatus"), ["Solved", "DNF", "In progress", "New"], "status");
     chipSet($("fPub"), uniq(pubOf), "pub");
     chipSet($("fType"), uniq(typeOf), "type");
+    // Created puzzles: shown, or hidden (FILT.made).
+    var fm = $("fMade"); fm.innerHTML = ""; fm.parentNode.hidden = !PUZZLES.some(function (p) { return p.made; });
+    ["Show", "Hide"].forEach(function (v, i) {
+      var b = mk("button", "chip" + (!!FILT.made === !!i ? " on" : ""), v); b.type = "button";
+      b.addEventListener("click", function () { FILT.made = i || undefined; filterChanged(); });
+      fm.appendChild(b);
+    });
     var sel = $("fSetter"); sel.innerHTML = "";
     [""].concat(uniq(function (p) { return p.setter; })).forEach(function (v) {
       var o = document.createElement("option"); o.value = v; o.textContent = v || "Any setter"; sel.appendChild(o);

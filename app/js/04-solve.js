@@ -222,7 +222,7 @@
 
   function select(r, c, dir) {
     var cell = cells[r][c];
-    if (cell.b) return;
+    if (cell.b || cell.a < 0 && cell.d < 0) return;  // a draft's square in no answer
     if (cell[dir] < 0) dir = dir === "a" ? "d" : "a";
     sel = { r: r, c: c, dir: dir };
     render(); save();
@@ -373,7 +373,7 @@
   // A submitted grid can't be changed, so Submit asks first; in Hard and Champ, submitting with blank squares is giving up.
   // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
   function askReset(no) {
-    $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
+    $("clueForm").hidden = $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
     $("hintText").hidden = false; $("hintNo").hidden = false; $("hintNo").textContent = no; $("hintYes").hidden = false;
   }
   function confirmAsk(mode, title, text, yes) {

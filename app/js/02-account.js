@@ -61,6 +61,7 @@
         };
         // Progress records first (finished ones are kept only in Firestore's offline copy: shed), from the server when
         // this device has no copy.
+        MADECOL = DB.collection("users/" + u.uid + "/made"); unsub.push(MADECOL.onSnapshot(gotMade, function () {}));
         var st = DB.collection("users/" + u.uid + "/state"), mine = st.get({ source: "cache" })
           .then(function (s) { return s.size ? s : st.get(); }, function () { return st.get(); }).then(cloudMemo, function () {});
         Promise.all([col.where("u", ">", "").get({ source: "cache" }).then(add, function () { return ""; }), mine]).then(function (r) {

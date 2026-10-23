@@ -384,6 +384,7 @@
   $("hintYes").addEventListener("click", function () {
     var w = curWord();
     if (askMode === "find") { $("hintAsk").hidden = true; return; }
+    if (askMode === "clue") return edClueSave(w);
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
     if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
     if (askMode === "add") {
@@ -483,7 +484,7 @@
   });
 
   document.addEventListener("keydown", function (e) {
-    if (!$("home").hidden || !$("sheet").hidden || !$("qfSheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!$("home").hidden || !$("sheet").hidden || !$("edSheet").hidden || !$("gridSheet").hidden || !$("qfSheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key;
     if (AW.open) {
       if (k === "Escape") wheelClose();
@@ -507,9 +508,10 @@
 
   $("grid").addEventListener("click", function (e) {
     var el = e.target.closest(".c"); if (!el) return;
+    if (P.ed && ED.sq) return edToggle(+el.dataset.r, +el.dataset.c);
     tapCell(+el.dataset.r, +el.dataset.c);
   });
   $("clues").addEventListener("click", function (e) {
     var el = e.target.closest(".clue"); if (el) { showList(false); gotoWord(+el.dataset.i); }
   });
-  $("now").addEventListener("click", function () { tapCell(sel.r, sel.c); });
+  $("now").addEventListener("click", function () { if (P.ed) edClue(curWord()); else tapCell(sel.r, sel.c); });

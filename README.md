@@ -6,8 +6,9 @@ page. Live at https://hardianmd.github.io/grid/ (Pages publishes every push to `
 ## Files
 - `app/style.css`, `app/page.html`, `app/js/*.js`: the page's styles, markup and vanilla JS (no dependencies). The JS
   files share one scope: the build joins them in name order inside one function.
-- `tools/build.py OUT`: joins them into `OUT/index.html` under the page head (the font loads in the background, so it
-  never holds up sign-in) and copies `site/` (icons, manifest, word list).
+- `tools/build.py [--min] OUT`: joins them into `OUT/index.html` under the page head (the font loads in the background,
+  so it never holds up sign-in) and copies `site/` (icons, manifest, word list). Publishing uses `--min`, which shrinks
+  the styles and script with esbuild (pinned in `build.py`, fetched by npx); the app test checks the two builds match.
 - `tools/check.js`: checks that the finish bar and Stats read every kind of saved record (old ones included) the same
   way (`helpOf`, `helpText`). Runs on each pull request (`check.yml`) and before each publish (`pages.yml`).
 - `site/words.txt`: the UKACD18 word list (licence in `site/words-licence.txt`) for the anagram solver and word finder.

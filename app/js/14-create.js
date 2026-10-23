@@ -325,11 +325,47 @@
   });
   // Add to puzzles: once every square has a letter and every clue its wording, the puzzle joins the list on the day it
   // was made; later changes reach it too.
-  $("edAdd").addEventListener("click", function () {
+  function edReady() {
     save();
     var todo = words.filter(function (w) { return !filled(w); }).length, nc = words.filter(function (w) { return !ED.d.clues[skey(w)]; }).length;
-    if (todo || nc) return toast("First " + [todo ? plural(todo, "answer") + " to fill" : "", nc ? plural(nc, "clue") + " to write" : ""].filter(Boolean).join(" and "));
+    if (todo || nc) toast("First " + [todo ? plural(todo, "answer") + " to fill" : "", nc ? plural(nc, "clue") + " to write" : ""].filter(Boolean).join(" and "));
+    return !todo && !nc;
+  }
+  $("edAdd").addEventListener("click", function () {
+    if (!edReady()) return;
     ED.d.added = 1; madeSave(ED.d); this.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");
+  });
+  // Export as an Across Lite .puz file (version 1.3), the format most crossword apps open: grid, answers, clues with their
+  // letter counts, title, author (the Settings name) and note, with the format's checksums. Its text is Latin-1, so
+  // other characters become "?".
+  function puzFile(p) {
+    var W = p.grid[0].length, H = p.grid.length, clues = [];
+    var lat = function (s) { return Array.from(String(s || "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, "-")).map(function (ch) { return ch.charCodeAt(0) < 256 ? ch.charCodeAt(0) : 63; }); };
+    var z = function (b) { return b.concat([0]); };
+    var ck = function (b, c) { b.forEach(function (x) { c = ((c & 1 ? (c >> 1) + 0x8000 : c >> 1) + x) & 0xffff; }); return c; };
+    slotsOf(p.grid).forEach(function (w) { clues.push(lat(p[w.dir === "a" ? "across" : "down"][w.num])); });
+    var sol = lat(solOf(p).replace(/#/g, ".")), grid = sol.map(function (x) { return x === 46 ? 46 : 45; }), str = [lat(p.title), lat(p.setter), []], note = lat(p.note);
+    var text = function (c) {
+      str.forEach(function (b) { if (b.length) c = ck(z(b), c); });
+      clues.forEach(function (b) { c = ck(b, c); });
+      return note.length ? ck(z(note), c) : c;
+    };
+    var h = [], put = function (at, b) { b.forEach(function (x, i) { h[at + i] = x; }); };
+    for (var i = 0; i < 0x34; i++) h.push(0);
+    put(2, z(lat("ACROSS&DOWN"))); put(0x18, z(lat("1.3"))); put(0x2c, [W, H, clues.length & 255, clues.length >> 8, 1, 0]);
+    var cib = ck(h.slice(0x2c), 0), cs = [cib, ck(sol, 0), ck(grid, 0), text(0)], all = text(ck(grid, ck(sol, cib)));
+    put(0, [all & 255, all >> 8]); put(0x0e, [cib & 255, cib >> 8]);
+    put(0x10, cs.map(function (c, i) { return "ICHE".charCodeAt(i) ^ c & 255; })); put(0x14, cs.map(function (c, i) { return "ATED".charCodeAt(i) ^ c >> 8; }));
+    return new Uint8Array(h.concat(sol, grid, [].concat.apply([], str.map(z)), [].concat.apply([], clues.map(z)), z(note)));
+  }
+  $("edPuz").addEventListener("click", function () {
+    if (!edReady()) return;
+    var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + ".puz";
+    var file = new File([puzFile(p)], name, { type: "application/octet-stream" }), a = mk("a");
+    // Phones share the file (a Home Screen app can't download); computers download it.
+    if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] }).catch(function () {});
+    a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
   });
   $("edDone").addEventListener("click", function () { $("edSheet").hidden = true; });
   $("edSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });

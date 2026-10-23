@@ -7,16 +7,20 @@
     });
     return out;
   }
-  // A finished puzzle's clues are worked out again only when the puzzle or its record changes.
+  // The finished puzzles are read whole (full) when Quickfire opens; each one's clues are worked out again only
+  // when the puzzle or its record changes.
   function qfPool() {
-    var out = [];
-    PUZZLES.forEach(function (p) {
-      if (!/^(Solved|DNF)$/.test(statusOf(p))) return;
-      var s = store.peek("crossword:" + p.id) || {}, c = pc(p);
-      if (!c.qf || c.qf.s !== s) c.qf = { s: s, list: qfClues(p, s) };
-      out.push.apply(out, c.qf.list);
+    var fin = PUZZLES.filter(function (p) { return /^(Solved|DNF)$/.test(statusOf(p)); });
+    return Promise.all(fin.map(function (h) { return full(h).catch(function () { return null; }); })).then(function (ps) {
+      var out = [];
+      ps.forEach(function (p) {
+        if (!p) return;
+        var s = store.peek("crossword:" + p.id) || {}, c = pc(p);
+        if (!c.qf || c.qf.s !== s) c.qf = { s: s, list: qfClues(p, s) };
+        out.push.apply(out, c.qf.list);
+      });
+      return out;
     });
-    return out;
   }
   function qfClues(p, s) {
     var out = [], mine = s.parses || {}, blog = jsonOf(p, "parses") || {}, tails = {};
@@ -39,10 +43,12 @@
     return QF.pool.filter(function (c) { return !pick.length || c.t.some(function (t) { return pick.indexOf(t) >= 0; }); });
   }
   function openQuickfire() {
-    QF = { pool: qfPool(), seen: [], at: -1 };
-    if (!QF.pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
-    showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
-    qfNext();
+    return qfPool().then(function (pool) {
+      QF = { pool: pool, seen: [], at: -1 };
+      if (!pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
+      showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
+      qfNext();
+    });
   }
   // › moves on (back through any clues ‹ stepped over, then a new one); ‹ goes back to the clues seen before.
   function qfNext() {

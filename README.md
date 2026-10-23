@@ -20,7 +20,9 @@ Search for the function name; the comment above each says what it does.
 - Speed: `store.peek` (a record for reading only, parsed again only when it changes), `pc` (facts worked out once per
   copy of a puzzle: `solOf`, `jsonOf`, `linksFor`, clue starts, Quickfire clues), `progressOf` (kept per record),
   `fmtDate` and `cmp` (date formats and text order, each made once).
-- Sign-in and data: `fbInit` (Firebase compat SDK from gstatic, puzzles read incrementally by `u`), `gotPuzzles`,
+- Sign-in and data: `fbInit` (Firebase compat SDK from gstatic; puzzle heads from `meta/h_<id>`, read incrementally by
+  `u`, are all `PUZZLES` holds), `full` (a whole puzzle from `puzzles/<id>`, read when opened, for Favourites and
+  Quickfire), `gotPuzzles`,
   `showStatus` (update problems, refresh spinner), `runUpdate`/`dispatch` (starts the updater with the saved key).
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.
 - Elements: `mk(tag, class, text)` builds one.

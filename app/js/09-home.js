@@ -59,13 +59,15 @@
     $("home").hidden = false;
     if (keepScroll !== true) $("home").scrollTop = 0;
   }
-  function openPuzzle(p) {
-    var nl = notes(), left = nl.filter(function (n) { return n.id !== p.id; });
+  function openPuzzle(h) {
+    var nl = notes(), left = nl.filter(function (n) { return n.id !== h.id; });
     if (left.length !== nl.length) setNotes(left);  // opening a puzzle, from the bell or the list, reviews its notification
-    showList(false); qfHead(false);
-    $("home").hidden = true;
-    if (p !== P || P.stale) load(p); else { startClock(); render(); }  // a new copy (answers or parsings arrived) loads afresh
-    size();
+    return full(h).then(function (p) {
+      showList(false); qfHead(false);
+      $("home").hidden = true;
+      if (p !== P || p.stale) { p.stale = false; load(p); } else { startClock(); render(); }  // a new copy (answers or parsings arrived) loads afresh
+      size();
+    }, function () { toast("Couldn\u2019t open the puzzle. Check your connection."); });
   }
   $("homeBtn").addEventListener("click", showHome);
   document.addEventListener("click", function (e) {

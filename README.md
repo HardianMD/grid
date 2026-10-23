@@ -34,7 +34,7 @@ Search for the function name; the comment above each says what it does.
   `check`/`checkWords`, `grade`/`submit` (Hard and Champ), `save` (record format), `blank`.
 - Hints and parsings: `nextAction`, the `hintBtn` and `hintYes` handlers (one pop-up, `askMode`), `showParse`,
   `openEditor` (definition picker, clue type chips, mark-up bar `MARKS`).
-- Tools: anagram wheel (`wheelOpen` … `wheelKey`, `solveAnagram`, `combos`), word finder (`findBtn`), dictionary
+- Tools: anagram wheel (`wheelOpen` … `wheelKey`, `solveAnagram`, `combos`), word finder (`findBtn`, its own button unless Settings switch it off; `partWords` for each word of a longer answer), dictionary
   (`lookup`, `DICTS`).
 - Home: `showHome` (two weeks at a time, `FROM`), filters (`FILT`), Favourites (`showFavs`, `answerOf`), Stats
   (`showStats`, `helpOf`), bell (`checkSubs`, `markOf`, `notes`), Settings (`showSettings`, `applyPrefs`).

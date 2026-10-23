@@ -155,11 +155,19 @@
     var br = seps(parseEnum(joinEnum(clue)));
     return Array.from(a).map(function (ch, i) { return ch + (br[i] || ""); }).join("");
   }
+  // Shown once the starred clues' puzzles are read (full); FAVT drops an older showing still reading.
+  var FAVT = 0;
   function showFavs() {
-    var box = $("favList"), byId = {};
-    box.innerHTML = "";
+    var byId = {}, tk = ++FAVT;
     PUZZLES.forEach(function (p) { byId[p.id] = p; });
     var list = favs().filter(function (f) { return byId[f.p]; });
+    Promise.all(list.map(function (f) { return full(byId[f.p]).catch(function () { return null; }); })).then(function (ps) {
+      if (tk === FAVT) favList(list.filter(function (f, i) { return byId[f.p] = ps[i]; }), byId);
+    });
+  }
+  function favList(list, byId) {
+    var box = $("favList");
+    box.innerHTML = "";
     if (!list.length) { var e = mk("p", "hempty", "No favourites yet. Tap the star by a clue to add it."); box.appendChild(e); }
     list.forEach(function (f) {
       var p = byId[f.p], dir = f.k[0], num = f.k.slice(1);
@@ -190,10 +198,11 @@
       });
       el.appendChild(b); el.appendChild(s); el.appendChild(fb);
       el.addEventListener("click", function () {
-        openPuzzle(p);
-        var i = words.findIndex(function (w) { return w.dir === dir && String(w.num) === num; });
-        if (i < 0) i = words.findIndex(function (w) { return (w.parts || []).some(function (x) { return x.dir === dir && String(x.num) === num; }); });
-        if (i >= 0) gotoWord(i);
+        openPuzzle(p).then(function () {
+          var i = words.findIndex(function (w) { return w.dir === dir && String(w.num) === num; });
+          if (i < 0) i = words.findIndex(function (w) { return (w.parts || []).some(function (x) { return x.dir === dir && String(x.num) === num; }); });
+          if (i >= 0) gotoWord(i);
+        });
       });
       box.appendChild(el);
     });

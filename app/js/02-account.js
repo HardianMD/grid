@@ -52,14 +52,16 @@
         }
         $("syncTxt").textContent = "Syncing…";
         if (!BOOTED) gate("Loading puzzles…");
-        var col = DB.collection("puzzles"), add = function (snap) {
+        // Each puzzle's head (meta/h_<id>: the puzzle without its clues and notes) is all the lists and Stats read;
+        // the whole puzzle is read when it is opened (full).
+        var col = DB.collection("meta"), add = function (snap) {
           var top = "";
-          snap.forEach(function (d) { var x = d.data(); if (x.u > top) top = x.u; try { PZ[d.id] = JSON.parse(x.j); } catch (e) {} });
+          snap.forEach(function (d) { var x = d.data(); if (x.u > top) top = x.u; try { var h = JSON.parse(x.j); h.u = x.u; PZ[h.id] = h; } catch (e) {} });
           return top;
         };
-        col.get({ source: "cache" }).then(add, function () { return ""; }).then(function (top) {
+        col.where("u", ">", "").get({ source: "cache" }).then(add, function () { return ""; }).then(function (top) {
           if (FBUSER !== u) return;
-          unsub.push((top ? col.where("u", ">", top) : col).onSnapshot(function (snap) {
+          unsub.push(col.where("u", ">", top).onSnapshot(function (snap) {
             add(snap);
             gotPuzzles(Object.keys(PZ).map(function (k) { return PZ[k]; }), snap.metadata.fromCache, u);
           }, denied));
@@ -84,11 +86,18 @@
     checkSubs();
     if (!BOOTED) {
       BOOTED = true;
-      boot();
-      gate(null);
-      cloudListen(DB.collection("users/" + u.uid + "/state"));
+      boot().then(function () { gate(null); cloudListen(DB.collection("users/" + u.uid + "/state")); },
+        function () { gate("Couldn\u2019t load the puzzles. Check your connection and reload."); });
     } else if (!$("home").hidden) showHome(true);
-    else if (P && solved && PZ[P.id] !== P) { load(PZ[P.id]); size(); }  // a finished grid on screen picks up parsings as they arrive
+    else if (P && solved && PZ[P.id] && PZ[P.id].u !== P.u) full(PZ[P.id]).then(function (p) { if (P && P.id === p.id) { load(p); size(); } });  // a finished grid on screen picks up parsings as they arrive
+  }
+  // A whole puzzle, for its head h: from this device's copy when it is as new as the head, else from the server.
+  var FULL = {};
+  function full(h) {
+    var f = FULL[h.id], ref = DB.collection("puzzles").doc(h.id);
+    if (f && f.u === h.u) return Promise.resolve(f);
+    var got = function (d) { var x = d.exists && d.data(); if (!x || x.u < h.u) throw new Error("not here"); var p = JSON.parse(x.j); p.u = x.u; return FULL[h.id] = p; };
+    return ref.get({ source: "cache" }).then(got).catch(function () { return ref.get().then(got); });
   }
   // The update status: problems the last run met, and whether a run is going (the refresh button spins meanwhile).
   function showStatus() {

@@ -428,8 +428,8 @@
     var w = curWord(), pat = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; });
     var br = seps(w.breaks);
     var shown = pat.map(function (ch, i) { return (ch || "?") + (br[i] || ""); }).join("");
-    withWords($("findBtn"), function (list) {
-      var all = entries(list, w, pat), fit = all.filter(function (h) { return h.fit; }), hits = fit.length ? fit : all;
+    withWords($("findBtn"), [pat.length], function (W) {
+      var all = entries(W(pat.length), w, pat), fit = all.filter(function (h) { return h.fit; }), hits = fit.length ? fit : all;
       $("findNote").textContent = shown + ": " + (!hits.length ? "no words in the list fit." :
         (fit.length ? "" : "none match the word lengths, but these fit the letters. ") +
         (hits.length > 60 ? "Showing 60 of " + hits.length + "; fill in more letters to narrow it down." : hits.length + (hits.length > 1 ? " words fit." : " word fits.")));

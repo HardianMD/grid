@@ -190,12 +190,13 @@
     layoutTiles(false);
   });
   // Anagram solver, only inside the wheel so the letters have to be worked out first: answers from the word list
-  // (words.txt, UKACD) using exactly the wheel letters around any letters fixed by crossing answers.
-  var WORDS = null;
-  function loadWords() {
-    if (!WORDS) WORDS = fetch("words.txt").then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-      .then(function (t) { return t.split(/\r?\n/); }, function (e) { WORDS = null; throw e; });
-    return WORDS;
+  // (UKACD, split by letter count into words/N.txt by tools/build.py) using exactly the wheel letters around any
+  // letters fixed by crossing answers.
+  var WORDS = {};
+  function loadWords(n) {
+    if (!WORDS[n]) WORDS[n] = fetch("words/" + n + ".txt").then(function (r) { if (r.status === 404) return ""; if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { return t.split(/\r?\n/); }, function (e) { delete WORDS[n]; throw e; });
+    return WORDS[n];
   }
   function plain(s) { return s.normalize("NFD").replace(/[^A-Za-z]/g, "").toUpperCase(); }
   // Word lengths as an enumeration: "play on words" -> "4,2,5", "rub-a-dub" -> "3-1-3".
@@ -221,10 +222,13 @@
     });
     return out;
   }
-  // Load the word list for a button press: the button is disabled meanwhile.
-  function withWords(btn, fn) {
+  // Load the word lists of these lengths for a button press (the button is disabled meanwhile); fn gets W(n), the list
+  // of length n.
+  function withWords(btn, lens, fn) {
     btn.disabled = true;
-    loadWords().then(fn, function () { toast("The word list couldn't be loaded"); }).then(function () { btn.disabled = false; });
+    Promise.all(lens.map(loadWords)).then(function (ls) {
+      fn(function (n) { return ls[lens.indexOf(n)]; });
+    }, function () { toast("The word list couldn't be loaded"); }).then(function () { btn.disabled = false; });
   }
   function chipList(box, hits, max, pick) {
     hits.slice(0, max).forEach(function (h) {
@@ -252,11 +256,11 @@
     return SINGLE[len];
   }
   // Answers of several words, such as (7,5): one single word per part that fits the part's fixed letters, together
-  // using exactly the letters available. words.txt is ordered from common to rare words, so the search meets common
+  // using exactly the letters available. Each list is ordered from common to rare words, so the search meets common
   // words first; it stops at 2000 answers, which are ranked by how common their words are.
-  function combos(list, fixed, pool, parts) {
+  function combos(W, fixed, pool, parts) {
     var cand = parts.map(function (pt) {
-      return singles(list, pt.len).filter(function (w) {
+      return singles(W(pt.len), pt.len).filter(function (w) {
         for (var i = 0; i < pt.len; i++) if (fixed[pt.at + i] && w.L[i] !== fixed[pt.at + i]) return false;
         for (i = 0; i < 26; i++) if (w.c[i] > pool[i]) return false;
         return true;
@@ -288,16 +292,16 @@
     return { fixed: fixed, have: have, open: fixed.filter(function (v) { return !v; }).length, key: have + "|" + fixed.join(",") };
   }
   function solveAnagram() {
-    var s = wheelSet();
-    withWords($("solveBtn"), function (list) {
-      var hits = entries(list, AW.word, s.fixed, function (L) {
+    var s = wheelSet(), parts = partsOf(AW.word);
+    withWords($("solveBtn"), [s.fixed.length].concat(parts.map(function (p) { return p.len; })), function (W) {
+      var hits = entries(W(s.fixed.length), AW.word, s.fixed, function (L) {
         return L.split("").filter(function (_, i) { return !s.fixed[i]; }).sort().join("") === s.have;
       });
-      var fit = hits.filter(function (h) { return h.fit; }), parts = partsOf(AW.word), box = $("finds");
+      var fit = hits.filter(function (h) { return h.fit; }), box = $("finds");
       if (parts.length > 1) {
         var got = {};
         fit.forEach(function (h) { got[h.L] = 1; });
-        fit = fit.concat(combos(list, s.fixed, counts(s.have + s.fixed.join("")), parts).filter(function (h) { return !got[h.L]; }));
+        fit = fit.concat(combos(W, s.fixed, counts(s.have + s.fixed.join("")), parts).filter(function (h) { return !got[h.L]; }));
       }
       var show = fit.length ? fit : hits;
       box.innerHTML = ""; box.hidden = false; AW.found = s.key;

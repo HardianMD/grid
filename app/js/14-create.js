@@ -1,8 +1,9 @@
   // Create: the solver's own puzzles. Each is a draft d, kept in Firestore at users/{uid}/made/<id> as {j, u}: its number
   // n, title, note, date made, grid rows ("#" black), clue wording (clues) and linked answers (links), keyed by a slot's
   // first square and direction ("r,c,a"), and word breaks (brk: "," or "-" after a square, keyed "r,c,dir"), so each
-  // stays with its slot while other squares change. Its letters (f, rows) travel scrambled in x. The editor plays a
-  // draft as a puzzle (P.ed, made by edPuzzle) and numbers it like any other.
+  // stays with its slot while other squares change. Its letters (f, rows), parsings (p) and definitions (d, by slot too)
+  // travel scrambled in x. The editor plays a draft as a puzzle (P.ed, made by edPuzzle) and numbers it like any other.
+  // Once added, a draft is also a puzzle in the list (madePuzzle, p.made), built here rather than stored again.
   var MADE = {}, MADECOL = null, madeQ = {}, madeT = null, ED = null;
   function scramble(s, key) {
     var b = new TextEncoder().encode(s), out = "";
@@ -13,10 +14,10 @@
     snap.docChanges().forEach(function (ch) {
       var id = ch.doc.id, x = ch.doc.data(), d = null;
       if (ch.type === "removed") { delete MADE[id]; return; }
-      try { d = JSON.parse(x.j); d.f = JSON.parse(unscramble(d.x, id)).f; delete d.x; } catch (e) { return; }
+      try { d = JSON.parse(x.j); Object.assign(d, JSON.parse(unscramble(d.x, id))); delete d.x; } catch (e) { return; }
       if (!MADE[id] || (d.at || 0) > (MADE[id].at || 0)) MADE[id] = d;
     });
-    if (!$("home").hidden && TAB === "make") showMade();
+    if (BOOTED && !$("home").hidden) showHome(true);
   }
   function madeSave(d) {
     d.at = Date.now(); MADE[d.id] = madeQ[d.id] = d;
@@ -27,7 +28,7 @@
     if (!MADECOL) return;
     var q = madeQ; madeQ = {};
     Object.keys(q).forEach(function (id) {
-      var o = Object.assign({}, q[id], { x: scramble(JSON.stringify({ f: q[id].f }), id) }); delete o.f;
+      var o = Object.assign({}, q[id], { x: scramble(JSON.stringify({ f: q[id].f, p: q[id].p, d: q[id].d }), id), f: undefined, p: undefined, d: undefined });
       MADECOL.doc(id).set({ j: JSON.stringify(o), u: new Date().toISOString() }).then(syncOk, function (e) { if (!madeQ[id]) madeQ[id] = q[id]; syncErr(e); });
     });
   }
@@ -43,7 +44,7 @@
       var b = mk("button", "hitem"); b.type = "button";
       b.appendChild(mk("div", "ht")).appendChild(mk("span", null, d.title));
       b.appendChild(mk("div", "hm", plural(slotsOf(d.grid).length, "clue") + " · " + fmtDate(new Date(d.date + "T12:00:00"), { day: "numeric", month: "short", year: "numeric" })));
-      b.appendChild(mk("div", "hs", "Draft"));
+      b.appendChild(mk("div", "hs", d.added ? "Added" : "Draft"));
       b.addEventListener("click", function () { edOpen(d); });
       box.appendChild(b);
     });
@@ -51,8 +52,36 @@
   function newMade(g) {
     var n = Object.keys(MADE).reduce(function (m, k) { return Math.max(m, MADE[k].n || 0); }, 0) + 1, id = "made-" + n;
     var d = { id: id, n: n, title: "Crossword No. " + n, note: "", date: new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10),
-      grid: g, f: g.map(function (row) { return row.replace(/./g, " "); }), clues: {}, brk: {}, links: [], sym: 1 };
+      grid: g, f: g.map(function (row) { return row.replace(/./g, " "); }), clues: {}, brk: {}, links: [], p: {}, d: {}, sym: 1 };
     madeSave(d); edOpen(d);
+  }
+
+  // An added draft as a puzzle for the list, Quickfire and solving, in the shared puzzles' format (answers, definitions
+  // and parsings scrambled; qc as the updater writes it); made again only when the draft changes.
+  var MP = new WeakMap(), SHARED = [];
+  function madePuzzle(d) {
+    var c = MP.get(d);
+    if (c && c.at === d.at) return c.p;
+    var p = edPuzzle(d), id = d.id, nk = {}, hints = { a: {}, d: {} }, ps = { a: {}, d: {} }, qc = { a: {}, d: {} }, tail = {};
+    slotsOf(d.grid).forEach(function (w) { nk[skey(w)] = w; });
+    (d.links || []).forEach(function (g) { g.slice(1).forEach(function (k) { if (nk[k] && nk[g[0]]) tail[k] = nk[g[0]]; }); });
+    Object.keys(nk).forEach(function (k) {
+      var w = nk[k], n = w.num, h = tail[k], x = (d.p || {})[k], df = ((d.d || {})[k] || [])[0];
+      if (h) { p[w.dir === "a" ? "across" : "down"][n] = "See " + h.num + (h.dir !== w.dir ? (h.dir === "a" ? " Across" : " Down") : ""); return; }
+      if (x) ps[w.dir][n] = x;
+      if (df) hints[w.dir][n] = df;
+      qc[w.dir][n] = [x ? x.type : null, 1];
+    });
+    var flat = d.f.map(function (row, r) { return Array.from(row).map(function (ch, c) { return d.grid[r][c] === "#" ? "#" : ch.trim() || "?"; }).join(""); }).join("");
+    delete p.ed;
+    p = Object.assign(p, { id: id, made: 1, publication: "Created", badge: { bg: "#e8e0f4", fg: "#4b2c83" }, type: "Cryptic", solution_source: "published",
+      solution: scramble(flat, id), hints: scramble(JSON.stringify(hints), id), parses: scramble(JSON.stringify(ps), id), qc: qc, u: String(d.at) });
+    MP.set(d, { at: d.at, p: p });
+    return p;
+  }
+  // The shared puzzles (SHARED, from Firestore) and the added drafts.
+  function mergeMade() {
+    PUZZLES = SHARED.concat(Object.keys(MADE).filter(function (k) { return MADE[k].added; }).map(function (k) { return madePuzzle(MADE[k]); }));
   }
 
   // The grid library: starting points, grids made here on the papers' lattice, and every 15x15 layout in the puzzles.
@@ -178,10 +207,17 @@
     $("edSq").setAttribute("aria-pressed", String(ED.sq));
     load(edPuzzle(d)); size(); edStat();
   }
+  // Parsings and definitions are kept by slot (d.p, d.d) and used by clue number (myParses, myDefs).
+  function edByNum(o) { var out = {}; words.forEach(function (w) { var x = o && o[skey(w)]; if (x) out[w.dir + w.num] = x; }); return out; }
+  function edBySlot(o, by) {
+    var out = Object.assign({}, o);
+    words.forEach(function (w) { var x = by[w.dir + w.num]; if (x) out[skey(w)] = x; else delete out[skey(w)]; });
+    return out;
+  }
   function edSave() {
-    var f = fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); });
-    ED.d.sel = sel;
-    if (f.join() !== ED.d.f.join()) { ED.d.f = f; madeSave(ED.d); edStat(); }
+    var d = ED.d, f = fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }), p = edBySlot(d.p, myParses), df = edBySlot(d.d, myDefs);
+    d.sel = sel;
+    if (f.join() !== d.f.join() || JSON.stringify([p, df]) !== JSON.stringify([d.p || {}, d.d || {}])) { d.f = f; d.p = p; d.d = df; madeSave(d); edStat(); }
   }
   function edStat() {
     var k = gridCheck(ED.d.grid), warn = [], todo = words.filter(function (w) { return !filled(w); }).length, nc = words.filter(function (w) { return !ED.d.clues[skey(w)]; }).length;
@@ -227,12 +263,38 @@
     $("clueLen").textContent = "(" + ((w.clue.match(/\(([\d,\-]+)\)$/) || [])[1] || w.cells.length) + ")";
     $("clueText").value = ED.d.clues[skey(w)] || "";
     $("clueAns").value = any ? w.cells.map(function (rc, i) { return (fill[rc[0]][rc[1]] || "?") + (br[i] || ""); }).join("") : "";
+    // Linking: the other slots this answer runs on into, in order; slots in other links are not offered.
+    var k = skey(w), links = ED.d.links || [], other = {}, box = $("clueLink"), sl = slotsOf(ED.d.grid);
+    ED.tails = ((links.filter(function (g) { return g[0] === k; })[0]) || [k]).slice(1);
+    links.forEach(function (g) { if (g[0] !== k) g.forEach(function (x) { other[x] = 1; }); });
+    box.innerHTML = "";
+    sl.forEach(function (s) {
+      var sk = skey(s); if (sk === k || other[sk]) return;
+      var b = mk("button", "chip", s.num + (s.dir === "a" ? " Across" : " Down") + " (" + s.cells.length + ")"); b.type = "button";
+      b.classList.toggle("on", ED.tails.indexOf(sk) >= 0);
+      b.addEventListener("click", function () {
+        var i = ED.tails.indexOf(sk);
+        if (i >= 0) ED.tails.splice(i, 1); else ED.tails.push(sk);
+        b.classList.toggle("on", i < 0);
+        $("clueLen").textContent = "(" + ED.tails.reduce(function (n, t) { return n + sl.filter(function (x) { return skey(x) === t; })[0].cells.length; }, sl.filter(function (x) { return skey(x) === k; })[0].cells.length) + " letters)";
+      });
+      box.appendChild(b);
+    });
     $("hintYes").textContent = "Save"; $("hintAsk").hidden = false;
   }
+  $("clueParse").addEventListener("click", function () { if (edClueSave(curWord())) openEditor(curWord(), false); });
   function edClueSave(w) {
-    var d = ED.d, v = $("clueAns").value.toUpperCase().trim(), n = w.cells.length, i = 0;
+    var d = ED.d, v = $("clueAns").value.toUpperCase().trim(), k = skey(w), was = ((d.links || []).filter(function (g) { return g[0] === k; })[0] || [k]).slice(1);
+    if (ED.tails.join() !== was.join()) {
+      save();
+      d.links = (d.links || []).filter(function (g) { return g[0] !== k; });
+      if (ED.tails.length) d.links.push([k].concat(ED.tails));
+      madeSave(d); edLoad();
+      w = words.filter(function (x) { return skey(x) === k; })[0];
+    }
+    var n = w.cells.length, i = 0;
     if (v && v.replace(/[^A-Z?]/g, "").length !== n) return toast("The answer needs " + n + " letters");
-    d.clues[skey(w)] = $("clueText").value.replace(/\s+/g, " ").trim().replace(/\s*\([\d,\-\s]+\)$/, "");  // the count is added for you
+    d.clues[k] = $("clueText").value.replace(/\s+/g, " ").trim().replace(/\s*\([\d,\-\s]+\)$/, "");  // the count is added for you
     if (v) {
       w.cells.forEach(function (rc, j) { delete d.brk[rc.concat(w.cdir[j]).join()]; });
       Array.from(v).forEach(function (ch) {
@@ -242,11 +304,13 @@
       save();
     }
     $("hintAsk").hidden = true; madeSave(d); edLoad();
+    return true;
   }
   // Puzzle details: title, note, symmetry, another grid, or deleting the puzzle.
   $("edMenu").addEventListener("click", function () {
     var d = ED.d;
     $("edName").value = d.title; $("edNote").value = d.note || ""; $("edSym").checked = !!d.sym;
+    $("edAdd").hidden = !!d.added; $("edAdded").hidden = !d.added;
     $("edSheet").hidden = false;
   });
   $("edName").addEventListener("change", function () { ED.d.title = this.value.trim() || "Crossword No. " + ED.d.n; madeSave(ED.d); edLoad(); });
@@ -258,6 +322,14 @@
     var id = ED.d.id;
     delete MADE[id]; delete madeQ[id]; if (MADECOL) MADECOL.doc(id).delete();
     $("edSheet").hidden = true; stopClock(); ED = null; P = null; TAB = "make"; showHome();
+  });
+  // Add to puzzles: once every square has a letter and every clue its wording, the puzzle joins the list on the day it
+  // was made; later changes reach it too.
+  $("edAdd").addEventListener("click", function () {
+    save();
+    var todo = words.filter(function (w) { return !filled(w); }).length, nc = words.filter(function (w) { return !ED.d.clues[skey(w)]; }).length;
+    if (todo || nc) return toast("First " + [todo ? plural(todo, "answer") + " to fill" : "", nc ? plural(nc, "clue") + " to write" : ""].filter(Boolean).join(" and "));
+    ED.d.added = 1; madeSave(ED.d); this.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");
   });
   $("edDone").addEventListener("click", function () { $("edSheet").hidden = true; });
   $("edSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });

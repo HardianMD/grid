@@ -43,7 +43,10 @@ Search for the function name; the comment above each says what it does.
 - Create (`14-create.js`): the solver's own puzzles as drafts in Firestore `users/{uid}/made/<id>` (`MADE`, `madeSave`,
   `madeFlush`), the Create tab (`showMade`), the grid library (`gridPick`: starting points, `genGrid` lattice grids, every
   15x15 layout in the puzzles; `gridCheck` for the usual grid rules), and the editor, which plays a draft as a puzzle
-  (`edPuzzle`, `P.ed`: Squares, Break, the clue sheet `edClue`, details `edMenu`). `slotsOf` numbers any grid.
+  (`edPuzzle`, `P.ed`: Squares, Break, the clue sheet `edClue` with linked answers and Parsing, details `edMenu` with Add
+  to puzzles). An added draft is built into a puzzle in the shared format (`madePuzzle`, `p.made`, with `qc` for
+  Quickfire) and joins `PUZZLES` beside the shared ones (`SHARED`, `mergeMade`); `full` returns it as it is. Filters can
+  hide created puzzles (`FILT.made`); a puzzle's note shows from the i button (`infoBtn`). `slotsOf` numbers any grid.
 - Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
   pill and results sheet with `ncurve`), `nitchTable` (Stats).
 

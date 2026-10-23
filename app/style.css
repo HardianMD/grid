@@ -292,6 +292,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .fbar { display: flex; align-items: center; gap: clamp(6px, 2vw, 10px); margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
 .fbar .btn { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding-inline: clamp(8px, 2.6vw, 12px); }  /* the four tabs fit a phone's width */
+@media (max-width: 380px) { .fbar { gap: 5px; } .fbar .btn { padding-inline: 7px; font-size: 12.5px; } }  /* five tabs, Filter (n) included, on a 360px phone */
 .fhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }  /* Clear beside the first row of Status chips */
 .fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on, .fbar #makeBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
@@ -303,6 +304,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .hnote { font-size: 12px; color: var(--ink-soft); text-align: center; margin: 18px 0 0; }
 header .back { flex: 0 0 auto; padding: 2px 11px 5px; font-size: 22px; line-height: 1; }
 header .more { flex: 0 0 auto; padding: 3px 8px; line-height: 1; }
+header .more.info { min-width: 34px; font: 800 15px/22px var(--f-ui); color: var(--accent); }
 header .more svg { display: block; width: 20px; height: 22px; color: var(--accent); }
 
 .clue.see span { color: var(--ink-soft); font-style: italic; }

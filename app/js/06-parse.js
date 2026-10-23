@@ -46,7 +46,7 @@
   }
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
-    var x = mine || blog || { type: "Not parsed", wordplay: "The blog has no parsing for this clue. Tap Edit to add your own." };
+    var x = mine || blog || { type: "Not parsed", wordplay: P.ed ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
     return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "" };
   }
   // Blog-style markup: _indicator_ in italics, ~letters~ struck through.
@@ -156,9 +156,9 @@
       var a = document.createElement("a"); a.href = P.blog; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Read the post";
       $("parseNote").appendChild(a);
     }
-    $("parseNote").hidden = false;
-    $("parseForm").hidden = true;
-    $("parseEdit").hidden = false; $("parseReset").hidden = !r.mine && !myDefs[key];
+    $("parseNote").hidden = !!P.ed;  // a created puzzle's parsings are all the setter's
+    $("parseForm").hidden = $("clueForm").hidden = true;
+    $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
   }
@@ -175,12 +175,14 @@
     buildTypeChips($("parseType").value); preview(); selState(); buildDefPick(w);
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;
-    $("parseView").hidden = true; $("parseNote").hidden = true; $("parseForm").hidden = false;
+    $("parseView").hidden = $("parseNote").hidden = $("clueForm").hidden = true; $("parseForm").hidden = false;
     $("parseEdit").hidden = true; $("parseReset").hidden = true;
     $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
     $("hintYes").textContent = "Save";
     $("hintAsk").hidden = false;
   }
+  // A puzzle's note (a rule or its theme), from the i button.
+  $("infoBtn").addEventListener("click", function () { confirmAsk("info", P.title, P.note, "Close"); $("hintNo").hidden = true; });
   $("parseEdit").addEventListener("click", function () { openEditor(curWord(), false); });
   // Definition picker: the clue as tappable words; runs of chosen words become the definition(s).
   var DTOK = [];
@@ -383,7 +385,7 @@
   $("hintAsk").addEventListener("click", function (e) { if (e.target === $("hintAsk") && askMode !== "edit" && askMode !== "add") $("hintAsk").hidden = true; });
   $("hintYes").addEventListener("click", function () {
     var w = curWord();
-    if (askMode === "find") { $("hintAsk").hidden = true; return; }
+    if (askMode === "find" || askMode === "info") { $("hintAsk").hidden = true; return; }
     if (askMode === "clue") return edClueSave(w);
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
     if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
@@ -403,7 +405,7 @@
     }
     if (askMode === "edit") {
       var t = $("parseType").value.trim(), x = $("parseText").value.trim();
-      if (x) myParses[w.dir + w.num] = { type: t || "Parsing", wordplay: x };
+      if (x || P.ed && t) myParses[w.dir + w.num] = { type: t || "Parsing", wordplay: x };
       saveDefs(w); save(); render(); toast("Parsing saved");
       return showParse(w);
     }

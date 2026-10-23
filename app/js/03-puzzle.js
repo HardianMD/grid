@@ -122,7 +122,7 @@
     words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
 
     $("app").classList.toggle("qf", !!p.qf); $("app").classList.toggle("ed", !!p.ed); $("app").classList.toggle("sq", !!(p.ed && ED.sq));
-    var saved = p.qf ? {} : p.ed ? { fill: ED.d.f, sel: ED.d.sel } : store.get("crossword:" + p.id) || {};
+    var saved = p.qf ? {} : p.ed ? { fill: ED.d.f, sel: ED.d.sel, parses: edByNum(ED.d.p), defs: edByNum(ED.d.d) } : store.get("crossword:" + p.id) || {};
     if (!p.ed && blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
     fill = [];
     for (r = 0; r < R; r++) { fill.push([]); for (c = 0; c < C; c++) fill[r].push((saved.fill && saved.fill[r] && saved.fill[r][c] || " ").trim()); }

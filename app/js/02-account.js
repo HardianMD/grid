@@ -59,7 +59,12 @@
           snap.forEach(function (d) { var x = d.data(); if (x.u > top) top = x.u; try { var h = JSON.parse(x.j); h.u = x.u; PZ[h.id] = h; } catch (e) {} });
           return top;
         };
-        col.where("u", ">", "").get({ source: "cache" }).then(add, function () { return ""; }).then(function (top) {
+        // Progress records first (finished ones are kept only in Firestore's offline copy: shed), from the server when
+        // this device has no copy.
+        var st = DB.collection("users/" + u.uid + "/state"), mine = st.get({ source: "cache" })
+          .then(function (s) { return s.size ? s : st.get(); }, function () { return st.get(); }).then(cloudMemo, function () {});
+        Promise.all([col.where("u", ">", "").get({ source: "cache" }).then(add, function () { return ""; }), mine]).then(function (r) {
+          var top = r[0];
           if (FBUSER !== u) return;
           unsub.push(col.where("u", ">", top).onSnapshot(function (snap) {
             add(snap);

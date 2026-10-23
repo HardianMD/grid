@@ -37,10 +37,24 @@
     if (!CLOUD) return;
     var q = cloudQ; cloudQ = {};
     Object.keys(q).forEach(function (id) {
-      CLOUD.doc(id).set({ v: JSON.stringify(q[id]), at: (q[id] && q[id].at) || Date.now() }).then(syncOk, function (e) {
+      CLOUD.doc(id).set({ v: JSON.stringify(q[id]), at: (q[id] && q[id].at) || Date.now() }).then(function () { syncOk(); shed(id, q[id]); }, function (e) {
         if (!cloudQ[id]) cloudQ[id] = q[id];
         syncErr(e);
       });
+    });
+  }
+  // A finished puzzle's record leaves browser storage (which Safari caps at about 5 MB) once the server has it, and
+  // is kept in memory instead: Firestore's own offline copy keeps it on the device, read back at sign-in (cloudMemo)
+  // before anything uses the records.
+  function shed(id, v) {
+    var k = "crossword:" + id.slice(2);
+    if (id.indexOf("p_") === 0 && v && v.solved) try { if (localStorage.getItem(k) === JSON.stringify(v)) { MEM[k] = v; localStorage.removeItem(k); } } catch (e) {}
+  }
+  function cloudMemo(snap) {
+    snap.forEach(function (d) {
+      var x = d.data(), k = "crossword:" + d.id.slice(2);
+      if (d.id.indexOf("p_") !== 0 || !x || typeof x.v !== "string") return;
+      try { if (localStorage.getItem(k) === null) MEM[k] = JSON.parse(x.v); } catch (e) {}
     });
   }
   // Dates and times in British style, and text compared as localeCompare does; each formatter is made once, as
@@ -77,9 +91,10 @@
         // Newer wins, except that a grid with letters beats an empty one and a finished grid beats both.
         var lr = loc && rank(loc), rr = rank(val);
         if (!loc || rr > lr || (rr === lr && ra > la)) {
-          store.local(k, val); any = true; delete cloudQ[d.id];
+          store.local(k, val); shed(d.id, val); any = true; delete cloudQ[d.id];
           if (P && k === "crossword:" + P.id) cur = true;
         } else if (lr > rr || la > ra) cloudQ[d.id] = loc;
+        else shed(d.id, loc);
       });
       CLOUD = col;
       if (!snap.metadata.fromCache) {

@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: node tools/check.js
-      - run: python3 tools/build.py _site
+      - run: python3 tools/build.py --min _site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

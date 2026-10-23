@@ -1,9 +1,10 @@
-"""Build the site: python3 tools/build.py OUT_DIR
+"""Build the site: python3 tools/build.py [--min] OUT_DIR
 
 Joins app/style.css, app/page.html and app/js/*.js (in name order, inside one function) into a full HTML document as
 OUT_DIR/index.html, stamped with the build time (shown in Settings), and copies the icons, manifest and word list from
-site/. The page holds no puzzles: it loads them from Firestore after Google sign-in."""
-import pathlib, shutil, sys
+site/. The page holds no puzzles: it loads them from Firestore after Google sign-in. --min (used when publishing)
+shrinks the styles and script with esbuild, pinned below and fetched by npx."""
+import pathlib, shutil, subprocess, sys
 from datetime import datetime, timezone
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -18,11 +19,21 @@ HEAD = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap" media="print" onload="this.media=\'all\'">'
         '</head><body>\n')
 
-out = pathlib.Path(sys.argv[1])
+MIN = "--min" in sys.argv
+
+
+def shrink(text, loader):
+    if not MIN:
+        return text
+    return subprocess.run(["npx", "--yes", "esbuild@0.24.0", "--minify", "--loader=" + loader], input=text,
+                          capture_output=True, text=True, check=True).stdout
+
+
+out = pathlib.Path(sys.argv[-1])
 app = ROOT / "app"
 js = "".join(f.read_text() for f in sorted((app / "js").glob("*.js")))
-page = ("\n<style>\n" + (app / "style.css").read_text() + "</style>\n" + (app / "page.html").read_text() +
-        '<script>\n(function () {\n  "use strict";\n' + js + "})();\n</script>\n")
+page = ("\n<style>\n" + shrink((app / "style.css").read_text(), "css") + "</style>\n" + (app / "page.html").read_text() +
+        "<script>\n" + shrink('(function () {\n  "use strict";\n' + js + "})();\n", "js") + "</script>\n")
 page = page.replace("__BUILT__", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), 1)
 out.mkdir(parents=True, exist_ok=True)
 for f in (ROOT / "site").iterdir():

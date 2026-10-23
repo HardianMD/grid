@@ -269,7 +269,7 @@
       sel = { r: nx[0], c: nx[1], dir: w.cdir[idx + 1] };
       return typeLetter(ch);
     }
-    if (!lockedCell(k)) { if (fill[sel.r][sel.c] !== ch) delete ok[k]; fill[sel.r][sel.c] = ch; }
+    put(sel.r, sel.c, ch);
     var pf = prefs(), nx2 = idx + 1;
     if (!wasFull && filled(w)) { flash(w); if (pf.jump) { save(); return nextWord(1); } }
     // Skip filled squares: the next empty one in the word, if any.
@@ -279,6 +279,8 @@
     render(); save();
   }
 
+  // A letter into a square that isn't locked; a changed letter is no longer checked.
+  function put(r, c, ch) { var k = r + "," + c; if (lockedCell(k)) return; if (fill[r][c] !== ch) delete ok[k]; fill[r][c] = ch; }
   function indexIn(w) {
     for (var i = 0; i < w.cells.length; i++) if (w.cells[i][0] === sel.r && w.cells[i][1] === sel.c) return i;
     return 0;
@@ -286,11 +288,11 @@
 
   function del() {
     var w = curWord(), idx = indexIn(w);
-    if (fill[sel.r][sel.c] && !lockedCell(sel.r + "," + sel.c)) { fill[sel.r][sel.c] = ""; delete ok[sel.r + "," + sel.c]; }
+    if (fill[sel.r][sel.c] && !lockedCell(sel.r + "," + sel.c)) put(sel.r, sel.c, "");
     else if (idx > 0) {
       var rc = w.cells[idx - 1];
       sel = { r: rc[0], c: rc[1], dir: w.cdir[idx - 1] };
-      if (!lockedCell(rc[0] + "," + rc[1])) { fill[rc[0]][rc[1]] = ""; delete ok[rc[0] + "," + rc[1]]; }
+      put(rc[0], rc[1], "");
     }
     render(); save();
   }

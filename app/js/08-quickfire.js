@@ -7,32 +7,26 @@
     });
     return out;
   }
-  // The finished puzzles are read whole (full) when Quickfire opens; each one's clues are worked out again only
-  // when the puzzle or its record changes.
+  // The pool comes from the finished puzzles' heads (h.qc: each playable clue's blog type, and whether its answer is
+  // known), worked out again only when the puzzle or its record changes; a clue's puzzle is read whole (full) only
+  // when the clue comes up.
   function qfPool() {
-    var fin = PUZZLES.filter(function (p) { return /^(Solved|DNF)$/.test(statusOf(p)); });
-    return Promise.all(fin.map(function (h) { return full(h).catch(function () { return null; }); })).then(function (ps) {
-      var out = [];
-      ps.forEach(function (p) {
-        if (!p) return;
-        var s = store.peek("crossword:" + p.id) || {}, c = pc(p);
-        if (!c.qf || c.qf.s !== s) c.qf = { s: s, list: qfClues(p, s) };
-        out.push.apply(out, c.qf.list);
-      });
-      return out;
+    var out = [];
+    PUZZLES.forEach(function (h) {
+      if (!h.qc || !/^(Solved|DNF)$/.test(statusOf(h))) return;
+      var s = store.peek("crossword:" + h.id) || {}, c = pc(h);
+      if (!c.qf || c.qf.s !== s) c.qf = { s: s, list: qfClues(h, s) };
+      out.push.apply(out, c.qf.list);
     });
+    return out;
   }
-  function qfClues(p, s) {
-    var out = [], mine = s.parses || {}, blog = jsonOf(p, "parses") || {}, tails = {};
-    linksFor(p).forEach(function (g) { g.slice(1).forEach(function (k) { tails[k] = 1; }); });
+  // Clues with a known answer, or one the solver added.
+  function qfClues(h, s) {
+    var out = [], mine = s.parses || {}, ans = s.answers || {};
     ["a", "d"].forEach(function (dir) {
-      var list = p[dir === "a" ? "across" : "down"] || {};
-      Object.keys(list).forEach(function (num) {
-        var k = dir + num, a = !tails[k] && rawAnswer(p, k, s), clue = joinEnum(list[num]), m = clue.match(/\(([\d,\-\s]+)\)\s*$/);
-        // Only clues whose enumeration matches a fully known answer.
-        if (!a || !/^[A-Z]+$/.test(a) || !m || m[1].split(/[,\-\s]+/).reduce(function (n, x) { return n + (+x || 0); }, 0) !== a.length) return;
-        var b = blog[dir] && blog[dir][num], x = mine[k] || b;
-        out.push({ p: p, k: k, clue: clue, a: a, blog: b, mine: mine[k], t: qfTypes(x) });
+      Object.keys(h.qc[dir] || {}).forEach(function (num) {
+        var k = dir + num, x = h.qc[dir][num];
+        if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] || (x[0] ? { type: x[0] } : null)) });
       });
     });
     return out;
@@ -43,12 +37,10 @@
     return QF.pool.filter(function (c) { return !pick.length || c.t.some(function (t) { return pick.indexOf(t) >= 0; }); });
   }
   function openQuickfire() {
-    return qfPool().then(function (pool) {
-      QF = { pool: pool, seen: [], at: -1 };
-      if (!pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
-      showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
-      qfNext();
-    });
+    QF = { pool: qfPool(), seen: [], at: -1 };
+    if (!QF.pool.length) return toast("Finish a puzzle first: Quickfire uses clues from your finished puzzles");
+    showList(false); $("home").hidden = true; TAB = ""; qfHead(true);
+    qfNext();
   }
   // › moves on (back through any clues ‹ stepped over, then a new one); ‹ goes back to the clues seen before.
   function qfNext() {
@@ -60,8 +52,13 @@
     qfShow(QF.seen[QF.at]);
   }
   function qfShow(c) {
-    QF.c = c; $("qfPrev").disabled = !QF.at;
-    var dir = c.k[0], num = c.k.slice(1), d = ((jsonOf(c.p, "hints") || {})[dir] || {})[num], rec = store.get("crossword:" + c.p.id) || {};
+    QF.want = c; $("qfPrev").disabled = !QF.at;
+    full(c.h).then(function (p) { if (QF.want === c) { QF.c = c; qfLoad(c, p); } }, function () { toast("Couldn\u2019t load that clue. Check your connection."); });
+  }
+  function qfLoad(c, p) {
+    var dir = c.k[0], num = c.k.slice(1), d = ((jsonOf(p, "hints") || {})[dir] || {})[num], rec = store.get("crossword:" + p.id) || {};
+    c.p = p; c.a = rawAnswer(p, c.k, rec); c.clue = joinEnum((p[dir === "a" ? "across" : "down"] || {})[num] || "");
+    c.blog = ((jsonOf(p, "parses") || {})[dir] || {})[num]; c.mine = (rec.parses || {})[c.k];
     QF.name = num + (dir === "a" ? " Across" : " Down");
     load({ id: "quickfire", qf: 1, title: "Quickfire", grid: [c.a.replace(/./g, ".")], across: { 1: c.clue },
       blog: c.p.blog, blog_name: c.p.blog_name, blog_keys: (c.p.blog_keys || []).indexOf(c.k) >= 0 ? ["a1"] : [] });

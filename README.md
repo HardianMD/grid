@@ -23,7 +23,7 @@ Search for the function name; the comment above each says what it does.
   `fmtDate` and `cmp` (date formats and text order, each made once).
 - Sign-in and data: `fbInit` (Firebase compat SDK from gstatic; puzzle heads from `meta/h_<id>`, read incrementally by
   `u`, are all `PUZZLES` holds), `full` (a whole puzzle from `puzzles/<id>`, read when opened, for Favourites and
-  Quickfire), `gotPuzzles`,
+  each Quickfire clue), `gotPuzzles`,
   `showStatus` (update problems, refresh spinner), `runUpdate`/`dispatch` (starts the updater with the saved key).
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.
 - Elements: `mk(tag, class, text)` builds one.
@@ -35,7 +35,7 @@ Search for the function name; the comment above each says what it does.
   (`lookup`, `DICTS`).
 - Home: `showHome` (two weeks at a time, `FROM`), filters (`FILT`), Favourites (`showFavs`, `answerOf`), Stats
   (`showStats`, `helpOf`), bell (`checkSubs`, `markOf`, `notes`), Settings (`showSettings`, `applyPrefs`).
-- Quickfire: `qfPool` (clues from finished puzzles, with `rawAnswer` and `qfTypes`), `qfNext` (loads one clue as a one-row
+- Quickfire: `qfPool` (clues from finished puzzles' heads, `h.qc`, with `qfTypes`; `qfLoad` reads the clue's puzzle), `qfNext` (loads one clue as a one-row
   puzzle, `P.qf`: Easy tools, nothing saved), the clue-type filter (`crossword:qf`, this device only).
 - Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
   pill and results sheet with `ncurve`), `nitchTable` (Stats).

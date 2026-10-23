@@ -23,14 +23,14 @@
     el.hidden = false; AW.open = true;
     $("wheelTitle").innerHTML = "";
     $("wheelTitle").appendChild(document.createTextNode(wordName(w)));
-    var sm = document.createElement("small"); sm.textContent = "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")";
+    var sm = mk("small", null, "(" + (w.clue.match(/\(([^()]*)\)\s*$/) || [0, w.cells.length])[1] + ")");
     $("wheelTitle").appendChild(sm);
     // The clue, its letters tappable into the wheel.
     var wc = $("wheelClue"); wc.textContent = "";
     w.clue.split("").forEach(function (ch) {
       var L = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
       if (!/^[A-Z]$/.test(L)) return wc.appendChild(document.createTextNode(ch));
-      var sp = document.createElement("span"); sp.className = "wl"; sp.textContent = ch; sp.dataset.l = L; wc.appendChild(sp);
+      var sp = mk("span", "wl", ch); sp.dataset.l = L; wc.appendChild(sp);
     });
     var avail = Math.min(main.clientWidth - 32, h - 205 - wc.offsetHeight, el.classList.contains("mid") ? 460 : 300);  // room for the hint line too
     AW.size = Math.max(180, avail);
@@ -305,7 +305,7 @@
       box.innerHTML = ""; box.hidden = false; AW.found = s.key;
       var note = !show.length ? "No words in the list use exactly these letters." :
         (fit.length ? "" : "None match the word lengths, but these use the same letters. ") + (show.length > 40 ? "Showing the first 40 of " + (show.length >= 2000 ? "2,000+" : show.length) + "." : "");
-      if (note) { var p = document.createElement("p"); p.textContent = note; box.appendChild(p); }
+      if (note) box.appendChild(mk("p", null, note));
       chipList(box, show, 40, function (h) { useFind(h.L); });
     });
   }

@@ -22,7 +22,7 @@
   $("bellBtn").addEventListener("click", function () {
     var list = notes(), box = $("noteList");
     box.innerHTML = "";
-    var e = document.createElement("p"); e.className = "sub";
+    var e = mk("p", "sub");
     e.textContent = list.length ? "Tap a puzzle to review it. Each notification stays here until its puzzle has been opened." : "No notifications.";
     box.appendChild(e);
     list.forEach(function (n) {

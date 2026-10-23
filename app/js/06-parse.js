@@ -76,7 +76,7 @@
       box.innerHTML = "";
       r.senses.forEach(function (x) {
         var p = document.createElement("p");
-        if (x.pos) { var bb = document.createElement("b"); bb.textContent = x.pos; p.appendChild(bb); }
+        if (x.pos) p.appendChild(mk("b", null, x.pos));
         p.appendChild(document.createTextNode(x.def)); box.appendChild(p);
       });
       $("dictNote").textContent = "Definitions from " + r.name + ".";

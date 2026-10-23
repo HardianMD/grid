@@ -68,29 +68,38 @@
     return out;
   }
 
-  function load(p) {
-    P = p; R = p.grid.length; C = p.grid[0].length;
-    var open = function (r, c) { return r >= 0 && r < R && c >= 0 && c < C && p.grid[r][c] !== "#"; };
-    cells = []; words = [];
-    var n = 0;
-    for (var r = 0; r < R; r++) {
-      cells.push([]);
-      for (var c = 0; c < C; c++) cells[r].push({ b: !open(r, c), num: 0, a: -1, d: -1 });
-    }
-    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+  // A grid's slots in clue order ({dir, num, cells}), numbered as the papers do: a white square starting an across or
+  // down run of two or more takes the next number.
+  function slotsOf(g) {
+    var R0 = g.length, C0 = g[0].length, out = [], n = 0;
+    var open = function (r, c) { return r >= 0 && r < R0 && c >= 0 && c < C0 && g[r][c] !== "#"; };
+    for (var r = 0; r < R0; r++) for (var c = 0; c < C0; c++) {
       if (!open(r, c)) continue;
       var sa = !open(r, c - 1) && open(r, c + 1), sd = !open(r - 1, c) && open(r + 1, c);
-      if (!sa && !sd) continue;
-      cells[r][c].num = ++n;
+      if (sa || sd) n++;
       [["a", sa, 0, 1], ["d", sd, 1, 0]].forEach(function (t) {
         if (!t[1]) return;
-        var w = { dir: t[0], num: n, cells: [] }, rr = r, cc = c;
-        while (open(rr, cc)) { w.cells.push([rr, cc]); cells[rr][cc][t[0]] = words.length; rr += t[2]; cc += t[3]; }
-        var key = t[0] === "a" ? "across" : "down";
-        w.clue = (p[key] && p[key][n]) || "(clue missing)";
-        words.push(w);
+        var s = { dir: t[0], num: n, cells: [] };
+        for (var rr = r, cc = c; open(rr, cc); rr += t[2], cc += t[3]) s.cells.push([rr, cc]);
+        out.push(s);
       });
     }
+    return out;
+  }
+
+  function load(p) {
+    P = p; R = p.grid.length; C = p.grid[0].length;
+    cells = []; words = [];
+    for (var r = 0; r < R; r++) {
+      cells.push([]);
+      for (var c = 0; c < C; c++) cells[r].push({ b: p.grid[r][c] === "#", num: 0, a: -1, d: -1 });
+    }
+    slotsOf(p.grid).forEach(function (w) {
+      cells[w.cells[0][0]][w.cells[0][1]].num = w.num;
+      w.cells.forEach(function (rc) { cells[rc[0]][rc[1]][w.dir] = words.length; });
+      w.clue = (p[w.dir === "a" ? "across" : "down"] || {})[w.num] || "(clue missing)";
+      words.push(w);
+    });
     words.forEach(function (w) { w.cdir = w.cells.map(function () { return w.dir; }); w.ends = [w.cells.length - 1]; });
     // Linked clues ("See 1") are played as one answer: the tail slots join the head clue's word.
     var byKey = {}; words.forEach(function (w) { byKey[w.dir + w.num] = w; });
@@ -112,9 +121,9 @@
     words.sort(function (x, y) { return x.dir === y.dir ? x.num - y.num : (x.dir === "a" ? -1 : 1); });
     words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
 
-    $("app").classList.toggle("qf", !!p.qf);
-    var saved = p.qf ? {} : store.get("crossword:" + p.id) || {};
-    if (blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
+    $("app").classList.toggle("qf", !!p.qf); $("app").classList.toggle("ed", !!p.ed); $("app").classList.toggle("sq", !!(p.ed && ED.sq));
+    var saved = p.qf ? {} : p.ed ? { fill: ED.d.f, sel: ED.d.sel } : store.get("crossword:" + p.id) || {};
+    if (!p.ed && blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
     fill = [];
     for (r = 0; r < R; r++) { fill.push([]); for (c = 0; c < C; c++) fill[r].push((saved.fill && saved.fill[r] && saved.fill[r][c] || " ").trim()); }
     sel = saved.sel && cells[saved.sel.r] && cells[saved.sel.r][saved.sel.c] && !cells[saved.sel.r][saved.sel.c].b
@@ -137,11 +146,11 @@
     ok = {};
     (saved.ok || []).forEach(function (k) { ok[k] = 1; });
     if (!sel) { var w0 = words[0]; sel = { r: w0.cells[0][0], c: w0.cells[0][1], dir: w0.dir }; }
-    if (!p.qf) store.set("crossword:last", p.id);
+    if (!p.qf && !p.ed) store.set("crossword:last", p.id);
     elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null; EDITED = !!saved.ed;
     startClock();
     build();
-    setMode(p.qf ? "easy" : saved.mode || lastMode(p), true);
+    setMode(p.qf || p.ed ? "easy" : saved.mode || lastMode(p), true);
     USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
     if (USED < 0 && solved) USED = RANK[MODE];  // older finished records: the mode it was played in
     REV = !!saved.rev; REVW = saved.revw || {};
@@ -208,6 +217,7 @@
   // look newer than progress made since on another device and overwrite it.
   function save() {
     if (P.qf) return qfSave();
+    if (P.ed) return edSave();
     var k = "crossword:" + P.id, old = store.peek(k);
     if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     var rec = {

@@ -128,20 +128,15 @@
   $("fTo").addEventListener("change", function () { FILT.to = this.value; filterChanged(); });
   $("filterClear").addEventListener("click", function () { FILT = {}; filterChanged(); });
   // Favourites tab: each starred clue with no hints; Parse shows its parsing in place, and tapping it opens the clue.
-  // Home tabs: "" (the puzzle list), "favs" or "stats"; tapping the open tab's button goes back to the list.
+  // Home tabs: "" (the puzzle list), "favs", "stats" or "make" (Create); tapping the open tab's button goes back to the list.
   var TAB = "";
-  ["favs", "stats"].forEach(function (t) { $(t + "Btn").addEventListener("click", function () { TAB = TAB === t ? "" : t; showHome(); }); });
+  ["favs", "stats", "make"].forEach(function (t) { $(t + "Btn").addEventListener("click", function () { TAB = TAB === t ? "" : t; showHome(); }); });
   // A favourite's answer, from the puzzle's grid and solution (or the solver's own answer, from its record s if given),
   // without loading the puzzle.
   function rawAnswer(p, k, s) {
     var R0 = p.grid.length, C0 = p.grid[0].length, at = pc(p).at, flat = solOf(p);
     var open = function (r, c) { return r >= 0 && r < R0 && c >= 0 && c < C0 && p.grid[r][c] !== "#"; };
-    if (!at) {  // the square each clue number starts on, found once
-      at = pc(p).at = {};
-      for (var r = 0, n = 0; r < R0; r++) for (var c = 0; c < C0; c++) {
-        if (open(r, c) && ((!open(r, c - 1) && open(r, c + 1)) || (!open(r - 1, c) && open(r + 1, c)))) at[++n] = [r, c];
-      }
-    }
+    if (!at) { at = pc(p).at = {}; slotsOf(p.grid).forEach(function (w) { at[w.num] = w.cells[0]; }); }  // the square each clue number starts on, found once
     var a = ((s || store.peek("crossword:" + p.id) || {}).answers || {})[k] || ((linksFor(p).filter(function (g) { return g[0] === k; })[0] || [k]).map(function (x) {
       var s = "", rc = at[x.slice(1)] || [-1, -1], dr = x[0] === "d" ? 1 : 0;
       for (var rr = rc[0], cc = rc[1]; open(rr, cc); rr += dr, cc += 1 - dr) s += flat[rr * C0 + cc] || "";

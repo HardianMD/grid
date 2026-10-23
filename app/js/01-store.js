@@ -33,7 +33,7 @@
     if (CLOUD && !cloudT) cloudT = setTimeout(cloudFlush, 3000);
   }
   function cloudFlush() {
-    clearTimeout(cloudT); cloudT = null;
+    clearTimeout(cloudT); cloudT = null; madeFlush();
     if (!CLOUD) return;
     var q = cloudQ; cloudQ = {};
     Object.keys(q).forEach(function (id) {

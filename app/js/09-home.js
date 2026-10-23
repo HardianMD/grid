@@ -6,9 +6,9 @@
     if (P) { save(); stopClock(); }
     qfHead(false);
     checkSubs();
-    ["favs", "stats"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
-    $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats";
-    if (TAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); if (TAB === "favs") showFavs(); else showStats(); }
+    ["favs", "stats", "make"].forEach(function (t) { $(t + "Btn").classList.toggle("on", TAB === t); $(t + "Btn").setAttribute("aria-pressed", String(TAB === t)); });
+    $("homeList").hidden = !!TAB; $("favList").hidden = TAB !== "favs"; $("statBody").hidden = TAB !== "stats"; $("makeList").hidden = TAB !== "make";
+    if (TAB) { $("fpanel").hidden = true; $("filterBtn").setAttribute("aria-expanded", "false"); (TAB === "favs" ? showFavs : TAB === "stats" ? showStats : showMade)(); }
     var list = $("homeList"), last = null;
     list.innerHTML = "";
     var all = PUZZLES.slice().sort(function (x, y) { return cmp(y.date || "", x.date || "") || cmp(y.id, x.id); });

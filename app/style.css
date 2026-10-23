@@ -141,6 +141,21 @@ header .timer.stopped { color: var(--good); }
 .app.qf .c.br, .app.qf .c.hr { margin-right: 8px; }
 .app.qf .c.eol { margin-right: 0; }
 .app.qf .c.hr .l::after { right: -8px; width: 6px; background: var(--ink-soft); transform: translate(0, -50%); }
+/* Create: the editor is the puzzle screen with its own tools; with Squares on, a tap turns a square black or white. */
+.app.ed #timer, .app.ed #menuBtn, .app.ed #favBtn, .app.ed #checkWordBtn, .app.ed #checkAllBtn, .app.ed #noAns, .app.ed #submitBtn,
+.app.ed #hintBtn, .app.ed .solvedbar, .app:not(.ed) .edo { display: none !important; }
+.checks #edSq[aria-pressed="true"] { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.app.sq .c, .app.sq .c.b { cursor: cell; }
+.edstat { margin: 6px 0 0; font-size: 12px; line-height: 1.4; color: var(--ink-soft); text-align: center; }
+.edstat b { font-weight: 600; color: var(--warn); }
+.mknew { display: block; width: 100%; margin: 12px 0; padding: 10px; font-size: 14px; }
+.gsec h4 { margin: 10px 0 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
+.gsec .btn { margin-top: 8px; }
+.gthumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.gthumb { padding: 0; line-height: 0; border: 1px solid var(--block); border-radius: 3px; background: var(--sheet); cursor: pointer; overflow: hidden; }
+.gthumb canvas { width: 75px; height: 75px; }
+#edSheet .set input, #edSheet textarea { flex: 0 1 260px; min-width: 0; }
+#edSheet textarea { font: 400 15px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; resize: vertical; }
 .grid.no .c { animation: no .7s; } @keyframes no { 0%, 50% { background: var(--warn-bg); } }
 .sval { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 14px; }
 .seg button.sure { background: var(--bad); color: #fff; }
@@ -278,7 +293,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .fbar { display: flex; align-items: center; gap: clamp(6px, 2vw, 10px); margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
 .fbar .btn { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding-inline: clamp(8px, 2.6vw, 12px); }  /* the four tabs fit a phone's width */
 .fhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }  /* Clear beside the first row of Status chips */
-.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
+.fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on, .fbar #makeBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
@@ -395,7 +410,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .checks { grid-column: 1; grid-row: 2; align-self: start; }
   .solvedbar { grid-column: 1; grid-row: 3; align-self: start; }
   /* Settings opens as a wide two-column dialog. */
-  #setSheet, #qfSheet { align-items: center; }
+  #setSheet, #qfSheet, #edSheet, #gridSheet { align-items: center; }
+  #edSheet .panel, #gridSheet .panel { border-radius: 14px; max-height: 90%; }
+  .edstat { grid-column: 1; grid-row: 3; align-self: start; }
   #qfSheet .panel { max-width: 520px; border-radius: 14px; max-height: 90%; }
   #setSheet .panel { max-width: 980px; border-radius: 14px; max-height: 90%; }
   /* Solving beside Account, then Clues beside Puzzle list with their previews level at the foot of the row. */

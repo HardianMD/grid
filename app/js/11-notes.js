@@ -1,7 +1,11 @@
   // Notifications: a submitted grid is marked as soon as its answers arrive, and the bell says how it went;
   // a puzzle finished before its parsings gets one when they arrive.
   // Opening the list clears the red dot; each notification stays until its puzzle is opened.
-  function notes() { return (store.peek("crossword:notes") || {}).list || []; }
+  // Each puzzle's notification of each kind once (another device may have added the same one).
+  function notes() {
+    var seen = {};
+    return ((store.peek("crossword:notes") || {}).list || []).filter(function (n) { var k = n.id + " " + n.res; return !seen[k] && (seen[k] = 1); });
+  }
   function setNotes(list) { store.set("crossword:notes", { list: list, at: Date.now() }); bellDot(); }
   function bellDot() { $("bellDot").hidden = !notes().some(function (n) { return !n.seen; }); }
   function checkSubs() {
@@ -9,11 +13,12 @@
     PUZZLES.forEach(function (p) {
       var k = "crossword:" + p.id, s = store.peek(k), m;
       if (!s || (P && P.id === p.id && $("home").hidden)) return;  // the open puzzle is marked on screen instead
-      if (s.np && p.parsed) { s = store.get(k); delete s.np; store.set(k, s); add.push({ id: p.id, res: "parse" }); }
+      // Records changed here get a new `at`, so other devices take the change rather than notify again.
+      if (s.np && p.parsed) { s = store.get(k); delete s.np; s.at = Date.now(); store.set(k, s); add.push({ id: p.id, res: "parse" }); }
       // a DNF is marked again in case its answers were corrected since
       if (!s.sub || s.sub.res === "ok" || !p.solution) return;
       if (!(m = markOf(p, s)).any || (m.bad ? "dnf" : "ok") === s.sub.res) return;
-      s = store.get(k); s.sub.res = m.bad ? "dnf" : "ok"; store.set(k, s);
+      s = store.get(k); s.sub.res = m.bad ? "dnf" : "ok"; s.at = Date.now(); store.set(k, s);
       if (P && P.id === p.id) P.stale = true;
       add.push({ id: p.id, res: s.sub.res, bad: m.bad, gap: m.gap, time: s.time || 0 });
     });

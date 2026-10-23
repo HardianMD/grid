@@ -21,7 +21,7 @@
   // Sign-in is required: the puzzles and the update status are in Firestore, readable only by the owner's Google
   // account. Firestore keeps every puzzle on the device (no size limit, so none is dropped), so the app opens
   // offline once it has loaded, and each opening reads only the puzzles uploaded since the newest one kept (`u`).
-  var DB = null, BOOTED = false, STATUS = {}, WAITING = null, PZ = {};
+  var DB = null, BOOTED = false, STATUS = {}, WAITING = null, PZ = {}, REFUSED = false;
   function gate(msg, btn, act) {
     $("gate").hidden = !msg; $("gateTxt").textContent = msg || "";
     $("gateBtn").hidden = !btn; $("gateBtn").textContent = btn || ""; $("gateBtn").dataset.act = act || "";
@@ -47,7 +47,7 @@
         CLOUD = null; FBUSER = u || null;
         if (!u) {
           if (BOOTED) { location.reload(); return; }  // signed out: nothing of the puzzles stays on screen
-          gate("Sign in to open your puzzles.", "Sign in with Google", "in");
+          gate(REFUSED ? "That Google account can’t open these puzzles, so it was signed out." : "Sign in to open your puzzles.", "Sign in with Google", "in");
           return;
         }
         $("syncTxt").textContent = "Syncing…";
@@ -68,10 +68,11 @@
       });
     }).catch(function () { gate("Couldn’t reach the sign-in service. Check your connection and reload."); });
   }
+  // Only the owner's account can read the puzzles (Firestore rules), so any other account is signed straight back out,
+  // and nothing about it is shown.
   function denied(e) {
-    var u = FBUSER || {};
-    var m = e && e.code === "permission-denied" ? "This Google account can’t open these puzzles. Signed in as " + (u.email || "?") + ", user ID " + (u.uid || "?") + "."
-      : "Couldn’t load the puzzles: " + ((e && (e.code || e.message)) || "error");
+    if (e && e.code === "permission-denied") { REFUSED = true; firebase.auth().signOut(); return; }
+    var m = "Couldn’t load the puzzles: " + ((e && (e.code || e.message)) || "error");
     if (BOOTED) toast(m); else gate(m, "Sign out", "out");
   }
   function gotPuzzles(list, fromCache, u) {

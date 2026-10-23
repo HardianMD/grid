@@ -23,7 +23,8 @@ Search for the function name; the comment above each says what it does.
 - Sign-in and data: `fbInit` (Firebase compat SDK from gstatic, puzzles read incrementally by `u`), `gotPuzzles`,
   `showStatus` (update problems, refresh spinner), `runUpdate`/`dispatch` (starts the updater with the saved key).
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.
-- Solving: `load` (grid numbering, linked clues, saved record), `build`, `size`, `render`, `typeLetter`, `del`,
+- Elements: `mk(tag, class, text)` builds one.
+- Solving: `load` (grid numbering, linked clues, saved record), `build`, `size`, `render`, `typeLetter`, `del`, `put`,
   `check`/`checkWords`, `grade`/`submit` (Hard and Champ), `save` (record format), `blank`.
 - Hints and parsings: `nextAction`, the `hintBtn` and `hintYes` handlers (one pop-up, `askMode`), `showParse`,
   `openEditor` (definition picker, clue type chips, mark-up bar `MARKS`).

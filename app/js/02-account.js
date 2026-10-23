@@ -94,13 +94,9 @@
     var box = $("problems"), list = STATUS.problems || [];
     box.innerHTML = ""; box.hidden = !list.length;
     if (list.length) {
-      var t = document.createElement("b");
-      t.textContent = "⚠ The last check hit " + (list.length > 1 ? list.length + " problems" : "a problem");
-      box.appendChild(t);
+      box.appendChild(mk("b", null, "⚠ The last check hit " + (list.length > 1 ? list.length + " problems" : "a problem")));
       list.forEach(function (x) {
-        var d = document.createElement("div"), when = new Date(x.since);
-        d.textContent = x.text + " (since " + when.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }) + ")";
-        box.appendChild(d);
+        box.appendChild(mk("div", null, x.text + " (since " + new Date(x.since).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }) + ")"));
       });
     }
     // Done once the run started for this tap has finished (seen running, or a newer last run, in case this

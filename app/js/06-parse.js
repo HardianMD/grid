@@ -75,7 +75,7 @@
       if (!r) { box.innerHTML = "<p>No dictionary has this word. Tap Chambers to look it up.</p>"; return; }
       box.innerHTML = "";
       r.senses.forEach(function (x) {
-        var p = document.createElement("p");
+        var p = mk("p");
         if (x.pos) p.appendChild(mk("b", null, x.pos));
         p.appendChild(document.createTextNode(x.def)); box.appendChild(p);
       });
@@ -173,7 +173,7 @@
     if (withAnswer) $("ansInput").value = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; }).join("");
     $("parseType").value = has ? r.type : ""; $("parseText").value = has ? r.wordplay : "";
     UNDO = []; $("undoBtn").hidden = true; defFresh = true;
-    lastSel = [0, 0]; TOK.anchor = -1; $("parseText").hidden = true; $("wpTok").hidden = false; $("typeBtn").classList.remove("on"); $("typeBtn").textContent = "Type";
+    unsel(); $("parseText").hidden = true; $("wpTok").hidden = false; $("typeBtn").classList.remove("on"); $("typeBtn").textContent = "Type";
     buildTypeChips($("parseType").value); preview(); selState(); buildDefPick(w);
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;
@@ -210,7 +210,7 @@
     if (at < 0) return toast("Those words aren\u2019t in the clue");
     if (defFresh) { DTOK.forEach(function (x) { x.el.classList.remove("on"); }); defFresh = false; }
     DTOK.forEach(function (x) { if (x.a < at + q.length && x.b > at) x.el.classList.add("on"); });
-    lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState();
+    unsel(); renderTok(); selState();
     var dp = $("defPick"); dp.classList.remove("flash"); void dp.offsetWidth; dp.classList.add("flash");
     toast("Definition set \u2013 tap Save to keep it");
   }
@@ -218,8 +218,8 @@
   $("defPick").addEventListener("click", function () { defFresh = false; setTimeout(renderTok, 0); });
   $("wpClear").addEventListener("click", function () {
     var ta = $("parseText"); if (!ta.value) return;
-    UNDO.push(ta.value); $("undoBtn").hidden = false;
-    ta.value = ""; lastSel = [0, 0]; TOK.anchor = -1; preview(); selState();
+    keepUndo(ta.value);
+    ta.value = ""; unsel(); preview(); selState();
   });
   function pickedDefs() {
     var out = [], run = null;
@@ -279,6 +279,7 @@
     $("markChips").appendChild(b);
   });
   var lastSel = [0, 0];
+  function unsel() { lastSel = [0, 0]; TOK.anchor = -1; }
   function selState() {
     var ta = $("parseText"), has = document.activeElement === ta && ta.selectionEnd > ta.selectionStart;
     if (has) lastSel = [ta.selectionStart, ta.selectionEnd];
@@ -323,22 +324,23 @@
   function typing(on) {
     var ta = $("parseText");
     ta.hidden = !on; $("wpTok").hidden = on; $("typeBtn").classList.toggle("on", on); $("typeBtn").textContent = on ? "Done" : "Type";
-    lastSel = [0, 0]; TOK.anchor = -1;
+    unsel();
     if (on) { try { ta.focus(); } catch (e) {} } else { ta.blur(); preview(); }
     selState();
   }
   $("typeBtn").addEventListener("click", function () { typing($("parseText").hidden); });
   $("lettersBtn").addEventListener("click", function () {
     TOK.letters = !TOK.letters; this.setAttribute("aria-pressed", String(TOK.letters));
-    lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState();
+    unsel(); renderTok(); selState();
   });
   var UNDO = [];
+  function keepUndo(v) { UNDO.push(v); $("undoBtn").hidden = false; }
   $("undoBtn").addEventListener("click", function () {
     if (!UNDO.length) return;
     $("parseText").value = UNDO.pop(); this.hidden = !UNDO.length;
-    lastSel = [0, 0]; TOK.anchor = -1; preview(); selState();
+    unsel(); preview(); selState();
   });
-  $("selClear").addEventListener("click", function () { lastSel = [0, 0]; TOK.anchor = -1; renderTok(); selState(); });
+  $("selClear").addEventListener("click", function () { unsel(); renderTok(); selState(); });
   // Keep the textarea's selection when a chip is pressed.
   $("markChips").addEventListener("pointerdown", function (e) { if (e.target.closest(".chip")) e.preventDefault(); });
   $("markChips").addEventListener("mousedown", function (e) { if (e.target.closest(".chip")) e.preventDefault(); });
@@ -348,10 +350,10 @@
     if (z <= a) return;
     if (!MARKS[+b.dataset.i][1]) return markDef(ta.value.slice(a, z));
     var out = MARKS[+b.dataset.i][1](ta.value.slice(a, z));
-    UNDO.push(ta.value); $("undoBtn").hidden = false;
+    keepUndo(ta.value);
     ta.value = ta.value.slice(0, a) + out + ta.value.slice(z);
     if (!out) { var before = ta.value.slice(0, a).replace(/[ \t]+$/, ""), after = ta.value.slice(a).replace(/^[ \t]+/, ""); ta.value = before + (before && after && !/\n$/.test(before) && !/^[\n,.;:)]/.test(after) ? " " : "") + after; a = before.length; }
-    if (ta.hidden) { lastSel = [0, 0]; TOK.anchor = -1; }
+    if (ta.hidden) { unsel(); }
     else { lastSel = [a, a + out.length]; try { ta.focus(); ta.setSelectionRange(a, a + out.length); } catch (err) {} }
     preview(); selState();
   });
@@ -362,9 +364,9 @@
   $("useClue").addEventListener("click", function () {
     var w = curWord(), ta = $("parseText");
     var text = w.clue.replace(/\s*\([\d,\-\s]+\)\s*$/, "").toLowerCase();
-    UNDO.push(ta.value); $("undoBtn").hidden = false;
+    keepUndo(ta.value);
     ta.value = ta.value.trim() ? ta.value.trim() + "\n" + text : text;
-    lastSel = [0, 0]; TOK.anchor = -1; preview(); selState(); if (!ta.hidden) ta.focus();
+    unsel(); preview(); selState(); if (!ta.hidden) ta.focus();
   });
   $("parseInfo").addEventListener("click", function () {
     var open = $("parseHelp").hidden;
@@ -433,10 +435,7 @@
         (hits.length > 60 ? "Showing 60 of " + hits.length + "; fill in more letters to narrow it down." : hits.length + (hits.length > 1 ? " words fit." : " word fits.")));
       $("findList").innerHTML = "";
       chipList($("findList"), hits, 60, function (h) {
-        w.cells.forEach(function (rc, i) {
-          var k = rc[0] + "," + rc[1];
-          if (!lockedCell(k)) { if (fill[rc[0]][rc[1]] !== h.L[i]) delete ok[k]; fill[rc[0]][rc[1]] = h.L[i]; }
-        });
+        w.cells.forEach(function (rc, i) { put(rc[0], rc[1], h.L[i]); });
         $("hintAsk").hidden = true;
         render(); save();
       });
@@ -454,11 +453,7 @@
   });
   $("toGrid").addEventListener("click", function () {
     var w = AW.word;
-    w.cells.forEach(function (rc, i) {
-      var k = rc[0] + "," + rc[1];
-      var v = AW.slots[i];
-      if (typeof v === "number" && v >= 0 && !lockedCell(k)) { if (fill[rc[0]][rc[1]] !== AW.tiles[v].ch) delete ok[k]; fill[rc[0]][rc[1]] = AW.tiles[v].ch; }
-    });
+    w.cells.forEach(function (rc, i) { var v = AW.slots[i]; if (typeof v === "number" && v >= 0) put(rc[0], rc[1], AW.tiles[v].ch); });
     wheelClose();
     sel = { r: w.cells[0][0], c: w.cells[0][1], dir: w.dir };
     render(); save();

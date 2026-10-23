@@ -165,7 +165,7 @@
       var p = byId[f.p], dir = f.k[0], num = f.k.slice(1);
       var el = mk("div", "clue");
       var b = mk("b", "fn", num);
-      var s = document.createElement("span"); s.textContent = (p[dir === "a" ? "across" : "down"] || {})[num] || "";
+      var s = mk("span", null, (p[dir === "a" ? "across" : "down"] || {})[num] || "");
       s.appendChild(mk("small", "fm", (dir === "a" ? "Across" : "Down") + " \u00b7 " + p.title + " \u00b7 " + metaText(p)));
       var fb = mk("div", "fb");
       // Each button shows its line under the clue, or hides it again; the answer line stays above the parsing.
@@ -173,7 +173,7 @@
        ["Parse", "pwp", function (x) {
         var mine = ((store.peek("crossword:" + p.id) || {}).parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
-        var t = mk("i", null, ctype(r.type)); var wp = document.createElement("span"); markup(wp, r.wordplay || "");
+        var t = mk("i", null, ctype(r.type)); var wp = mk("span"); markup(wp, r.wordplay || "");
         x.appendChild(t); x.appendChild(wp);
         if (mine) x.appendChild(mk("small", null, " \u00b7 " + editedBy()));
       }]].forEach(function (d) {
@@ -183,7 +183,7 @@
           var x = el.querySelector("." + d[1]);
           bt.classList.toggle("solid", !x);
           if (x) return el.removeChild(x);
-          x = document.createElement("p"); x.className = d[1]; d[2](x);
+          x = mk("p", d[1]); d[2](x);
           el.insertBefore(x, d[1] === "pans" ? el.querySelector(".pwp") : null);
         });
         fb.appendChild(bt);

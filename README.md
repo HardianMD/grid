@@ -15,7 +15,8 @@ page.
 
 ## Map of `app/js`
 Search for the function name; the comment above each says what it does.
-- Storage and sync: `store` (localStorage, then `cloudPut` to Firestore `users/{uid}/state`), `cloudListen` (merge by
+- Storage and sync: `store` (localStorage, then `cloudPut` to Firestore `users/{uid}/state`; finished puzzles' records
+  leave localStorage once synced and live in memory, read from Firestore's offline copy at sign-in: `shed`, `cloudMemo`), `cloudListen` (merge by
   `at`, `rank`), `KEEP` (synced records besides puzzles: `mode`, `favs`, `prefs`, `notes`).
 - Speed: `store.peek` (a record for reading only, parsed again only when it changes), `pc` (facts worked out once per
   copy of a puzzle: `solOf`, `jsonOf`, `linksFor`, clue starts, Quickfire clues), `progressOf` (kept per record),

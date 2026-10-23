@@ -8,7 +8,9 @@
       var p = box.dataset.p, v = pf[p] || box.firstElementChild && box.firstElementChild.dataset.v;
       Array.prototype.forEach.call(box.children, function (b) { b.classList.toggle("on", b.dataset.v === v); });
     });
-    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input[data-p]"), function (x) { x.checked = !!pf[x.dataset.p]; });
+    Array.prototype.forEach.call(document.querySelectorAll("#setSheet .tog input[data-p]"), function (x) {
+      x.checked = x.dataset.p in pf ? !!pf[x.dataset.p] : x.hasAttribute("data-on");  // data-on: on until switched off
+    });
     $("setNWhen").hidden = !pf.listN;
     $("setModeRow").hidden = start !== "fixed"; $("setMode").dataset.mode = m;
     Array.prototype.forEach.call($("setMode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === m)); });

@@ -149,6 +149,7 @@
     for (var fz = parseFloat(getComputedStyle(nb).fontSize); nb.scrollHeight > nb.clientHeight + 1 && fz > 12;) nb.style.fontSize = --fz + "px";
     // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
     $("dictBtn").hidden = !filled(w) && !P.qf;  // Quickfire always shows it, and asks for the squares first
+    $("findBtn").hidden = !!P.qf || CHAMP || prefs().find === false || locked(w);  // never in Champ; Settings can switch it off
     $("wheelBtn").hidden = P.qf && locked(w);  // a solved or revealed Quickfire clue swaps the wheel for the dictionary
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
@@ -373,11 +374,11 @@
   // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
   function askReset(no) {
     $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
-    $("hintText").hidden = false; $("hintNo").hidden = false; $("hintNo").textContent = no;
+    $("hintText").hidden = false; $("hintNo").hidden = false; $("hintNo").textContent = no; $("hintYes").hidden = false;
   }
   function confirmAsk(mode, title, text, yes) {
     askMode = mode; askReset("Cancel");
-    $("findBtn").hidden = $("ansRow").hidden = true;
+    $("ansRow").hidden = true;
     $("hintTitle").textContent = title; $("hintText").textContent = text;
     $("hintYes").textContent = yes;
     $("hintAsk").hidden = false;

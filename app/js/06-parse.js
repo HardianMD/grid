@@ -6,8 +6,6 @@
   $("hintBtn").addEventListener("click", function () {
     var w = curWord(), name = wordName(w), act = nextAction(w);
     askReset("Not yet");
-    // The word finder is offered only once a hint for this clue has been accepted.
-    $("findBtn").hidden = !(hinted[w.dir + w.num] >= 1) || act === "parse" || act === "add";
     if (act === "parse") {
       showParse(w);
     } else if (act === "add") {
@@ -29,8 +27,8 @@
       $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see the hint?";
       $("hintYes").textContent = "Show hint";
     }
-    // Settings can skip the question, except when it also offers Find words; Quickfire never asks.
-    if (/^(hint|hint2|reveal)$/.test(act) && (P.qf || prefs().noAsk && $("findBtn").hidden)) $("hintYes").click();
+    // Settings can skip the question; Quickfire never asks.
+    if (/^(hint|hint2|reveal)$/.test(act) && (P.qf || prefs().noAsk)) $("hintYes").click();
     else $("hintAsk").hidden = false;
   });
   // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
@@ -385,6 +383,7 @@
   $("hintAsk").addEventListener("click", function (e) { if (e.target === $("hintAsk") && askMode !== "edit" && askMode !== "add") $("hintAsk").hidden = true; });
   $("hintYes").addEventListener("click", function () {
     var w = curWord();
+    if (askMode === "find") { $("hintAsk").hidden = true; return; }
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
     if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
     if (askMode === "add") {
@@ -423,23 +422,37 @@
     hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1; HN++;
     render(); save();
   });
-  // Word finder: words from the word list that fit the answer's length and the letters already in the grid.
+  // Word finder (its own button, in every mode): entries in the word list that fit the answer's length and the letters
+  // already in the grid. For an answer of several words, phrases of the right word lengths come first, then the single
+  // words that fit each part, to fill one part at a time.
   $("findBtn").addEventListener("click", function () {
     var w = curWord(), pat = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; });
-    var br = seps(w.breaks);
+    var br = seps(w.breaks), parts = partsOf(w);
     var shown = pat.map(function (ch, i) { return (ch || "?") + (br[i] || ""); }).join("");
-    withWords($("findBtn"), [pat.length], function (W) {
-      var all = entries(W(pat.length), w, pat), fit = all.filter(function (h) { return h.fit; }), hits = fit.length ? fit : all;
-      $("findNote").textContent = shown + ": " + (!hits.length ? "no words in the list fit." :
-        (fit.length ? "" : "none match the word lengths, but these fit the letters. ") +
-        (hits.length > 60 ? "Showing 60 of " + hits.length + "; fill in more letters to narrow it down." : hits.length + (hits.length > 1 ? " words fit." : " word fits.")));
-      $("findList").innerHTML = "";
-      chipList($("findList"), hits, 60, function (h) {
-        w.cells.forEach(function (rc, i) { put(rc[0], rc[1], h.L[i]); });
-        $("hintAsk").hidden = true;
-        render(); save();
-      });
-      $("findBox").hidden = false;
+    withWords($("findBtn"), [pat.length].concat(parts.map(function (p) { return p.len; })), function (W) {
+      var all = entries(W(pat.length), w, pat), fit = all.filter(function (h) { return h.fit; }), box = $("findList");
+      var each = parts.length > 1 ? parts.map(function (pt) { return partWords(W(pt.len), pat, pt); }) : [];
+      var multi = fit.length && each.length || each.some(function (l) { return l.length; });
+      var hits = multi || fit.length ? fit : all, n = hits.length;
+      askMode = "find"; askReset("");
+      $("hintTitle").textContent = "Find words for " + wordName(w);
+      $("hintText").hidden = $("hintNo").hidden = true; $("hintYes").textContent = "Done";
+      var fills = function (at, L) { L.split("").forEach(function (ch, i) { var rc = w.cells[at + i]; put(rc[0], rc[1], ch); }); $("hintAsk").hidden = true; render(); save(); };
+      box.innerHTML = "";
+      if (multi) {
+        $("findNote").textContent = shown + ": " + (n ? "phrases that fit, then words for each part." : "words that fit each part.");
+        if (n) { box.appendChild(mk("span", "lbl", "Phrases")); chipList(box, hits, 12, function (h) { fills(0, h.L); }); }
+        parts.forEach(function (pt, i) {
+          box.appendChild(mk("span", "lbl", "Word " + (i + 1) + " (" + pt.len + ")" + (each[i].length ? "" : ": none in the list fit")));
+          chipList(box, each[i], 30, function (h) { fills(pt.at, h.L); });
+        });
+      } else {
+        $("findNote").textContent = shown + ": " + (!n ? "no words in the list fit." :
+          (fit.length ? "" : "none match the word lengths, but these fit the letters. ") +
+          (n > 60 ? "Showing 60 of " + n + "; fill in more letters to narrow it down." : n + (n > 1 ? " words fit." : " word fits.")));
+        chipList(box, hits, 60, function (h) { fills(0, h.L); });
+      }
+      $("findBox").hidden = false; $("hintAsk").hidden = false;
     });
   });
   $("wheelClose").addEventListener("click", wheelClose);

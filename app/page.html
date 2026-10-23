@@ -17,6 +17,7 @@
     <button class="btn" id="checkAllBtn" type="button">Check all</button>
     <span class="noans" id="noAns" hidden>Answers not out yet</span>
     <button class="btn icon" id="wheelBtn" type="button" aria-label="Anagram wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.6" fill="currentColor"/><circle cx="18.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="5.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
+    <button class="btn icon" id="findBtn" type="button" hidden aria-label="Find words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
     <button class="btn icon" id="dictBtn" type="button" hidden aria-label="Dictionary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 3 4.5v14c4 0 7 .5 9 2 2-1.5 5-2 9-2v-14c-4 0-7 .5-9 2zM12 6.5v14"/></svg></button>
     <button class="btn icon" id="hintBtn" type="button">Hint</button>
     <button class="btn solid" id="submitBtn" type="button" hidden>Submit puzzle</button>
@@ -97,6 +98,7 @@
       <label class="tog">Skip filled squares<input type="checkbox" data-p="skip"></label>
       <label class="tog">Jump to next clue<input type="checkbox" data-p="jump"></label>
       <label class="tog">Hints without asking<input type="checkbox" data-p="noAsk"></label>
+      <label class="tog">Find words<input type="checkbox" data-p="find" data-on></label>
       <label class="tog">Hide timer<input type="checkbox" data-p="noTimer"></label>
     </div>
     <div class="fgrp"><span>Clues</span>
@@ -135,6 +137,7 @@
         <tr><td>Right answers turn green</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Hints and reveal</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
         <tr><td>Anagram Solve</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td></tr>
+        <tr><td>Find words</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td></tr>
         <tr><td>Finish</td><td>When all right</td><td>When all right</td><td>On submit</td><td>On submit</td></tr>
         <tr><td>DNF</td><td>Never</td><td>Any answer revealed</td><td>Incomplete / errors</td><td>Incomplete / errors</td></tr>
       </tbody>
@@ -196,7 +199,6 @@
     </div>
     <div class="pfind" id="findBox" hidden><p class="note" id="findNote"></p><div class="chips" id="findList"></div></div>
     <div class="actions">
-      <button class="btn" id="findBtn" type="button" hidden>Find words</button>
       <button class="btn" id="parseReset" type="button" hidden>Use original</button>
       <button class="btn" id="parseEdit" type="button" hidden>Edit</button>
       <button class="btn" id="hintNo" type="button">Not yet</button>

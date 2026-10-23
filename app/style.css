@@ -320,7 +320,8 @@ header .more svg { display: block; width: 20px; height: 22px; color: var(--accen
 .finds { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .finds p { margin: 0; width: 100%; text-align: center; font-size: 13px; color: var(--ink-soft); }
 .pfind { display: grid; gap: 8px; }
-.pfind .chips { max-height: 30vh; overflow-y: auto; }
+.pfind .chips { max-height: 40vh; overflow-y: auto; }
+.pfind .lbl { flex-basis: 100%; font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); }
 .confirm { position: fixed; inset: 0; background: rgba(10,14,18,.45); display: flex; align-items: center; justify-content: center; z-index: 25; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .confirm .box { background: var(--sheet); border-radius: 12px; padding: 18px; max-width: 360px; width: 100%; display: grid; gap: 10px; max-height: 88%; overflow-y: auto; box-sizing: border-box; }
@@ -447,3 +448,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .key.wide { max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* Seven buttons (word finder and dictionary both shown) on a 360px phone. */
+@media (max-width: 389.98px) {
+  .checks { gap: 3px; }
+  .checks .btn { padding-inline: 4px; }
+  .checks .btn.icon { padding-inline: 5px; }
+}

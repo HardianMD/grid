@@ -286,6 +286,13 @@
         score: ws.reduce(function (n, w) { return n + w.score; }, 0) };
     }).sort(function (a, b) { return a.score - b.score; });
   }
+  // Single words for one part of an answer of several words, fitting the part's letters in the grid, common first.
+  function partWords(list, fixed, pt) {
+    return singles(list, pt.len).filter(function (w) {
+      for (var i = 0; i < pt.len; i++) if (fixed[pt.at + i] && w.L[i] !== fixed[pt.at + i]) return false;
+      return true;
+    });
+  }
   function wheelSet() {
     var fixed = AW.slots.map(function (v) { return typeof v === "string" ? v : ""; });
     var cov = coveredTiles(), have = AW.tiles.filter(function (_, i) { return !cov[i]; }).map(function (t) { return t.ch; }).sort().join("");

@@ -12,19 +12,19 @@
   }
   function nchip(n) { return n ? '<span class="nb" style="background:' + ncol(n) + '">' + n + "</span>" : '<span class="sub">\u2013</span>'; }
   function mean(a) { return a.length ? a.reduce(function (n, v) { return n + v; }, 0) / a.length : 0; }
-  // The user's usual time for a series, worked out the way the score is for each solver: the average of clean solves
-  // (no DNF, no reveal) in the six months up to the puzzle's date, leaving out any under 40% or over 250% of the
+  // The user's usual time for a series, worked out the way the score is for each solver: the average of solves
+  // that are not DNFs (hints and reveals count) in the six months up to the puzzle's date, leaving out any under 40% or over 250% of the
   // median. Needs 5 such solves. Personal NITCH: this time against the usual; WITCH: that against the field's score.
   function mineOf(p) {
     var g = progressOf(p), from = new Date(Date.parse(p.date) - 183 * 864e5).toISOString().slice(0, 10), ts = [], ser = series(p);
     PUZZLES.forEach(function (q) {
       if (!q.date || q.date < from || q.date > p.date || series(q) !== ser) return;
       var h = progressOf(q);
-      if (h.solved && !h.dnf && !h.rf && h.time) ts.push(h.time / 1000);
+      if (h.solved && !h.dnf && h.time) ts.push(h.time / 1000);
     });
     ts.sort(function (a, b) { return a - b; });
     var md = ts[ts.length >> 1], ok = ts.filter(function (x) { return x >= md * 0.4 && x <= md * 2.5; }),
-      u = ok.length >= 5 && !g.dnf && !g.rf ? mean(ok) : 0, pn = u && Math.round(100 * g.time / 1000 / u);
+      u = ok.length >= 5 && !g.dnf ? mean(ok) : 0, pn = u && Math.round(100 * g.time / 1000 / u);
     return { g: g, u: u, pn: pn, w: pn && Math.round(100 * pn / p.nitch.n) };
   }
   // Where the user's time sits in the field: a smoothed curve of the field's times, shaded up to the user's line.
@@ -56,7 +56,7 @@
       (m.g.dnf ? "" : '<h4>Where you sit</h4><div class="ncurve">' + ncurve(t, me) + "</div><p>" +
         (beat >= 50 ? "You beat " + beat + "% of solvers" : (100 - beat) + "% of solvers beat you") + "</p>") +
       "</div><div><h4>You</h4>" + row("Your time", m.g.dnf ? '<b class="rv">DNF</b>' : s(me)) +
-      row("Your usual (last 6 months)", m.u ? s(m.u) : '<span class="sub">after 5 clean solves</span>') +
+      row("Your usual (last 6 months)", m.u ? s(m.u) : '<span class="sub">after 5 solves</span>') +
       (m.pn ? row("Personal NITCH", nchip(m.pn)) + row("WITCH", nchip(m.w)) : "") + "</div>";
     $("nitchSheet").hidden = false;
   }

@@ -59,10 +59,12 @@
   // An added draft as a puzzle for the list, Quickfire and solving, in the shared puzzles' format (answers, definitions
   // and parsings scrambled; qc as the updater writes it); made again only when the draft changes.
   var MP = new WeakMap(), SHARED = [];
+  // An added draft's id in the list: each publish after an unpublish gets a new one (d.r), so its progress starts afresh.
+  function madeId(d) { return d.id + (d.r ? "-r" + d.r : ""); }
   function madePuzzle(d) {
     var c = MP.get(d);
     if (c && c.at === d.at) return c.p;
-    var p = edPuzzle(d), id = d.id, nk = {}, hints = { a: {}, d: {} }, ps = { a: {}, d: {} }, qc = { a: {}, d: {} }, tail = {};
+    var p = edPuzzle(d), id = madeId(d), nk = {}, hints = { a: {}, d: {} }, ps = { a: {}, d: {} }, qc = { a: {}, d: {} }, tail = {};
     slotsOf(d.grid).forEach(function (w) { nk[skey(w)] = w; });
     (d.links || []).forEach(function (g) { g.slice(1).forEach(function (k) { if (nk[k] && nk[g[0]]) tail[k] = nk[g[0]]; }); });
     Object.keys(nk).forEach(function (k) {
@@ -312,7 +314,7 @@
   $("edMenu").addEventListener("click", function () {
     var d = ED.d;
     $("edName").value = d.title; $("edNote").value = d.note || ""; $("edSym").checked = !!d.sym;
-    $("edAdd").hidden = !!d.added; $("edAdded").hidden = !d.added; $("edPdfOpts").hidden = true;
+    $("edAdd").parentNode.hidden = !!d.added; $("edAdded").hidden = !d.added; $("edPdfOpts").hidden = true;
     $("edSheet").hidden = false;
   });
   $("edName").addEventListener("change", function () { ED.d.title = this.value.trim() || "Crossword No. " + ED.d.n; madeSave(ED.d); edLoad(); });
@@ -335,7 +337,17 @@
   }
   $("edAdd").addEventListener("click", function () {
     if (!edReady()) return;
-    ED.d.added = 1; madeSave(ED.d); this.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");
+    ED.d.added = 1; madeSave(ED.d); this.parentNode.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");
+  });
+  // Unpublish: off the puzzle list, Stats and Quickfire, and back to a draft. Its progress is deleted, and a later publish
+  // has a new id, so a copy of the old progress still on another device is never counted again.
+  $("edUnpub").addEventListener("click", function () {
+    if (!sure(this, "Tap to unpublish")) return;
+    var d = ED.d, pid = madeId(d), k = "crossword:" + pid;
+    delete MEM[k]; delete cloudQ["p_" + pid]; try { localStorage.removeItem(k); } catch (e) {}
+    if (CLOUD) CLOUD.doc("p_" + pid).delete().catch(function () {});
+    delete d.added; d.r = (d.r || 0) + 1; madeSave(d);
+    $("edAdded").hidden = true; $("edAdd").parentNode.hidden = false; toast("Back to drafts");
   });
   // Both exports write Latin-1 text, so curly quotes and dashes become plain ones and other characters "?".
   function lat(s) { return Array.from(String(s || "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, "-")).map(function (ch) { return ch.charCodeAt(0) < 256 ? ch.charCodeAt(0) : 63; }); }

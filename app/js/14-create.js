@@ -372,82 +372,180 @@
     put(0x10, cs.map(function (c, i) { return "ICHE".charCodeAt(i) ^ c & 255; })); put(0x14, cs.map(function (c, i) { return "ATED".charCodeAt(i) ^ c >> 8; }));
     return new Uint8Array(h.concat(sol, grid, [].concat.apply([], str.map(z)), [].concat.apply([], clues.map(z)), z(note)));
   }
-  // Export as an A4 PDF to print: title, author and note, the grid with the clues beside and below it; then, as chosen
-  // (k: 0 clues only, 1 with the solution, 2 with the solution and each answer's definition and parsing), a solution page.
-  // It uses the PDF's own Helvetica (nothing embedded); its widths here wrap the clues.
-  var HW = ("278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278," + "556,".repeat(10) + "278,278,584,584,584,556,1015,667,667,722,722," +
+  // Export as an A4 PDF to print in The Punch's punk zine style: a black band with the masthead in cut-out letters, a
+  // warning sticker and a typed strapline; the note; the grid centred with a hard shadow and one across answer circled
+  // in red pen; Across and Down on red tape in two columns, sized to fit one page; a black footer band. As chosen (k: 0
+  // the puzzle only, 1 with the solution, 2 with the solution and each answer's definition and parsing) solution pages
+  // follow in the same style. It uses the PDF's own Helvetica, Times and Courier (nothing embedded); their widths here wrap text.
+  var FW = { H: "278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278," + "556,".repeat(10) + "278,278,584,584,584,556,1015,667,667,722,722," +
     "667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556," +
-    "500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584").split(",");
+    "500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584",
+    T: "250,333,408,500,500,833,778,180,333,333,500,564,250,333,250,278," + "500,".repeat(10) + "278,278,564,564,564,444,921,722,667,667,722,611," +
+    "556,722,722,333,389,722,611,889,722,722,556,722,667,556,611,722,722,944,722,722,611,333,278,333,469,500,333,444,500,444," +
+    "500,444,333,500,500,278,278,500,278,778,500,500,500,500,333,389,278,500,500,722,500,500,444,480,200,480,541" };
+  FW.H = FW.H.split(","); FW.T = FW.T.split(",");
   function pdfFile(p, k, d) {
-    var PW = 595, PH = 842, M = 40, pages = [], o = "", f = function (n) { return +n.toFixed(1); };
+    var PW = 595, PH = 842, M = 44, pages = [], o = "", f = function (n) { return +n.toFixed(2); };
+    var INK = "0.08 0.08 0.1", RED = "0.84 0.12 0.14", YEL = "0.98 0.86 0.2", WHT = "1 1 1", SOFT = "0.3 0.3 0.32";
     var esc = function (s) { return String.fromCharCode.apply(null, lat(s)).replace(/[\\()]/g, "\\$&"); };
-    var wid = function (s, z) { return lat(s).reduce(function (n, c) { return n + +(HW[c - 32] || 556); }, 0) * z / 1000; };
-    var text = function (s, x, y, z, b) { o += "BT /F" + (b ? 2 : 1) + " " + z + " Tf " + f(x) + " " + f(y) + " Td (" + esc(s) + ") Tj ET\n"; };
-    var wrap = function (s, z, w) {
-      var out = [], line = "";
-      String(s || "").split(/\s+/).forEach(function (t) { if (line && wid(line + " " + t, z) > w) { out.push(line); line = t; } else line = line ? line + " " + t : t; });
-      return out.concat(line ? [line] : []);
+    // Widths: Courier is fixed at 600; bold faces run about 6% wider than the regular metrics here; tc is extra letter spacing.
+    var wid = function (s, ft, z, tc) {
+      return lat(s).reduce(function (n, c) { return n + (ft[0] === "C" ? 600 : +(FW[ft[0]][c - 32] || 556)); }, 0) * z / 1000 * (/B/.test(ft) && ft[0] !== "C" ? 1.06 : 1) + (tc || 0) * String(s).length;
     };
-    var grid = function (x, top, c, sol) {
-      o += "0.6 w\n";
-      p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, k) {
-        o += f(x + k * c) + " " + f(top - (r + 1) * c) + " " + c + " " + c + " re " + (ch === "#" ? "B" : "S") + "\n";
-        if (sol && ch !== "#") text(sol[r * row.length + k], x + k * c + (c - wid(sol[r * row.length + k], c * 0.55)) / 2, top - (r + 1) * c + c * 0.25, f(c * 0.55), 1);
-      }); });
-      slotsOf(p.grid).forEach(function (w) { text(String(w.num), x + w.cells[0][1] * c + 1.5, top - w.cells[0][0] * c - c * 0.33, f(c * 0.3)); });
-      o += "1.5 w " + f(x) + " " + f(top - p.grid.length * c) + " " + p.grid[0].length * c + " " + p.grid.length * c + " re S\n";
+    var text = function (s, x, y, ft, z, col, align, tc) {
+      s = String(s); x -= align === "c" ? wid(s, ft, z, tc) / 2 : align === "r" ? wid(s, ft, z, tc) : 0;
+      o += col + " rg BT /" + ft + " " + z + " Tf " + (tc || 0) + " Tc " + f(x) + " " + f(y) + " Td (" + esc(s) + ") Tj ET\n";
     };
+    var rect = function (x, y, w, h, col, stroke) { o += col + (stroke ? " RG " + stroke + " w " : " rg ") + f(x) + " " + f(y) + " " + f(w) + " " + f(h) + " re " + (stroke ? "S" : "f") + "\n"; };
+    // Draw in a frame turned by a degrees about (x, y), scaled sx by sy.
+    var turn = function (a, x, y, fn, sx, sy) {
+      var r = a * Math.PI / 180, cs = Math.cos(r), sn = Math.sin(r); sx = sx || 1; sy = sy || 1;
+      o += "q " + [cs * sx, sn * sx, -sn * sy, cs * sy, x, y].map(f).join(" ") + " cm\n"; fn(); o += "Q\n";
+    };
+    var wrap = function (s, ft, z, w) {
+      var out = [], ln = "";
+      String(s || "").split(/\s+/).forEach(function (t) { if (ln && wid(ln + " " + t, ft, z) > w) { out.push(ln); ln = t; } else ln = ln ? ln + " " + t : t; });
+      return out.concat(ln ? [ln] : []);
+    };
+    var fit = function (s, ft, z, w) { while (z > 5 && wid(s, ft, z) > w) z = f(z - 0.25); return z; };
     var page = function () { if (o) pages.push(o); o = ""; };
-    // Page 1: heading, then the grid; the clues run beside it, under it, then in two columns on further pages.
-    var y = PH - M - 16, c = 17, gw = c * p.grid[0].length;
-    text(p.title, M, y, 18, 1);
-    if (p.setter) text(p.setter, M, y -= 17, 11);
-    wrap(p.note, 10, PW - 2 * M).forEach(function (l) { text(l, M, y -= 13, 10); });
-    var top = y - 14, cols = [[M + gw + 20, top, PW - 2 * M - gw - 20], [M, top - c * p.grid.length - 18, gw]], ci = 0;
-    grid(M, top, c);
-    y = cols[0][1];
-    var half = function (t) { return [[M, t, (PW - 2 * M - 20) / 2], [PW / 2 + 10, t, (PW - 2 * M - 20) / 2]]; };
-    var put = function (h, draw) {
-      while (y - h < M) {
-        if (++ci >= cols.length) { page(); cols = cols.concat(half(PH - M)); }
-        y = cols[ci][1];
-      }
-      draw(cols[ci][0], cols[ci][2]); y -= h;
+    var N = p.grid.length, Cn = p.grid[0].length, sol = k ? solOf(p) : "", sl = slotsOf(p.grid);
+    // The grid, centred, on a hard black shadow; letters for the solution.
+    var grid = function (top, c, letters) {
+      var x = (PW - Cn * c) / 2, nums = {};
+      sl.forEach(function (w) { nums[w.cells[0].join()] = w.num; });
+      rect(x + 7, top - N * c - 7, Cn * c, N * c, INK); rect(x, top - N * c, Cn * c, N * c, WHT);
+      p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, j) {
+        var X = x + j * c, Y = top - (r + 1) * c;
+        if (ch === "#") rect(X, Y, c, c, INK);
+        else {
+          rect(X, Y, c, c, "0.2 0.2 0.22", 0.5);
+          if (nums[r + "," + j]) text(nums[r + "," + j], X + 1.4, top - r * c - c * 0.34, "H", f(c * 0.32), INK);
+          if (letters) text(letters[r * Cn + j], X + c / 2, Y + c * 0.22, "HB", f(c * 0.55), INK, "c");
+        }
+      }); });
+      rect(x, top - N * c, Cn * c, N * c, INK, 2.4);
+      return x;
     };
-    ["a", "d"].forEach(function (dir, i) {
-      put(i ? 26 : 14, function (x) { text(dir === "a" ? "Across" : "Down", x, y - (i ? 24 : 12), 12, 1); });
-      slotsOf(p.grid).filter(function (w) { return w.dir === dir; }).forEach(function (w) {
-        var ls = wrap(p[dir === "a" ? "across" : "down"][w.num], 10, cols[0][2] - 20);  // the narrowest column
-        put(4 + ls.length * 12, function (x) { text(String(w.num), x, y - 14, 10, 1); ls.forEach(function (l, j) { text(l, x + 20, y - 14 - j * 12, 10); }); });
+    // The masthead band: THE PUNCH in cut-out scraps, a tilted sticker and a typed strapline.
+    var SCRAP = [[INK, WHT, "HB"], [WHT, INK, "TB"], [RED, WHT, "CB"], [YEL, INK, "HBO"], [WHT, RED, "TBI"], [INK, YEL, "HB"], [RED, WHT, "TB"], [WHT, INK, "CB"], [YEL, INK, "HB"]];
+    var TILT = [-6, 4, -3, 0, 7, -5, 3, -7, 5];
+    var head = function (sticker, strap) {
+      rect(0, PH - 150, PW, 150, INK);
+      var x = 40;
+      Array.from("THE PUNCH").forEach(function (ch, i) {
+        if (ch === " ") { x += 14; return; }
+        var s = SCRAP[(i + 2) % 9], z = 34 * (1 + (i + 2) % 3 * 0.12), w = wid(ch, s[2], z) + z * 0.3, h = z * 0.95;
+        turn(TILT[(i + 2) % 9], x + w / 2, PH - 70, function () { rect(-w / 2, -h / 2, w, h, s[0]); rect(-w / 2, -h / 2, w, h, INK, 0.5); text(ch, 0, -z * 0.34, s[2], f(z), s[1], "c"); });
+        x += w + 4;
       });
-    });
-    page();
-    // The solution on a page of its own, then the parsings in two columns under it.
-    if (k) { text("Solution: " + p.title, M, PH - M - 16, 14, 1); grid(M, PH - M - 34, 22, solOf(p)); }
-    if (k > 1) {
-      var sl = slotsOf(d.grid), by = {}, tails = {}, links = d.links || [];
-      sl.forEach(function (w) { by[skey(w)] = w; });
-      links.forEach(function (g) { g.slice(1).forEach(function (t) { tails[t] = 1; }); });
-      cols = half(PH - M - 34 - 22 * p.grid.length - 16); ci = 0; y = cols[0][1];
+      turn(-8, PW - 78, PH - 76, function () {
+        rect(-62, -30, 124, 60, YEL); rect(-58, -26, 116, 52, INK, 2);
+        text(sticker[0], 0, 8, "HB", 12, INK, "c"); text(sticker[1], 0, -5, "HB", 9, INK, "c", 1); text(sticker[2], 0, -17, "HB", 9, INK, "c", 1);
+      });
+      strap = strap.join("  //  ").toUpperCase();
+      text(strap, M, PH - 128, "CB", fit(strap, "CB", 9, PW - 2 * M), WHT);
+      return PH - 150;
+    };
+    var foot = function (left) { rect(0, 0, PW, 36, INK); text(left, M, 14, "CB", 8.5, WHT); text("THE PUNCH", PW - M, 14, "HB", 9, YEL, "r", 1.5); };
+    // Columns of items ({h, draw(x, y, w)}), split so the columns come out even; returns the height used.
+    var cols = function (items, top, n, gap) {
+      var cw = (PW - 2 * M - gap * (n - 1)) / n, total = items.reduce(function (s, it) { return s + it.h; }, 0), col = 0, y = top, used = 0, h = 0;
+      items.forEach(function (it) {
+        if (col < n - 1 && used && used + it.h > total / n + 8) { col++; h = Math.max(h, top - y); y = top; used = 0; if (it.gap) return; }
+        it.draw(M + col * (cw + gap), y, cw); y -= it.h; used += it.h;
+      });
+      return Math.max(h, top - y);
+    };
+    var heading = function (s) {
+      s = s.toUpperCase();
+      return { h: 28, draw: function (x, y) { turn(2.5, x, y, function () { rect(0, -19, wid(s, "CB", 12, 2) + 14, 17, RED); text(s, 7, -14, "CB", 12, WHT, "", 2); }); } };
+    };
+    var gapItem = { h: 8, gap: 1, draw: function () {} };
+    var clueItems = function (z, cw) {
+      var lead = z * 1.23, out = [];
       ["a", "d"].forEach(function (dir) {
-        sl.filter(function (w) { return w.dir === dir && !tails[skey(w)]; }).forEach(function (w) {
-          // The answer across every part it runs into, with its spaces and hyphens.
-          var g = (links.filter(function (l) { return l[0] === skey(w); })[0] || [skey(w)]).map(function (t) { return by[t]; }).filter(Boolean), ans = "";
-          g.forEach(function (s) { s.cells.forEach(function (rc) { var b = d.brk[rc.concat(s.dir).join()]; ans += d.f[rc[0]][rc[1]] + (b === "-" ? "-" : b ? " " : ""); }); });
-          var x = (d.p || {})[skey(w)], df = ((d.d || {})[skey(w)] || [])[0], cw = cols[0][2];
-          var ls = (df ? wrap("Definition: " + df, 9.5, cw) : []).concat(x ? wrap([x.type, (x.wordplay || "").replace(/_([^_]+)_/g, "$1").replace(/~([^~]+)~/g, "-$1")].filter(Boolean).join(": "), 9.5, cw) : []);
-          put(18 + ls.length * 11.5, function (cx) {
-            text(w.num + (dir === "a" ? " Across  " : " Down  ") + ans.trim(), cx, y - 12, 10, 1);
-            ls.forEach(function (l, j) { text(l, cx, y - 24 - j * 11.5, 9.5); });
-          });
+        if (dir === "d") out.push(gapItem);
+        out.push(heading(dir === "a" ? "Across" : "Down"));
+        sl.filter(function (w) { return w.dir === dir; }).forEach(function (w) {
+          var ls = wrap(p[dir === "a" ? "across" : "down"][w.num], "H", z, cw - 17);
+          out.push({ h: ls.length * lead + 2.4, draw: function (x, y) {
+            text(w.num, x + 12, y - z, "HB", z, RED, "r");
+            ls.forEach(function (l, i) { text(l, x + 17, y - z - i * lead, "H", z, INK); });
+          } });
         });
       });
+      return out;
+    };
+    var date = metaText({ date: p.date }) || "";
+    // Page 1: the largest grid and clue size that leave everything on the page.
+    var y = head(["WARNING:", "CONTAINS", "INNUENDO"], ["Filth, fun & fiendish clues", p.title, "Set by " + (p.setter || "you"), date].filter(Boolean)) - 26, cw = (PW - 2 * M - 26) / 2;
+    var note = wrap(p.note, "C", 9.5, PW - 2 * M - 40);
+    note.forEach(function (l) { text(l, PW / 2, y, "C", 9.5, SOFT, "c"); y -= 12; });
+    y -= note.length ? 10 : 0;
+    var room = function (c, z) { return y - N * c - 30 - clueItems(z, cw).reduce(function (s, it) { return s + it.h; }, 0) / 2 - 20 - 50; };
+    var c = 20, z = 8.8;
+    while (room(c, z) < 0 && c > 15) c--;
+    while (room(c, z) < 0 && z > 6.6) z = f(z - 0.2);
+    var gx = grid(y, c);
+    // Red pen round the longest across answer (up to 9 letters, below the top row) that reaches the right edge in the top half, with a word beside it.
+    var mark = sl.filter(function (w) { return w.dir === "a" && w.cells.length < 10 && w.cells[0][0] && w.cells[0][0] < N / 2 && w.cells[w.cells.length - 1][1] === Cn - 1; })
+      .sort(function (a, b) { return b.cells.length - a.cells.length; })[0];
+    if (mark) {
+      var mr = mark.cells[0][0], ml = mark.cells[0][1], my = y - (mr + 0.5) * c;
+      turn(-4, gx + (ml + mark.cells.length / 2) * c, my, function () {
+        var rx = mark.cells.length * c / 2 + 8, ry = c * 0.85, kx = rx * 0.5523, ky = ry * 0.5523;
+        o += RED + " RG 1.6 w " + [rx, 0].map(f).join(" ") + " m " + [rx, ky, kx, ry, 0, ry].map(f).join(" ") + " c " + [-kx, ry, -rx, ky, -rx, 0].map(f).join(" ") + " c " +
+          [-rx, -ky, -kx, -ry, 0, -ry].map(f).join(" ") + " c " + [kx, -ry, rx, -ky, rx, 0].map(f).join(" ") + " c S\n";
+      });
+      turn(-10, gx + Cn * c + 14, my - c * 1.6, function () { text("this one's filthy", 0, 0, "HBO", 9.5, RED); });
     }
+    y -= N * c + 30;
+    cols(clueItems(z, cw), y, 2, 26);
+    foot((k ? "Answers overleaf  //  " : "") + "photocopy it, pass it round the office");
     page();
-    var objs = ["<< /Type /Catalog /Pages 2 0 R >>", "", "Helvetica", "Helvetica-Bold"].map(function (s, i) { return i < 2 ? s : "<< /Type /Font /Subtype /Type1 /BaseFont /" + s + " /Encoding /WinAnsiEncoding >>"; }), kids = [];
+    if (k) {
+      var top = head(["SPOILER:", "NO", "PEEKING"], ["Solution", p.title, "Set by " + (p.setter || "you")]) - 30, sc = k > 1 ? 15 : 22;
+      grid(top, sc, sol); top -= N * sc + 30;
+      if (k > 1) {
+        var tails = {}, by2 = {}, links = d.links || [], items = [];
+        sl.forEach(function (w) { by2[skey(w)] = w; });
+        links.forEach(function (g) { g.slice(1).forEach(function (t) { tails[t] = 1; }); });
+        ["a", "d"].forEach(function (dir) {
+          if (dir === "d") items.push(gapItem);
+          items.push(heading(dir === "a" ? "Across" : "Down"));
+          sl.filter(function (w) { return w.dir === dir && !tails[skey(w)]; }).forEach(function (w) {
+            // The answer across every part it runs into, with its spaces and hyphens.
+            var g = (links.filter(function (l) { return l[0] === skey(w); })[0] || [skey(w)]).map(function (t) { return by2[t]; }).filter(Boolean), ans = "";
+            g.forEach(function (s) { s.cells.forEach(function (rc) { var b = d.brk[rc.concat(s.dir).join()]; ans += d.f[rc[0]][rc[1]] + (b === "-" ? "-" : b ? " " : ""); }); });
+            var x = (d.p || {})[skey(w)], df = ((d.d || {})[skey(w)] || [])[0];
+            var wp = x ? wrap([x.type, (x.wordplay || "").replace(/_([^_]+)_/g, "$1").replace(/~([^~]+)~/g, "-$1")].filter(Boolean).join(": "), "C", 8, cw - 17) : [];
+            var dl = df ? wrap("Definition: " + df, "HBO", 8.5, cw - 17) : [];
+            items.push({ h: 13 + (dl.length + wp.length) * 10.4 + 3, draw: function (cx, cy) {
+              text(w.num, cx + 12, cy - 9.5, "HB", 9, RED, "r"); text(ans.trim(), cx + 17, cy - 9.5, "CB", 9.5, INK, "", 0.6);
+              dl.forEach(function (l, i) { text(l, cx + 17, cy - 21 - i * 10.4, "HBO", 8.5, SOFT); });
+              wp.forEach(function (l, i) { text(l, cx + 17, cy - 21 - (dl.length + i) * 10.4, "C", 8, INK); });
+            } });
+          });
+        });
+        // Parsings that run past the page carry on over further pages, two columns each.
+        while (items.length) {
+          var put = [], hsum = 0, cap = 2 * (top - 60) - 40;
+          while (items.length && hsum + items[0].h <= cap) { hsum += items[0].h; put.push(items.shift()); }
+          if (!put.length) put.push(items.shift());
+          cols(put, top, 2, 26);
+          if (items.length) { foot("Continued overleaf"); page(); top = head(["STILL", "GOING,", "YOU ANIMAL"], ["Solution, continued", p.title]) - 30; }
+        }
+      }
+      foot("Now go and wash your mind out");
+      page();
+    }
+    var objs = ["<< /Type /Catalog /Pages 2 0 R >>", ""], fr = [], kids = [];
+    var fonts = { H: "Helvetica", HB: "Helvetica-Bold", HBO: "Helvetica-BoldOblique", TB: "Times-Bold", TBI: "Times-BoldItalic", C: "Courier", CB: "Courier-Bold" };
+    Object.keys(fonts).forEach(function (n) { objs.push("<< /Type /Font /Subtype /Type1 /BaseFont /" + fonts[n] + " /Encoding /WinAnsiEncoding >>"); fr.push("/" + n + " " + objs.length + " 0 R"); });
     pages.forEach(function (s) {
       kids.push(objs.length + 1 + " 0 R");
-      objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + (objs.length + 2) + " 0 R >>");
+      objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /Font << " + fr.join(" ") + " >> >> /Contents " + (objs.length + 2) + " 0 R >>");
       objs.push("<< /Length " + s.length + " >>\nstream\n" + s + "endstream");
     });
     objs[1] = "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + kids.length + " >>";

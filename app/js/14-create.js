@@ -267,7 +267,9 @@
     var k = skey(w), links = ED.d.links || [], other = {}, box = $("clueLink"), sl = slotsOf(ED.d.grid);
     ED.tails = ((links.filter(function (g) { return g[0] === k; })[0]) || [k]).slice(1);
     links.forEach(function (g) { if (g[0] !== k) g.forEach(function (x) { other[x] = 1; }); });
-    box.innerHTML = "";
+    var name = function (t) { var s = sl.filter(function (x) { return skey(x) === t; })[0]; return s.num + (s.dir === "a" ? " Across" : " Down"); };
+    var sum = function () { $("clueLinkSum").textContent = ED.tails.length ? "· " + ED.tails.map(name).join(", ") : ""; };
+    box.innerHTML = ""; $("clueLinkBox").open = ED.tails.length > 0; sum();
     sl.forEach(function (s) {
       var sk = skey(s); if (sk === k || other[sk]) return;
       var b = mk("button", "chip", s.num + (s.dir === "a" ? " Across" : " Down") + " (" + s.cells.length + ")"); b.type = "button";
@@ -275,7 +277,7 @@
       b.addEventListener("click", function () {
         var i = ED.tails.indexOf(sk);
         if (i >= 0) ED.tails.splice(i, 1); else ED.tails.push(sk);
-        b.classList.toggle("on", i < 0);
+        b.classList.toggle("on", i < 0); sum();
         $("clueLen").textContent = "(" + ED.tails.reduce(function (n, t) { return n + sl.filter(function (x) { return skey(x) === t; })[0].cells.length; }, sl.filter(function (x) { return skey(x) === k; })[0].cells.length) + " letters)";
       });
       box.appendChild(b);

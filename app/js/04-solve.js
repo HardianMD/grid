@@ -374,7 +374,7 @@
   // A submitted grid can't be changed, so Submit asks first; in Hard and Champ, submitting with blank squares is giving up.
   // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
   function askReset(no) {
-    $("clueForm").hidden = $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
+    $("clueForm").hidden = $("clueParse").hidden = $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;
     $("hintText").hidden = false; $("hintNo").hidden = false; $("hintNo").textContent = no; $("hintYes").hidden = false;
   }
   function confirmAsk(mode, title, text, yes) {

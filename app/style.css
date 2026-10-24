@@ -346,6 +346,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .confirm p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-soft); }
 .confirm p#hintText { color: var(--ink); font-size: 16px; }
 .confirm .actions { justify-content: flex-end; }
+#clueParse { margin-right: auto; }
 .dword { font-size: 20px !important; letter-spacing: 0.04em; }
 .dbody { display: grid; gap: 8px; }
 .dbody p { color: var(--ink) !important; font-size: 15px !important; }

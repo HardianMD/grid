@@ -314,7 +314,7 @@
   $("edMenu").addEventListener("click", function () {
     var d = ED.d;
     $("edName").value = d.title; $("edNote").value = d.note || ""; $("edSym").checked = !!d.sym;
-    $("edAdd").parentNode.hidden = !!d.added; $("edAdded").hidden = !d.added; $("edPdfOpts").hidden = true;
+    $("edAdd").parentNode.hidden = !!d.added; $("edAdded").hidden = !d.added; $("edPdfOpts").hidden = $("edCircRow").hidden = true;
     $("edSheet").hidden = false;
   });
   $("edName").addEventListener("change", function () { ED.d.title = this.value.trim() || "Crossword No. " + ED.d.n; madeSave(ED.d); edLoad(); });
@@ -488,17 +488,23 @@
     while (room(c, z) < 0 && c > 15) c--;
     while (room(c, z) < 0 && z > 6.6) z = f(z - 0.2);
     var gx = grid(y, c);
-    // Red pen round the longest across answer (up to 9 letters, below the top row) that reaches the right edge in the top half, with a word beside it.
-    var mark = sl.filter(function (w) { return w.dir === "a" && w.cells.length < 10 && w.cells[0][0] && w.cells[0][0] < N / 2 && w.cells[w.cells.length - 1][1] === Cn - 1; })
-      .sort(function (a, b) { return b.cells.length - a.cells.length; })[0];
+    // Red pen round the answer chosen in the export options (d.circ: a slot, "-" for none), else round the longest
+    // across answer of up to 9 letters that reaches the right edge in the top half, below row 1; a word beside it in the margin.
+    var mark = d && d.circ ? sl.filter(function (w) { return skey(w) === d.circ; })[0] :
+      sl.filter(function (w) { return w.dir === "a" && w.cells.length < 10 && w.cells[0][0] && w.cells[0][0] < N / 2 && w.cells[w.cells.length - 1][1] === Cn - 1; })
+        .sort(function (a, b) { return b.cells.length - a.cells.length; })[0];
     if (mark) {
-      var mr = mark.cells[0][0], ml = mark.cells[0][1], my = y - (mr + 0.5) * c;
-      turn(-4, gx + (ml + mark.cells.length / 2) * c, my, function () {
-        var rx = mark.cells.length * c / 2 + 8, ry = c * 0.85, kx = rx * 0.5523, ky = ry * 0.5523;
+      var ac = mark.dir === "a", half = mark.cells.length * c / 2 + 8, rx = ac ? half : c * 0.85, ry = ac ? c * 0.85 : half;
+      var mx = gx + (mark.cells[0][1] + (ac ? mark.cells.length / 2 : 0.5)) * c, my = y - (mark.cells[0][0] + (ac ? 0.5 : mark.cells.length / 2)) * c;
+      turn(-4, mx, my, function () {
+        var kx = rx * 0.5523, ky = ry * 0.5523;
         o += RED + " RG 1.6 w " + [rx, 0].map(f).join(" ") + " m " + [rx, ky, kx, ry, 0, ry].map(f).join(" ") + " c " + [-kx, ry, -rx, ky, -rx, 0].map(f).join(" ") + " c " +
           [-rx, -ky, -kx, -ry, 0, -ry].map(f).join(" ") + " c " + [kx, -ry, rx, -ky, rx, 0].map(f).join(" ") + " c S\n";
       });
-      turn(-10, gx + Cn * c + 14, my - c * 1.6, function () { text("this one's filthy", 0, 0, "HBO", 9.5, RED); });
+      // The word sits in the nearer margin, with a pen line to the circle when it's further off.
+      var lw = wid("this one's filthy", "HBO", 9.5), right = mx >= PW / 2, lx = right ? gx + Cn * c + 14 : gx - 14 - lw, ex = right ? mx + rx : mx - rx;
+      turn(-6, lx, my - 3, function () { text("this one's filthy", 0, 0, "HBO", 9.5, RED); });
+      if (Math.abs((right ? lx - 4 : lx + lw + 4) - ex) > 8) o += RED + " RG 1 w " + f(right ? lx - 4 : lx + lw + 4) + " " + f(my) + " m " + f(ex) + " " + f(my) + " l S\n";
     }
     y -= N * c + 30;
     cols(clueItems(z, cw), y, 2, 26);
@@ -557,7 +563,15 @@
     return Uint8Array.from(out, function (ch) { return ch.charCodeAt(0); });
   }
   $("edPuz").addEventListener("click", function () { edExport("puz"); });
-  $("edPdf").addEventListener("click", function () { $("edPdfOpts").hidden = !$("edPdfOpts").hidden; });
+  // PDF: the choice of pages, and which answer the red pen circles (Auto picks one; kept on the draft as d.circ).
+  $("edPdf").addEventListener("click", function () {
+    var on = $("edPdfOpts").hidden, sel = $("edCirc"); $("edPdfOpts").hidden = $("edCircRow").hidden = !on;
+    if (!on) return;
+    sel.innerHTML = ""; sel.appendChild(new Option("Auto", "")); sel.appendChild(new Option("None", "-"));
+    slotsOf(ED.d.grid).forEach(function (w) { sel.appendChild(new Option(w.num + (w.dir === "a" ? " Across" : " Down"), skey(w))); });
+    sel.value = ED.d.circ || ""; if (sel.selectedIndex < 0) sel.value = "";
+  });
+  $("edCirc").addEventListener("change", function () { if (this.value) ED.d.circ = this.value; else delete ED.d.circ; madeSave(ED.d); });
   $("edPdfOpts").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) edExport("pdf", +b.dataset.k); });
   function edExport(ext, k) {
     if (!edReady()) return;

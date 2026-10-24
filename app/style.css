@@ -25,6 +25,7 @@
   color-scheme: light;
 }
 html, body { height: 100%; }
+input, textarea { -webkit-user-select: text; user-select: text; }
 body {
   margin: 0; background: var(--paper); color: var(--ink); font-family: var(--f-ui);
   overflow: hidden; -webkit-user-select: none; user-select: none;
@@ -298,7 +299,7 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .fbar #filterBtn[aria-expanded="true"], .fbar #filterBtn.on, .fbar #favsBtn.on, .fbar #statsBtn.on, .fbar #qfBtn.on, .fbar #makeBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .fpanel { display: grid; gap: 12px; margin-top: 10px; padding: 12px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
 .fgrp { display: grid; gap: 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
-.fgrp select, .fgrp input { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
+.fgrp select, .fgrp input, #edCirc { font: 400 16px var(--f-ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; min-width: 0; text-transform: none; letter-spacing: 0; }
 .frange { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; font-weight: 400; text-transform: none; }
 .hmore { display: block; margin: 8px auto 0; }
 .hempty { text-align: center; color: var(--ink-soft); margin: 24px 0; font-size: 14px; }

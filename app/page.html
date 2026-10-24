@@ -228,8 +228,7 @@
       <textarea id="clueText" rows="3" maxlength="300" placeholder="The clue, without its letter count"></textarea>
       <label for="clueAns">Answer <span class="sub" id="clueLen"></span></label>
       <input id="clueAns" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="Spaces and hyphens set the word breaks">
-      <label>Answer runs on into <span class="sub">tap the other parts in order</span></label>
-      <div class="chips" id="clueLink"></div>
+      <details class="lnk" id="clueLinkBox"><summary>Answer runs on into <span class="sub" id="clueLinkSum"></span></summary><p class="sub">Tap the other parts in order</p><div class="chips" id="clueLink"></div></details>
       <div class="lrow"><span></span><button class="btn mini" id="clueParse" type="button">Parsing and definition</button></div>
     </div>
     <div class="pfind" id="findBox" hidden><p class="note" id="findNote"></p><div class="chips" id="findList"></div></div>

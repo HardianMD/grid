@@ -398,8 +398,11 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .confirm .pview .pwp { font: 15px/1.45 var(--f-ui); color: var(--ink); }
 .pwp > i { font-size: 13px; color: var(--accent); margin-right: 8px; }
 .pwp s { text-decoration-thickness: 2px; color: var(--ink-soft); }
-.pedit label { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.pedit label, .lnk summary { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 #ansInput { text-transform: uppercase; font: 800 18px var(--f-ui); letter-spacing: 0.08em; }
+.lnk summary { cursor: pointer; padding: 4px 0; }
+.lnk summary .sub { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.lnk p { margin: 2px 0 6px; font-size: 12px; }
 .pedit input, .pedit textarea { font: 16px var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; -webkit-user-select: text; user-select: text; resize: vertical; width: 100%; box-sizing: border-box; }
 .btn.solid { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; z-index: 30; }

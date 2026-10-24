@@ -312,7 +312,7 @@
   $("edMenu").addEventListener("click", function () {
     var d = ED.d;
     $("edName").value = d.title; $("edNote").value = d.note || ""; $("edSym").checked = !!d.sym;
-    $("edAdd").hidden = !!d.added; $("edAdded").hidden = !d.added;
+    $("edAdd").hidden = !!d.added; $("edAdded").hidden = !d.added; $("edPdfOpts").hidden = true;
     $("edSheet").hidden = false;
   });
   $("edName").addEventListener("change", function () { ED.d.title = this.value.trim() || "Crossword No. " + ED.d.n; madeSave(ED.d); edLoad(); });
@@ -360,12 +360,13 @@
     put(0x10, cs.map(function (c, i) { return "ICHE".charCodeAt(i) ^ c & 255; })); put(0x14, cs.map(function (c, i) { return "ATED".charCodeAt(i) ^ c >> 8; }));
     return new Uint8Array(h.concat(sol, grid, [].concat.apply([], str.map(z)), [].concat.apply([], clues.map(z)), z(note)));
   }
-  // Export as an A4 PDF to print: title, author and note, the grid with the clues beside and below it, then the solution
-  // on the last page. It uses the PDF's own Helvetica (nothing embedded); its widths here wrap the clues.
+  // Export as an A4 PDF to print: title, author and note, the grid with the clues beside and below it; then, as chosen
+  // (k: 0 clues only, 1 with the solution, 2 with the solution and each answer's definition and parsing), a solution page.
+  // It uses the PDF's own Helvetica (nothing embedded); its widths here wrap the clues.
   var HW = ("278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278," + "556,".repeat(10) + "278,278,584,584,584,556,1015,667,667,722,722," +
     "667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556," +
     "500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584").split(",");
-  function pdfFile(p) {
+  function pdfFile(p, k, d) {
     var PW = 595, PH = 842, M = 40, pages = [], o = "", f = function (n) { return +n.toFixed(1); };
     var esc = function (s) { return String.fromCharCode.apply(null, lat(s)).replace(/[\\()]/g, "\\$&"); };
     var wid = function (s, z) { return lat(s).reduce(function (n, c) { return n + +(HW[c - 32] || 556); }, 0) * z / 1000; };
@@ -393,9 +394,10 @@
     var top = y - 14, cols = [[M + gw + 20, top, PW - 2 * M - gw - 20], [M, top - c * p.grid.length - 18, gw]], ci = 0;
     grid(M, top, c);
     y = cols[0][1];
+    var half = function (t) { return [[M, t, (PW - 2 * M - 20) / 2], [PW / 2 + 10, t, (PW - 2 * M - 20) / 2]]; };
     var put = function (h, draw) {
       while (y - h < M) {
-        if (++ci >= cols.length) { page(); cols = cols.concat([[M, PH - M, (PW - 2 * M - 20) / 2], [PW / 2 + 10, PH - M, (PW - 2 * M - 20) / 2]]); }
+        if (++ci >= cols.length) { page(); cols = cols.concat(half(PH - M)); }
         y = cols[ci][1];
       }
       draw(cols[ci][0], cols[ci][2]); y -= h;
@@ -408,8 +410,28 @@
       });
     });
     page();
-    // The solution, on its own page.
-    text("Solution: " + p.title, M, PH - M - 16, 14, 1); grid(M, PH - M - 34, 22, solOf(p)); page();
+    // The solution on a page of its own, then the parsings in two columns under it.
+    if (k) { text("Solution: " + p.title, M, PH - M - 16, 14, 1); grid(M, PH - M - 34, 22, solOf(p)); }
+    if (k > 1) {
+      var sl = slotsOf(d.grid), by = {}, tails = {}, links = d.links || [];
+      sl.forEach(function (w) { by[skey(w)] = w; });
+      links.forEach(function (g) { g.slice(1).forEach(function (t) { tails[t] = 1; }); });
+      cols = half(PH - M - 34 - 22 * p.grid.length - 16); ci = 0; y = cols[0][1];
+      ["a", "d"].forEach(function (dir) {
+        sl.filter(function (w) { return w.dir === dir && !tails[skey(w)]; }).forEach(function (w) {
+          // The answer across every part it runs into, with its spaces and hyphens.
+          var g = (links.filter(function (l) { return l[0] === skey(w); })[0] || [skey(w)]).map(function (t) { return by[t]; }).filter(Boolean), ans = "";
+          g.forEach(function (s) { s.cells.forEach(function (rc) { var b = d.brk[rc.concat(s.dir).join()]; ans += d.f[rc[0]][rc[1]] + (b === "-" ? "-" : b ? " " : ""); }); });
+          var x = (d.p || {})[skey(w)], df = ((d.d || {})[skey(w)] || [])[0], cw = cols[0][2];
+          var ls = (df ? wrap("Definition: " + df, 9.5, cw) : []).concat(x ? wrap([x.type, (x.wordplay || "").replace(/_([^_]+)_/g, "$1").replace(/~([^~]+)~/g, "-$1")].filter(Boolean).join(": "), 9.5, cw) : []);
+          put(18 + ls.length * 11.5, function (cx) {
+            text(w.num + (dir === "a" ? " Across  " : " Down  ") + ans.trim(), cx, y - 12, 10, 1);
+            ls.forEach(function (l, j) { text(l, cx, y - 24 - j * 11.5, 9.5); });
+          });
+        });
+      });
+    }
+    page();
     var objs = ["<< /Type /Catalog /Pages 2 0 R >>", "", "Helvetica", "Helvetica-Bold"].map(function (s, i) { return i < 2 ? s : "<< /Type /Font /Subtype /Type1 /BaseFont /" + s + " /Encoding /WinAnsiEncoding >>"; }), kids = [];
     pages.forEach(function (s) {
       kids.push(objs.length + 1 + " 0 R");
@@ -425,11 +447,12 @@
     return Uint8Array.from(out, function (ch) { return ch.charCodeAt(0); });
   }
   $("edPuz").addEventListener("click", function () { edExport("puz"); });
-  $("edPdf").addEventListener("click", function () { edExport("pdf"); });
-  function edExport(ext) {
+  $("edPdf").addEventListener("click", function () { $("edPdfOpts").hidden = !$("edPdfOpts").hidden; });
+  $("edPdfOpts").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) edExport("pdf", +b.dataset.k); });
+  function edExport(ext, k) {
     if (!edReady()) return;
     var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + "." + ext;
-    var file = new File([ext === "pdf" ? pdfFile(p) : puzFile(p)], name, { type: ext === "pdf" ? "application/pdf" : "application/octet-stream" }), a = mk("a");
+    var file = new File([ext === "pdf" ? pdfFile(p, k, ED.d) : puzFile(p)], name, { type: ext === "pdf" ? "application/pdf" : "application/octet-stream" }), a = mk("a");
     // Phones share the file (a Home Screen app can't download); computers download it.
     if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] }).catch(function () {});
     a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();

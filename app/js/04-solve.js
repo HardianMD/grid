@@ -154,8 +154,8 @@
     $("wheelBtn").hidden = P.qf && locked(w);  // a solved or revealed Quickfire clue swaps the wheel for the dictionary
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
-    $("checkWordBtn").hidden = CHAMP || !!SUB || solved || !known(w);
-    $("checkAllBtn").hidden = CHAMP || !!SUB || solved || !words.some(known);
+    $("checkWordBtn").hidden = !known(w);
+    $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); chkShow(false);
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
@@ -401,6 +401,10 @@
       "and the timer carries on from " + fmt(elapsed) + ". You can only do this once: after you submit again, the grid is final.", "Edit grid");
   });
 
+  // The tick opens the two checks; any other tap closes them.
+  function chkShow(on) { $("chkPop").hidden = !on; $("checkBtn").setAttribute("aria-expanded", on); }
+  $("checkBtn").addEventListener("click", function () { chkShow($("chkPop").hidden); });
+  document.addEventListener("click", function (e) { if (!$("chk").contains(e.target) || e.target.closest("#chkPop")) chkShow(false); }, true);
   $("checkWordBtn").addEventListener("click", function () {
     var res = check([curWord()]);
     if (MED || HARD) return toast(res.right ? "Correct" : res.cleared ? "Not right – word cleared" : "Nothing wrong so far");

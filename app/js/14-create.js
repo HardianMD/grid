@@ -337,12 +337,12 @@
     if (!edReady()) return;
     ED.d.added = 1; madeSave(ED.d); this.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");
   });
+  // Both exports write Latin-1 text, so curly quotes and dashes become plain ones and other characters "?".
+  function lat(s) { return Array.from(String(s || "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, "-")).map(function (ch) { return ch.charCodeAt(0) < 256 ? ch.charCodeAt(0) : 63; }); }
   // Export as an Across Lite .puz file (version 1.3), the format most crossword apps open: grid, answers, clues with their
-  // letter counts, title, author (the Settings name) and note, with the format's checksums. Its text is Latin-1, so
-  // other characters become "?".
+  // letter counts, title, author (the Settings name) and note, with the format's checksums.
   function puzFile(p) {
     var W = p.grid[0].length, H = p.grid.length, clues = [];
-    var lat = function (s) { return Array.from(String(s || "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, "-")).map(function (ch) { return ch.charCodeAt(0) < 256 ? ch.charCodeAt(0) : 63; }); };
     var z = function (b) { return b.concat([0]); };
     var ck = function (b, c) { b.forEach(function (x) { c = ((c & 1 ? (c >> 1) + 0x8000 : c >> 1) + x) & 0xffff; }); return c; };
     slotsOf(p.grid).forEach(function (w) { clues.push(lat(p[w.dir === "a" ? "across" : "down"][w.num])); });
@@ -360,14 +360,80 @@
     put(0x10, cs.map(function (c, i) { return "ICHE".charCodeAt(i) ^ c & 255; })); put(0x14, cs.map(function (c, i) { return "ATED".charCodeAt(i) ^ c >> 8; }));
     return new Uint8Array(h.concat(sol, grid, [].concat.apply([], str.map(z)), [].concat.apply([], clues.map(z)), z(note)));
   }
-  $("edPuz").addEventListener("click", function () {
+  // Export as an A4 PDF to print: title, author and note, the grid with the clues beside and below it, then the solution
+  // on the last page. It uses the PDF's own Helvetica (nothing embedded); its widths here wrap the clues.
+  var HW = ("278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278," + "556,".repeat(10) + "278,278,584,584,584,556,1015,667,667,722,722," +
+    "667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556," +
+    "500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584").split(",");
+  function pdfFile(p) {
+    var PW = 595, PH = 842, M = 40, pages = [], o = "", f = function (n) { return +n.toFixed(1); };
+    var esc = function (s) { return String.fromCharCode.apply(null, lat(s)).replace(/[\\()]/g, "\\$&"); };
+    var wid = function (s, z) { return lat(s).reduce(function (n, c) { return n + +(HW[c - 32] || 556); }, 0) * z / 1000; };
+    var text = function (s, x, y, z, b) { o += "BT /F" + (b ? 2 : 1) + " " + z + " Tf " + f(x) + " " + f(y) + " Td (" + esc(s) + ") Tj ET\n"; };
+    var wrap = function (s, z, w) {
+      var out = [], line = "";
+      String(s || "").split(/\s+/).forEach(function (t) { if (line && wid(line + " " + t, z) > w) { out.push(line); line = t; } else line = line ? line + " " + t : t; });
+      return out.concat(line ? [line] : []);
+    };
+    var grid = function (x, top, c, sol) {
+      o += "0.6 w\n";
+      p.grid.forEach(function (row, r) { Array.from(row).forEach(function (ch, k) {
+        o += f(x + k * c) + " " + f(top - (r + 1) * c) + " " + c + " " + c + " re " + (ch === "#" ? "B" : "S") + "\n";
+        if (sol && ch !== "#") text(sol[r * row.length + k], x + k * c + (c - wid(sol[r * row.length + k], c * 0.55)) / 2, top - (r + 1) * c + c * 0.25, f(c * 0.55), 1);
+      }); });
+      slotsOf(p.grid).forEach(function (w) { text(String(w.num), x + w.cells[0][1] * c + 1.5, top - w.cells[0][0] * c - c * 0.33, f(c * 0.3)); });
+      o += "1.5 w " + f(x) + " " + f(top - p.grid.length * c) + " " + p.grid[0].length * c + " " + p.grid.length * c + " re S\n";
+    };
+    var page = function () { if (o) pages.push(o); o = ""; };
+    // Page 1: heading, then the grid; the clues run beside it, under it, then in two columns on further pages.
+    var y = PH - M - 16, c = 17, gw = c * p.grid[0].length;
+    text(p.title, M, y, 18, 1);
+    if (p.setter) text(p.setter, M, y -= 17, 11);
+    wrap(p.note, 10, PW - 2 * M).forEach(function (l) { text(l, M, y -= 13, 10); });
+    var top = y - 14, cols = [[M + gw + 20, top, PW - 2 * M - gw - 20], [M, top - c * p.grid.length - 18, gw]], ci = 0;
+    grid(M, top, c);
+    y = cols[0][1];
+    var put = function (h, draw) {
+      while (y - h < M) {
+        if (++ci >= cols.length) { page(); cols = cols.concat([[M, PH - M, (PW - 2 * M - 20) / 2], [PW / 2 + 10, PH - M, (PW - 2 * M - 20) / 2]]); }
+        y = cols[ci][1];
+      }
+      draw(cols[ci][0], cols[ci][2]); y -= h;
+    };
+    ["a", "d"].forEach(function (dir, i) {
+      put(i ? 26 : 14, function (x) { text(dir === "a" ? "Across" : "Down", x, y - (i ? 24 : 12), 12, 1); });
+      slotsOf(p.grid).filter(function (w) { return w.dir === dir; }).forEach(function (w) {
+        var ls = wrap(p[dir === "a" ? "across" : "down"][w.num], 10, cols[0][2] - 20);  // the narrowest column
+        put(4 + ls.length * 12, function (x) { text(String(w.num), x, y - 14, 10, 1); ls.forEach(function (l, j) { text(l, x + 20, y - 14 - j * 12, 10); }); });
+      });
+    });
+    page();
+    // The solution, on its own page.
+    text("Solution: " + p.title, M, PH - M - 16, 14, 1); grid(M, PH - M - 34, 22, solOf(p)); page();
+    var objs = ["<< /Type /Catalog /Pages 2 0 R >>", "", "Helvetica", "Helvetica-Bold"].map(function (s, i) { return i < 2 ? s : "<< /Type /Font /Subtype /Type1 /BaseFont /" + s + " /Encoding /WinAnsiEncoding >>"; }), kids = [];
+    pages.forEach(function (s) {
+      kids.push(objs.length + 1 + " 0 R");
+      objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + (objs.length + 2) + " 0 R >>");
+      objs.push("<< /Length " + s.length + " >>\nstream\n" + s + "endstream");
+    });
+    objs[1] = "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + kids.length + " >>";
+    var out = "%PDF-1.4\n", at = [];
+    objs.forEach(function (s, i) { at.push(out.length); out += i + 1 + " 0 obj\n" + s + "\nendobj\n"; });
+    var xref = out.length;
+    out += "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n" + at.map(function (n) { return ("000000000" + n).slice(-10) + " 00000 n \n"; }).join("") +
+      "trailer\n<< /Size " + (objs.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+    return Uint8Array.from(out, function (ch) { return ch.charCodeAt(0); });
+  }
+  $("edPuz").addEventListener("click", function () { edExport("puz"); });
+  $("edPdf").addEventListener("click", function () { edExport("pdf"); });
+  function edExport(ext) {
     if (!edReady()) return;
-    var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + ".puz";
-    var file = new File([puzFile(p)], name, { type: "application/octet-stream" }), a = mk("a");
+    var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + "." + ext;
+    var file = new File([ext === "pdf" ? pdfFile(p) : puzFile(p)], name, { type: ext === "pdf" ? "application/pdf" : "application/octet-stream" }), a = mk("a");
     // Phones share the file (a Home Screen app can't download); computers download it.
     if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] }).catch(function () {});
     a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
-  });
+  }
   $("edDone").addEventListener("click", function () { $("edSheet").hidden = true; });
   $("edSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });

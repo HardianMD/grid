@@ -494,7 +494,9 @@
   });
 
   document.addEventListener("keydown", function (e) {
-    if (!$("home").hidden || !$("sheet").hidden || !$("edSheet").hidden || !$("gridSheet").hidden || !$("qfSheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    // Typing in a box (Settings' Name, say) is never a move in the grid behind it.
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+    if (!$("home").hidden || !$("sheet").hidden || !$("setSheet").hidden || !$("edSheet").hidden || !$("gridSheet").hidden || !$("qfSheet").hidden || !$("hintAsk").hidden || !$("dictDlg").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
     var k = e.key;
     if (AW.open) {
       if (k === "Escape") wheelClose();

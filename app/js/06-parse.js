@@ -1,10 +1,18 @@
-  // Hint underlines the definition; once hinted, the same button becomes Reveal.
+  // Hint offers the definition (underlined) and the clue type, each counted as a hint; once both are shown it becomes Reveal.
   function lockedCell(k) { return !!SUB || (!HARD && !!ok[k]); }
   // A finished grid offers no more hints or reveals.
   function locked(w) { if (HARD || solved) return solved; return w.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; }); }
   var askMode = "hint";
   $("hintBtn").addEventListener("click", function () {
-    var w = curWord(), name = wordName(w), act = nextAction(w);
+    var w = curWord(), act = nextAction(w), h = hintsLeft(w);
+    if (act !== "hint") return ask(act);
+    $("hintDef").hidden = !h.def; $("hintType").hidden = !h.type;
+    pop("hintPop", $("hintPop").hidden);
+  });
+  $("hintDef").addEventListener("click", function () { ask("hint"); });
+  $("hintType").addEventListener("click", function () { ask("hint2"); });
+  function ask(act) {
+    var w = curWord(), name = wordName(w);
     askReset("Not yet");
     if (act === "parse") {
       showParse(w);
@@ -12,7 +20,7 @@
       openEditor(w, true);
     } else if (act === "hint2") {
       askMode = "hint2";
-      $("hintTitle").textContent = "Show a" + (hasDef(w) ? " second" : "") + " hint for " + name + "?";
+      $("hintTitle").textContent = "Show the clue type for " + name + "?";
       $("hintText").textContent = "The type of clue, such as anagram or charade, will be shown. Are you sure you want to see it?";
       $("hintYes").textContent = "Show clue type";
     } else if (act === "reveal") {
@@ -23,14 +31,14 @@
       $("hintYes").textContent = "Reveal answer";
     } else {
       askMode = "hint";
-      $("hintTitle").textContent = "Show a hint for " + name + "?";
-      $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see the hint?";
-      $("hintYes").textContent = "Show hint";
+      $("hintTitle").textContent = "Show the definition for " + name + "?";
+      $("hintText").textContent = "The definition part of this clue will be underlined. Are you sure you want to see it?";
+      $("hintYes").textContent = "Show definition";
     }
     // Settings can skip the question; Quickfire never asks.
     if (/^(hint|hint2|reveal)$/.test(act) && (P.qf || prefs().noAsk)) $("hintYes").click();
     else $("hintAsk").hidden = false;
-  });
+  }
   // Parsing view: the blog's by default; the solver can correct it and the correction is kept for this puzzle.
   // Clues whose definition and parsing came from the puzzle's blog (p.blog_keys: head-clue keys).
   function fromBlog(w) {
@@ -145,7 +153,7 @@
     var r = parseFor(w), key = w.dir + w.num, had = hinted[key];
     askMode = "parse";
     $("hintTitle").textContent = wordName(w);
-    hinted[key] = had || 1; clueInto($("pvClue"), w, true); if (!had) delete hinted[key];
+    hinted[key] = 1; clueInto($("pvClue"), w, true); if (had) hinted[key] = had; else delete hinted[key];
     $("pvAns").textContent = answerText(w);
     $("pvType").textContent = r.type;
     markup($("pvWp"), r.wordplay);
@@ -236,7 +244,7 @@
     var d = pickedDefs(), k = w.dir + w.num, blog = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num];
     if (d.length === 1 && d[0] === blog) delete myDefs[k];
     else if (d.length || blog) myDefs[k] = d;
-    if (d.length) hinted[k] = Math.max(hinted[k] || 0, 1);
+    if (d.length) hintAdd(k, false);
   }
   // Editor helpers: clue types as toggles, and a mark-up bar that acts on the selected text.
   var TYPES = ["Anagram", "Charade", "Container", "Reversal", "Hidden", "Deletion", "Letter selection", "Letter change", "Homophone", "Double definition", "Cryptic definition", "&lit", "Spoonerism", "Palindrome"];
@@ -422,7 +430,7 @@
       render(); save();
       return;
     }
-    hinted[w.dir + w.num] = askMode === "hint2" ? 2 : 1; HN++;
+    hintAdd(w.dir + w.num, askMode === "hint2"); HN++;
     render(); save();
   });
   // Word finder (its own button, in every mode): entries in the word list that fit the answer's length and the letters

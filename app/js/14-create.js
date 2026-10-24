@@ -259,7 +259,7 @@
   function edClue(w) {
     var br = seps(w.breaks), any = w.cells.some(function (rc) { return fill[rc[0]][rc[1]]; });
     askMode = "clue"; askReset("Cancel");
-    $("hintTitle").textContent = wordName(w); $("hintText").hidden = true; $("clueForm").hidden = false;
+    $("hintTitle").textContent = wordName(w); $("hintText").hidden = true; $("clueForm").hidden = $("clueParse").hidden = false;
     $("clueLen").textContent = "(" + ((w.clue.match(/\(([\d,\-]+)\)$/) || [])[1] || w.cells.length) + ")";
     $("clueText").value = ED.d.clues[skey(w)] || "";
     $("clueAns").value = any ? w.cells.map(function (rc, i) { return (fill[rc[0]][rc[1]] || "?") + (br[i] || ""); }).join("") : "";

@@ -157,7 +157,7 @@
       $("parseNote").appendChild(a);
     }
     $("parseNote").hidden = !!P.ed;  // a created puzzle's parsings are all the setter's
-    $("parseForm").hidden = $("clueForm").hidden = true;
+    $("parseForm").hidden = $("clueForm").hidden = $("clueParse").hidden = true;
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
@@ -175,7 +175,7 @@
     buildTypeChips($("parseType").value); preview(); selState(); buildDefPick(w);
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;
-    $("parseView").hidden = $("parseNote").hidden = $("clueForm").hidden = true; $("parseForm").hidden = false;
+    $("parseView").hidden = $("parseNote").hidden = $("clueForm").hidden = $("clueParse").hidden = true; $("parseForm").hidden = false;
     $("parseEdit").hidden = true; $("parseReset").hidden = true;
     $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
     $("hintYes").textContent = "Save";

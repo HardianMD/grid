@@ -130,7 +130,7 @@
       ? saved.sel : null;
     SOL = decode(p); DEFS = jsonOf(p, "hints"); PARSES = jsonOf(p, "parses");
     hinted = {};
-    // Hint level per clue: 1 = definition underlined, 2 = clue type shown too.
+    // Hints per clue: 1 = definition underlined, 2 = definition and clue type, 4 = clue type only (see hintDef, hintType).
     if (Array.isArray(saved.hints)) saved.hints.forEach(function (k) { hinted[k] = 1; });
     else if (saved.hints) hinted = saved.hints;
     HN = helpOf(saved).hn;
@@ -185,15 +185,27 @@
   }
   // Settings can hide the hints of a finished puzzle (the parsing view still underlines its definition).
   function noHints() { return solved && !!prefs().hideHints; }
+  function hintDef(k) { return !!(hinted[k] & 3); }
+  function hintType(k) { return !!(hinted[k] & 6); }
+  function hintAdd(k, type) { var d = hintDef(k) || !type, t = hintType(k) || type; hinted[k] = d && t ? 2 : d ? 1 : 4; }
+  // The definition hint: the definition's words; the whole clue for a cryptic definition or &lit; for a double definition
+  // with one definition known, the rest of the clue as the other.
+  function hintSpans(w) {
+    var t = parseFor(w).type, s = defSpans(w, defsFor(w)), end = w.clue.replace(/\s*\([\d,\-\s]+\)\s*$/, "").length;
+    var trim = function (a, b) { var x = w.clue.slice(a, b); a += x.length - x.replace(/^[\s,;:.\u2013\u2014-]+/, "").length; b -= x.length - x.replace(/[\s,;:.?!\u2013\u2014-]+$/, "").length; return a < b ? [[a, b]] : []; };
+    if (/&lit|\bCD\b|cryptic def/i.test(t)) return trim(0, end);
+    if (/\bDD\b|double def/i.test(t) && s.length === 1) return s[0][0] > 0 ? trim(0, s[0][0]).concat(s) : s.concat(trim(s[0][1], end));
+    return s;
+  }
   function clueInto(el, w, noType) {
     el.textContent = "";
     if (!noType && noHints()) return el.appendChild(document.createTextNode(w.clue));
-    if (!HARD && !noType && hinted[w.dir + w.num] >= 2) {
+    if (!HARD && !noType && hintType(w.dir + w.num)) {
       var tg = mk("span", "ctype", parseFor(w).type);
       el.appendChild(tg);
     }
     // In Hard mode only the solver's own definitions are underlined.
-    var k = w.dir + w.num, spans = (HARD && !noType) ? (myDefs[k] ? defSpans(w, myDefs[k]) : []) : hinted[k] ? defSpans(w, defsFor(w)) : [], pos = 0;
+    var k = w.dir + w.num, spans = (HARD && !noType) ? (myDefs[k] ? defSpans(w, myDefs[k]) : []) : hintDef(k) ? hintSpans(w) : [], pos = 0;
     spans.forEach(function (sp) {
       el.appendChild(document.createTextNode(w.clue.slice(pos, sp[0])));
       el.appendChild(mk("u", "def", w.clue.slice(sp[0], sp[1])));

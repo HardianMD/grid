@@ -134,7 +134,7 @@
     words.forEach(function (x) {
       x.el.classList.toggle("on", x === w);
       x.el.classList.toggle("fav", isFav(fl, P.id, x.dir + x.num));
-      var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] >= 2 ? parseFor(x).type : "", myDefs[k] || ""].join("|");
+      var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] ? parseFor(x).type : "", myDefs[k] || ""].join("|");
       if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
@@ -155,12 +155,12 @@
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = !known(w);
-    $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); chkShow(false);
+    $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); pop("chkPop", false); pop("hintPop", false);
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
-    $("hintBtn").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
-    $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", hint2: "Hint", reveal: "Reveal" }[nextAction(w)];
+    $("hintWrap").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
+    $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
     if (SOL && !HARD && !solved && !P.qf && done === total && allRight()) {
       stopClock(); solved = true; save();
@@ -310,16 +310,15 @@
     if (UNSOLVED[key] && !userAns[key]) return false;
     return w.cells.every(function (rc) { return solAt(rc[0], rc[1]); });
   }
-  function hasDef(w) { return defsFor(w).length > 0; }
+  function hasDef(w) { return hintSpans(w).length > 0; }
   function hasType(w) { return !!(PARSES && PARSES[w.dir] && PARSES[w.dir][w.num]); }
-  // What the Hint button does next for this clue.
+  // What the Hint button does next for this clue: the hints not yet shown (the definition, the clue type), then Reveal.
+  function hintsLeft(w) { var k = w.dir + w.num; return { def: !hintDef(k) && hasDef(w), type: !hintType(k) && hasType(w) }; }
   function nextAction(w) {
-    var lv = hinted[w.dir + w.num] || 0;
+    var h = hintsLeft(w);
     if (locked(w)) return "parse";
     if (!known(w)) return "add";
-    if (lv < 1 && hasDef(w)) return "hint";
-    if (lv < 2 && hasType(w)) return "hint2";
-    return "reveal";
+    return h.def || h.type ? "hint" : "reveal";
   }
 
   // Check: wrong letters are removed, right ones stay; a fully right word turns green and locks.
@@ -401,10 +400,12 @@
       "and the timer carries on from " + fmt(elapsed) + ". You can only do this once: after you submit again, the grid is final.", "Edit grid");
   });
 
-  // The tick opens the two checks; any other tap closes them.
-  function chkShow(on) { $("chkPop").hidden = !on; $("checkBtn").setAttribute("aria-expanded", on); }
-  $("checkBtn").addEventListener("click", function () { chkShow($("chkPop").hidden); });
-  document.addEventListener("click", function (e) { if (!$("chk").contains(e.target) || e.target.closest("#chkPop")) chkShow(false); }, true);
+  // The tick opens the two checks (and Hint its two hints); any other tap closes them.
+  function pop(id, on) { $(id).hidden = !on; $(id).previousElementSibling.setAttribute("aria-expanded", on); }
+  $("checkBtn").addEventListener("click", function () { pop("chkPop", $("chkPop").hidden); });
+  document.addEventListener("click", function (e) {
+    ["chkPop", "hintPop"].forEach(function (id) { if (!$(id).parentNode.contains(e.target) || $(id).contains(e.target)) pop(id, false); });
+  }, true);
   $("checkWordBtn").addEventListener("click", function () {
     var res = check([curWord()]);
     if (MED || HARD) return toast(res.right ? "Correct" : res.cleared ? "Not right – word cleared" : "Nothing wrong so far");

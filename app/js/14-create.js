@@ -327,14 +327,30 @@
     delete MADE[id]; delete madeQ[id]; if (MADECOL) MADECOL.doc(id).delete();
     $("edSheet").hidden = true; stopClock(); ED = null; P = null; TAB = "make"; showHome();
   });
-  // Add to puzzles: once every square has a letter and every clue its wording, the puzzle joins the list on the day it
-  // was made; later changes reach it too.
+  // Add to puzzles and the exports wait until every answer is filled and has its clue, definition and clue type (a cryptic
+  // definition or &lit is its own definition); until then a sheet lists each one short, and a tap opens that clue.
+  // A published puzzle joins the list on the day it was made; later changes reach it too.
   function edReady() {
     save();
-    var todo = words.filter(function (w) { return !filled(w); }).length, nc = words.filter(function (w) { return !ED.d.clues[skey(w)]; }).length;
-    if (todo || nc) toast("First " + [todo ? plural(todo, "answer") + " to fill" : "", nc ? plural(nc, "clue") + " to write" : ""].filter(Boolean).join(" and "));
-    return !todo && !nc;
+    var d = ED.d, box = $("edChkList"), short = 0;
+    box.innerHTML = "";
+    words.forEach(function (w, i) {
+      var k = skey(w), t = ((d.p || {})[k] || {}).type || "", miss = [];
+      if (!filled(w)) miss.push("answer");
+      if (!d.clues[k]) miss.push("clue");
+      if (!((d.d || {})[k] || []).length && !/\bCD\b|&lit/.test(t)) miss.push("definition");
+      if (!t) miss.push("clue type");
+      if (!miss.length) return;
+      var b = mk("button", "note-item dnf"); b.type = "button"; short++;
+      b.appendChild(mk("b", null, wordName(w))); b.appendChild(mk("span", null, "No " + miss.join(", ").replace(/, ([^,]+)$/, " or $1")));
+      b.addEventListener("click", function () { $("edChkSheet").hidden = $("edSheet").hidden = true; gotoWord(i); edClue(words[i]); });
+      box.appendChild(b);
+    });
+    if (short) { box.insertBefore(mk("p", "sub", (short === 1 ? "1 clue still needs" : short + " clues still need") + " work. Tap one to finish it."), box.firstChild); $("edChkSheet").hidden = false; }
+    return !short;
   }
+  $("edChkDone").addEventListener("click", function () { $("edChkSheet").hidden = true; });
+  $("edChkSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   $("edAdd").addEventListener("click", function () {
     if (!edReady()) return;
     ED.d.added = 1; madeSave(ED.d); this.parentNode.hidden = true; $("edAdded").hidden = false; toast("Added to your puzzles");

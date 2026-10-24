@@ -112,7 +112,7 @@ header .timer.stopped { color: var(--good); }
   font: 400 15px var(--f-ui); color: var(--ink); text-transform: none; letter-spacing: 0; }
 .rows .fgrp > :nth-child(2) { border-top: 0; }
 /* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
-.app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #checkWordBtn, .app.qf #checkAllBtn, .app.qf #noAns,
+.app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #chk, .app.qf #noAns,
 .app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead { display: none !important; }
 /* The home page's heading, summary and tabs move to the top of Quickfire; there the Filter tab opens Quickfire's own filter. */
 .qfhead { flex: 0 0 auto; padding-top: env(safe-area-inset-top, 0px); }
@@ -142,7 +142,7 @@ header .timer.stopped { color: var(--good); }
 .app.qf .c.eol { margin-right: 0; }
 .app.qf .c.hr .l::after { right: -8px; width: 6px; background: var(--ink-soft); transform: translate(0, -50%); }
 /* Create: the editor is the puzzle screen with its own tools; with Squares on, a tap turns a square black or white. */
-.app.ed #timer, .app.ed #menuBtn, .app.ed #favBtn, .app.ed #checkWordBtn, .app.ed #checkAllBtn, .app.ed #noAns, .app.ed #submitBtn,
+.app.ed #timer, .app.ed #menuBtn, .app.ed #favBtn, .app.ed #chk, .app.ed #noAns, .app.ed #submitBtn,
 .app.ed #hintBtn, .app.ed .solvedbar, .app:not(.ed) .edo { display: none !important; }
 .checks #edSq[aria-pressed="true"] { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .app.sq .c, .app.sq .c.b { cursor: cell; }
@@ -308,6 +308,10 @@ header .more.info { min-width: 34px; font: 800 15px/22px var(--f-ui); color: var
 header .more svg { display: block; width: 20px; height: 22px; color: var(--accent); }
 
 .clue.see span { color: var(--ink-soft); font-style: italic; }
+/* Check: a small tick that opens Check word and Check all above it. */
+.chk { position: relative; display: flex; }
+.chkpop { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 20; display: flex; flex-direction: column; gap: 6px; padding: 6px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.checks .chkpop .btn { padding: 9px 14px; font-size: 14px; }
 .checks .noans { flex: 1; align-self: center; text-align: center; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
 .checks .btn.icon { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; }
 .btn.icon svg { width: 18px; height: 18px; display: block; }

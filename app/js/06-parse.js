@@ -46,7 +46,7 @@
   }
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
-    var x = mine || blog || { type: "Not parsed", wordplay: P.ed ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
+    var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
     return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "" };
   }
   // Blog-style markup: _indicator_ in italics, ~letters~ struck through.
@@ -156,7 +156,7 @@
       var a = document.createElement("a"); a.href = P.blog; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Read the post";
       $("parseNote").appendChild(a);
     }
-    $("parseNote").hidden = !!P.ed;  // a created puzzle's parsings are all the setter's
+    $("parseNote").hidden = !!(P.ed || P.made);  // a created puzzle's parsings are all the setter's
     $("parseForm").hidden = $("clueForm").hidden = $("clueParse").hidden = true;
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;

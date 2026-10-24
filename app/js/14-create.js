@@ -339,7 +339,7 @@
       if (!filled(w)) miss.push("answer");
       if (!d.clues[k]) miss.push("clue");
       if (!((d.d || {})[k] || []).length && !/\bCD\b|&lit/.test(t)) miss.push("definition");
-      if (!t) miss.push("clue type");
+      if (!t || t === "Parsing") miss.push("clue type");
       if (!miss.length) return;
       var b = mk("button", "note-item dnf"); b.type = "button"; short++;
       b.appendChild(mk("b", null, wordName(w))); b.appendChild(mk("span", null, "No " + miss.join(", ").replace(/, ([^,]+)$/, " or $1")));
@@ -579,6 +579,20 @@
     return Uint8Array.from(out, function (ch) { return ch.charCodeAt(0); });
   }
   $("edPuz").addEventListener("click", function () { edExport("puz"); });
+  $("edJson").addEventListener("click", function () { edExport("json"); });
+  // The parsings as JSON, to take into another app: each answer (with its spaces and hyphens) with its clue, definitions
+  // and parsing as stored ({type, wordplay}, wordplay in the parse editor's mark-up). Drafts in progress export as they stand.
+  function jsonFile(d) {
+    save();
+    var out = { title: d.title, setter: prefs().name || "", note: d.note || "", date: d.date, grid: d.grid, clues: [] };
+    words.forEach(function (w) {
+      var k = skey(w), ans = "";
+      w.cells.forEach(function (rc, j) { var b = d.brk[rc.concat(w.cdir[j]).join()]; ans += (fill[rc[0]][rc[1]] || "?") + (b === "-" ? "-" : b && j < w.cells.length - 1 ? " " : ""); });
+      out.clues.push({ number: w.num, direction: w.dir === "a" ? "across" : "down", parts: (w.parts || []).map(function (x) { return x.num + (x.dir === "a" ? "a" : "d"); }),
+        clue: w.clue, answer: ans.trim(), definitions: (d.d || {})[k] || [], parse: (d.p || {})[k] || null });
+    });
+    return JSON.stringify(out, null, 2);
+  }
   // PDF: the choice of pages, and which answer the red pen circles (Auto picks one; kept on the draft as d.circ).
   $("edPdf").addEventListener("click", function () {
     var on = $("edPdfOpts").hidden, sel = $("edCirc"); $("edPdfOpts").hidden = $("edCircRow").hidden = !on;
@@ -590,9 +604,10 @@
   $("edCirc").addEventListener("change", function () { if (this.value) ED.d.circ = this.value; else delete ED.d.circ; madeSave(ED.d); });
   $("edPdfOpts").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) edExport("pdf", +b.dataset.k); });
   function edExport(ext, k) {
-    if (!edReady()) return;
-    var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + "." + ext;
-    var file = new File([ext === "pdf" ? pdfFile(p, k, ED.d) : puzFile(p)], name, { type: ext === "pdf" ? "application/pdf" : "application/octet-stream" }), a = mk("a");
+    if (ext !== "json" && !edReady()) return;
+    var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + (ext === "json" ? " parsings" : "") + "." + ext;
+    var file = new File([ext === "pdf" ? pdfFile(p, k, ED.d) : ext === "json" ? jsonFile(ED.d) : puzFile(p)], name,
+      { type: ext === "pdf" ? "application/pdf" : ext === "json" ? "application/json" : "application/octet-stream" }), a = mk("a");
     // Phones share the file (a Home Screen app can't download); computers download it.
     if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] }).catch(function () {});
     a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();

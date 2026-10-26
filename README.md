@@ -48,7 +48,7 @@ Search for the function name; the comment above each says what it does.
   Quickfire) and joins `PUZZLES` beside the shared ones (`SHARED`, `mergeMade`); `full` returns it as it is. Filters can
   hide created puzzles (`FILT.made`); `puzFile` exports a draft as Across Lite .puz; a puzzle's note shows from the i button (`infoBtn`). `slotsOf` numbers any grid.
 - Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
-  pill and results sheet with `ncurve`), `nitchTable` (Stats).
+  pill and results sheet with `ncurve`), `ntiles` (Stats).
 
 ## Rules
 - No paper, blog or source names anywhere here (code, README, commits, PR text): display names arrive as data

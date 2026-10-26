@@ -67,15 +67,11 @@
   function hdt(p, d) {
     return '<td class="hdt" data-id="' + p.id + '">' + d + (p.setter ? " <small>" + p.setter.replace(/[&<>"]/g, function (ch) { return "&#" + ch.charCodeAt(0) + ";"; }) + "</small>" : "") + "</td>";
   }
-  // Stats: the scores above a series' chart, as averages and one row per puzzle (newest first).
-  function nitchTable(list, all) {
-    var rows = list.slice().reverse(), ms = rows.map(function (x) { return mineOf(x.p); }), d = document.createElement("div"),
+  // Stats: a series' average scores, above its chart.
+  function ntiles(list) {
+    var ms = list.map(function (x) { return mineOf(x.p); }), d = mk("div", "sfig ntiles"),
       tile = function (v, l) { v = Math.round(v); return "<div" + (v ? ' style="background:' + ncol(v) + '"' : "") + "><b>" + (v || "\u2013") + "</b><span>" + l + "</span></div>"; },
       got = function (k) { return mean(ms.map(function (m) { return m[k]; }).filter(Boolean)); };
-    d.innerHTML = '<div class="sfig ntiles">' + tile(mean(rows.map(function (x) { return x.p.nitch.n; })), "avg NITCH") + tile(got("pn"), "your NITCH") + tile(got("w"), "avg WITCH") +
-      '</div><table class="htab ntab"><tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th>You</th><th>WITCH</th></tr>' + rows.slice(0, all ? rows.length : 6).map(function (x, i) {
-        var m = ms[i], dt = fmtDate(new Date(x.p.date + "T12:00:00"), { weekday: "short", day: "numeric", month: "short" });
-        return '<tr data-n="' + x.p.id + '">' + hdt(x.p, dt) + "<td>" + nchip(x.p.nitch.n) + "</td><td" + (m.g.dnf ? ' class="rv">DNF' : ">" + fmt(m.g.time)) + "</td><td>" + nchip(m.pn) + "</td><td>" + nchip(m.w) + "</td></tr>";
-      }).join("") + "</table>";
+    d.innerHTML = tile(mean(list.map(function (x) { return x.p.nitch.n; })), "avg NITCH") + tile(got("pn"), "your NITCH") + tile(got("w"), "avg WITCH");
     return d;
   }

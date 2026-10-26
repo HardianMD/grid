@@ -159,7 +159,7 @@
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = !known(w);
     $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); pop("chkPop", false); pop("hintPop", false);
-    $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
+    $("noAns").hidden = !!SUB || words.some(known);  // in the Hint slot until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
     // A prize puzzle (P.entry from the updater: the closing date and an email address `to` or postal address lines `post`)

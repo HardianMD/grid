@@ -77,11 +77,14 @@
   $("menuBtn").addEventListener("click", openSheet);
   $("closeBtn").addEventListener("click", closeSheet);
   $("sheet").addEventListener("click", function (e) { if (e.target === $("sheet")) closeSheet(); });
+  // Clear (below the grid) empties every square at once, with Undo in the toast for a stray tap.
+  function setAll(src) { for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) fill[r][c] = src ? src[r][c] : ""; }
   $("clearBtn").addEventListener("click", function () {
-    if (!confirming) { confirming = true; $("clearBtn").textContent = "Tap again to clear every letter"; return; }
-    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) fill[r][c] = "";
-    ok = {};  // the time, recorded mode and reveals stay: clearing never makes a fresh attempt
-    save(); render(); closeSheet(); toast("Grid cleared");
+    var was = fill.map(function (row) { return row.slice(); }), wasOk = ok, p = P;
+    setAll();
+    ok = {};  // the time, recorded mode, hints and reveals stay: clearing never makes a fresh attempt
+    save(); render();
+    toast("Grid cleared", function () { if (P === p && !solved) { setAll(was); ok = wasOk; save(); render(); } });
   });
 
   window.addEventListener("resize", function () { size(); });

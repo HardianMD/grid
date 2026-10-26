@@ -10,9 +10,7 @@
   $("nextBtn").addEventListener("click", function () { nextWord(1); });
 
   // Puzzle sheet
-  var confirming = false;
   function openSheet() {
-    confirming = false; $("clearBtn").textContent = "Clear this grid"; $("clearBtn").hidden = solved;
     // A finished puzzle keeps its mode, and one that has had a hint or reveal can't move up to Hard or Champ.
     var helped = HN > 0 || REV;
     Array.prototype.forEach.call(document.querySelectorAll("#sheet .modesw button"), function (b) { b.disabled = solved || (helped && RANK[b.dataset.mode] >= 2); });

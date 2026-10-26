@@ -114,7 +114,7 @@ header .timer.stopped { color: var(--good); }
 .rows .fgrp > :nth-child(2) { border-top: 0; }
 /* Quickfire: the puzzle screen with a one-row grid, without the puzzle's own controls. */
 .app.qf #timer, .app.qf #menuBtn, .app.qf #setBtn2, .app.qf #cluesBtn, .app.qf #chk, .app.qf #noAns,
-.app.qf #submitBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead { display: none !important; }
+.app.qf #submitBtn, .app.qf #clearBtn, .app.qf #favBtn, .app.qf .nav, .app.qf .clues, .app.qf > header, .app:not(.qf) .qfo, .app:not(.qf) .qfhead { display: none !important; }
 /* The home page's heading, summary and tabs move to the top of Quickfire; there the Filter tab opens Quickfire's own filter. */
 .qfhead { flex: 0 0 auto; padding-top: env(safe-area-inset-top, 0px); }
 .hsum.qft { font-weight: 700; color: var(--ink); }
@@ -144,7 +144,7 @@ header .timer.stopped { color: var(--good); }
 .app.qf .c.hr .l::after { right: -8px; width: 6px; background: var(--ink-soft); transform: translate(0, -50%); }
 /* Create: the editor is the puzzle screen with its own tools; with Squares on, a tap turns a square black or white. */
 .app.ed #timer, .app.ed #menuBtn, .app.ed #favBtn, .app.ed #chk, .app.ed #noAns, .app.ed #submitBtn,
-.app.ed #hintWrap, .app.ed .solvedbar, .app:not(.ed) .edo { display: none !important; }
+.app.ed #hintWrap, .app.ed #clearBtn, .app.ed .solvedbar, .app:not(.ed) .edo { display: none !important; }
 .checks #edSq[aria-pressed="true"] { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .app.sq .c, .app.sq .c.b { cursor: cell; }
 .app.ed .clues { align-content: start; }
@@ -419,6 +419,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .pedit input, .pedit textarea { font: 16px var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; -webkit-user-select: text; user-select: text; resize: vertical; width: 100%; box-sizing: border-box; }
 .btn.solid { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 999px; z-index: 30; }
+.toast button { margin-left: 10px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 
 /* Wide screens: tablets in landscape, and any computer with a mouse whatever its window height. The grid fits the
    window beside the clue list, and the physical keyboard replaces the in-page one. */
@@ -487,4 +488,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .checks { gap: 3px; }
   .checks .btn { padding-inline: 4px; }
   .checks .btn.icon { padding-inline: 5px; }
+}
+@media (max-width: 359.98px) {  /* the smallest phones: a full button row still fits */
+  .checks { gap: 2px; }
+  .checks .btn.icon { padding-inline: 3px; }
 }

@@ -395,6 +395,12 @@
     var w = curWord();
     if (askMode === "find" || askMode === "info") { $("hintAsk").hidden = true; return; }
     if (askMode === "clue") return edClueSave(w);
+    if (askMode === "clear") {
+      $("hintAsk").hidden = true;
+      for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) fill[r][c] = "";
+      ok = {};  // the time, recorded mode, hints and reveals stay: clearing never makes a fresh attempt
+      save(); render(); return toast("Grid cleared");
+    }
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
     if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
     if (askMode === "add") {

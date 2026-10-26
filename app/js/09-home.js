@@ -41,8 +41,8 @@
       }
       else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; hs.appendChild(mk("small", null, fmt(g.time))); }
       else hs.appendChild(mk("span", "st", "New"));
-      // Parsed means a blog's explanations are in; until then any parsings are unverified.
-      if (!p.blog && !p.made) hs.appendChild(mk("small", "pz", "Unparsed"));
+      // Parsed means a blog's explanations are in; until then any parsings are unverified. A source no blog covers says noblog.
+      if (!p.blog && !p.made && !p.noblog) hs.appendChild(mk("small", "pz", "Unparsed"));
       b.appendChild(ht); b.appendChild(hm); b.appendChild(hs);
       b.addEventListener("click", function () { openPuzzle(p); });
       list.appendChild(b);

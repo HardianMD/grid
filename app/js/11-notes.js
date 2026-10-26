@@ -12,9 +12,10 @@
     var add = [];
     PUZZLES.forEach(function (p) {
       var k = "crossword:" + p.id, s = store.peek(k), m;
-      if (!s || (P && P.id === p.id && $("home").hidden)) return;  // the open puzzle is marked on screen instead
+      if (!s) return;
       // Records changed here get a new `at`, so other devices take the change rather than notify again.
       if (s.np && p.parsed) { s = store.get(k); delete s.np; s.at = Date.now(); store.set(k, s); add.push({ id: p.id, res: "parse" }); }
+      if (P && P.id === p.id && $("home").hidden) return;  // a grid on screen is marked there instead
       // a DNF is marked again in case its answers were corrected since
       if (!s.sub || s.sub.res === "ok" || !p.solution) return;
       if (!(m = markOf(p, s)).any || (m.bad ? "dnf" : "ok") === s.sub.res) return;

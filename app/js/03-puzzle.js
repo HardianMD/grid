@@ -235,7 +235,9 @@
     var rec = {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
       ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, ed: EDITED, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
-      np: solved && !PARSES ? 1 : undefined, sel: sel  // finished before its parsings: the bell says when they arrive
+      // finished before its parsings: the bell says when they arrive (only checkSubs clears it, so a puzzle open
+      // when they arrive still gets its notification)
+      np: solved && (old && old.solved ? old.np : !PARSES) ? 1 : undefined, sel: sel
     };
     var same = old && core(old) === core(rec);
     rec.at = same ? old.at : Date.now();

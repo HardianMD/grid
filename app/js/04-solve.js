@@ -165,6 +165,7 @@
     // A prize puzzle (P.entry from the updater: the closing date and an email address `to` or postal address lines `post`)
     // offers the full grid as an entry until it closes: by email, or as a page to print and post.
     var open = P.entry && !P.qf && !P.ed && done === total && new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10) <= P.entry.by;
+    $("clearBtn").hidden = solved || !done;
     $("mailBtn").hidden = !(open && P.entry.to); $("postBtn").hidden = !(open && P.entry.post);
     $("hintWrap").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
@@ -506,9 +507,10 @@
     giveFile(new File([pdfDoc([o], { H: "Helvetica", HB: "Helvetica-Bold" }, PW, PH)], P.id + " entry.pdf", { type: "application/pdf" }));
   });
 
-  function toast(msg) {
+  function toast(msg, undo) {  // with undo, the toast offers Undo for a few seconds
     var t = $("toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 1600);
+    if (undo) t.appendChild(mk("button", null, "Undo")).onclick = function () { t.hidden = true; undo(); };
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, undo ? 5000 : 1600);
   }
 
   // Keyboard

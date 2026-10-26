@@ -221,16 +221,32 @@
     d.sel = sel;
     if (f.join() !== d.f.join() || JSON.stringify([p, df]) !== JSON.stringify([d.p || {}, d.d || {}])) { d.f = f; d.p = p; d.d = df; madeSave(d); edStat(); }
   }
+  // What a clue still needs before the puzzle can be added: its answer, wording, parsing, clue type and definition (a
+  // cryptic definition or &lit is its own definition). A linked clue's later parts ("See 1 Across") need only letters.
+  function edMiss(w) {
+    var d = ED.d, k = skey(w), x = (d.p || {})[k] || {}, t = x.type || "", miss = [];
+    if (!filled(w)) miss.push("answer");
+    if ((d.links || []).some(function (g) { return g.indexOf(k) > 0; })) return miss;
+    if (!d.clues[k]) miss.push("clue");
+    if (!(x.wordplay || "").trim()) miss.push("parsing");
+    if (!t || t === "Parsing") miss.push("clue type");
+    if (!((d.d || {})[k] || []).length && !/\bCD\b|&lit/.test(t)) miss.push("definition");
+    return miss;
+  }
+  // Above the clue list: the grid's shape, then how many clues still need each part, kept up to date while editing.
   function edStat() {
-    var k = gridCheck(ED.d.grid), warn = [], todo = words.filter(function (w) { return !filled(w); }).length, nc = words.filter(function (w) { return !ED.d.clues[skey(w)]; }).length;
+    var k = gridCheck(ED.d.grid), warn = [], need = {}, short = 0;
     if (!k.sym) warn.push("not symmetric");
     if (!k.joined) warn.push("squares cut off");
     if (k.short) warn.push(plural(k.short, "2-letter answer"));
     if (k.lone) warn.push(plural(k.lone, "square") + " in no answer");
     if (k.bad) warn.push(plural(k.bad, "answer") + " lightly checked");
+    words.forEach(function (w) { var m = edMiss(w); if (m.length) short++; m.forEach(function (x) { need[x] = (need[x] || 0) + 1; }); });
     var el = $("edStat"); el.textContent = plural(words.length, "clue") + ", " + k.black + "% black · ";
     el.appendChild(warn.length ? mk("b", null, "⚠ " + warn.join(", ")) : document.createTextNode("✓ Usual grid rules"));
-    el.appendChild(document.createTextNode(" · " + (todo ? todo + " to fill" : "All filled") + ", " + (nc ? nc + " clues to write" : "all clues written")));
+    el.appendChild(mk("br"));
+    el.appendChild(document.createTextNode(short ? "Still needed: " + Object.keys(need).map(function (x) { return plural(need[x], x === "clue" ? "wording" : x); }).join(", ")
+      : "✓ Every clue complete, ready to add to puzzles"));
   }
   // Squares on: a tap turns a square black or white, with its half-turn twin while Symmetric squares is on.
   $("edSq").addEventListener("click", function () { ED.sq = !ED.sq; this.setAttribute("aria-pressed", String(ED.sq)); $("app").classList.toggle("sq", ED.sq); });
@@ -327,19 +343,14 @@
     delete MADE[id]; delete madeQ[id]; if (MADECOL) MADECOL.doc(id).delete();
     $("edSheet").hidden = true; stopClock(); ED = null; P = null; TAB = "make"; showHome();
   });
-  // Add to puzzles and the exports wait until every answer is filled and has its clue, definition and clue type (a cryptic
-  // definition or &lit is its own definition); until then a sheet lists each one short, and a tap opens that clue.
-  // A published puzzle joins the list on the day it was made; later changes reach it too.
+  // Add to puzzles and the exports wait until every clue is complete (edMiss); until then a sheet lists each one short,
+  // and a tap opens that clue. A published puzzle joins the list on the day it was made; later changes reach it too.
   function edReady() {
     save();
-    var d = ED.d, box = $("edChkList"), short = 0;
+    var box = $("edChkList"), short = 0;
     box.innerHTML = "";
     words.forEach(function (w, i) {
-      var k = skey(w), t = ((d.p || {})[k] || {}).type || "", miss = [];
-      if (!filled(w)) miss.push("answer");
-      if (!d.clues[k]) miss.push("clue");
-      if (!((d.d || {})[k] || []).length && !/\bCD\b|&lit/.test(t)) miss.push("definition");
-      if (!t || t === "Parsing") miss.push("clue type");
+      var miss = edMiss(w);
       if (!miss.length) return;
       var b = mk("button", "note-item dnf"); b.type = "button"; short++;
       b.appendChild(mk("b", null, wordName(w))); b.appendChild(mk("span", null, "No " + miss.join(", ").replace(/, ([^,]+)$/, " or $1")));

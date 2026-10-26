@@ -114,7 +114,7 @@
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
     var total = 0, done = 0, bad = 0, gap = 0, g = helpOf({ used: USED, mode: MODE, hn: HN, rev: REV, revw: REVW }), revDnf = g.rd;
-    // Revealed squares are amber; a marked Hard or Champ grid shows right squares green and wrong or blank ones amber. REVW lists, per revealed answer, the
+    // Revealed squares are amber; a marked Hard or Competition grid shows right squares green and wrong or blank ones amber. REVW lists, per revealed answer, the
     // squares the reveal filled (1: all of them), so crossing letters already green stay green.
     var rv = {};
     words.forEach(function (x) {
@@ -153,13 +153,13 @@
     for (var fz = parseFloat(getComputedStyle(nb).fontSize); nb.scrollHeight > nb.clientHeight + 1 && fz > 12;) nb.style.fontSize = --fz + "px";
     // Any filled word can be looked up, in every mode, and is looked up in the background as soon as it is filled.
     $("dictBtn").hidden = !filled(w) && !P.qf;  // Quickfire always shows it, and asks for the squares first
-    $("findBtn").hidden = !!P.qf || CHAMP || prefs().find === false || locked(w);  // never in Champ; Settings can switch it off
+    $("findBtn").hidden = !!P.qf || CHAMP || prefs().find === false || locked(w);  // never in Competition; Settings can switch it off
     $("wheelBtn").hidden = P.qf && locked(w);  // a solved or revealed Quickfire clue swaps the wheel for the dictionary
     words.forEach(function (x) { if (filled(x)) lookup(answerText(x)); });
-    // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
+    // Check needs a known answer; Competition never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = !known(w);
     $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); pop("chkPop", false); pop("hintPop", false);
-    // With a square filled, Hard and Champ can give up with the rest blank; Easy and Medium submit a full grid whose answers aren't out.
+    // With a square filled, Hard and Competition can give up with the rest blank; Easy and Medium submit a full grid whose answers aren't out.
     $("submitBtn").hidden = solved || !done || !HARD && (!!SOL || done < total);
     $("noAns").hidden = !!SUB || words.some(known) || !$("submitBtn").hidden;  // in the Hint slot until the answers arrive, or Submit shows
     BLANKS = total - done;
@@ -193,7 +193,7 @@
         : SUB.res === "dnf" ? dnfText(elapsed, bad, gap) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
       // A grid submitted before its answers are out hasn't been marked, so it can still be reopened: once in Hard, as often
-      // as wanted in Easy or Medium (with no Hard or Champ play recorded) until the parsings arrive, never in Champ.
+      // as wanted in Easy or Medium (with no Hard or Competition play recorded) until the parsings arrive, never in Competition.
       $("editBtn").hidden = !(SUB && !SUB.res && (HARD ? MODE === "hard" && !EDITED : USED < RANK.hard && !PARSES));
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
@@ -369,7 +369,7 @@
   // A submitted grid marked wrong: bad squares wrong or blank, gap of them blank.
   function dnfText(t, bad, gap) { return "DNF in " + fmt(t) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")); }
 
-  // Submitted grid (Hard, Champ, or Easy and Medium before the answers are out): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
+  // Submitted grid (Hard, Competition, or Easy and Medium before the answers are out): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
   function grade() {
     var any = false, bad = 0;
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
@@ -380,7 +380,7 @@
     SUB.res = !any ? "" : bad ? "dnf" : "ok";
     return bad;
   }
-  // A submitted grid can't be changed, so Submit asks first; in Hard and Champ, submitting with blank squares is giving up.
+  // A submitted grid can't be changed, so Submit asks first; in Hard and Competition, submitting with blank squares is giving up.
   // A yes/cancel question in the hint pop-up; its yes button acts on askMode.
   function askReset(no) {
     $("clueForm").hidden = $("clueParse").hidden = $("parseNote").hidden = $("parseForm").hidden = $("parseEdit").hidden = $("parseReset").hidden = $("parseView").hidden = $("findBox").hidden = true;

@@ -160,12 +160,14 @@
   // Easy (default): hints, reveals and green-locked answers; Check removes only the wrong letters.
   // Medium: like Easy, but Check never says which letters are right: a wrong word is cleared whole, except green squares.
   // Hard: no hints, reveals or green; Check clears a wrong word whole, keeping only letters of words already checked right.
-  // Champ: like Hard with no Check or hints. In both, a full grid finishes only when submitted (SUB), which locks and grades it;
+  // Competition: like Hard with no Check or hints. In both, a full grid finishes only when submitted (SUB), which locks and grades it;
   // in Easy and Medium too while the answers aren't out.
   // A reveal makes a DNF except in Easy (by the mode recorded in USED).
   // The mode belongs to each puzzle (chosen in its menu); the last choice for its series (the id less its number)
   // is the default for puzzles not yet started, unless Settings fixes one mode for every new puzzle (prefs.start).
   // Older records hold only m, the last choice overall.
   // USED is the mode in force when the first letter went in (3: none yet), lowered by any easier mode switched to
-  // before the end, so a solve is recorded at the most help it had. Champ ranks 4, as 3 already means none yet.
+  // before the end, so a solve is recorded at the most help it had. Competition ranks 4, as 3 already means none yet.
   var RANK = { easy: 0, medium: 1, hard: 2, champ: 4 }, MODES = ["easy", "medium", "hard", null, "champ"];
+  // A mode's name on screen (Competition is stored as "champ").
+  function modeName(m) { return m === "champ" ? "Competition" : m.charAt(0).toUpperCase() + m.slice(1); }

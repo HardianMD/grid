@@ -94,7 +94,7 @@
       head("By crossword");
       Object.keys(types).sort(function (x, y) { return types[y].n - types[x].n || cmp(x, y); }).forEach(function (k) { card(k, types[k]); });
       head("By mode");
-      MODES.forEach(function (m) { if (m && modes[m]) card(m.charAt(0).toUpperCase() + m.slice(1), modes[m], m); });
+      MODES.forEach(function (m) { if (m && modes[m]) card(modeName(m), modes[m], m); });
       box.appendChild(mk("p", null, "Averages and bests count solves without a DNF. Hints and reveals are averaged over every finished puzzle. A solve counts at the mode it was finished in, or at the easiest mode used once a check, hint or reveal was used."));
     }
   }

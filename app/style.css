@@ -231,6 +231,7 @@ button.nb { cursor: pointer; padding: 6px 11px; }
 .htab.ntab tr > :last-child { text-align: right; white-space: nowrap; }
 .htab .tm { white-space: nowrap; } .htab.ntab .tm .mico { margin-left: 5px; vertical-align: middle; }
 .htab .hl { display: none; }
+@media (max-width: 520px) { .mlong { display: none; } }  /* the mode switches say Comp on a phone */
 @media (max-width: 520px) { .htab.ntab .nh, .htab.ntab .hk { display: none; } .htab.ntab .hl { display: inline; } }
 .htab td:nth-child(3) { width: 26px; text-align: center; }
 .htab .mico { width: 18px; height: 18px; font-size: 10px; font-style: normal; }

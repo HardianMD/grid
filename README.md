@@ -46,7 +46,9 @@ Search for the function name; the comment above each says what it does.
   (`edPuzzle`, `P.ed`: Squares, Break, the clue sheet `edClue` with linked answers and Parsing, details `edMenu` with Add
   to puzzles). An added draft is built into a puzzle in the shared format (`madePuzzle`, `p.made`, with `qc` for
   Quickfire) and joins `PUZZLES` beside the shared ones (`SHARED`, `mergeMade`); `full` returns it as it is. Filters can
-  hide created puzzles (`FILT.made`); `puzFile` exports a draft as Across Lite .puz; a puzzle's note shows from the i button (`infoBtn`). `slotsOf` numbers any grid.
+  hide created puzzles (`FILT.made`); `puzFile` exports a draft as Across Lite .puz; a puzzle's note shows from the i button (`infoBtn`). `slotsOf` numbers any grid. The clue bank: clues written on
+  their own, kept as one-row drafts (`bank: 1`, `newClue`, `bankList`, `bankAns`), listed in the Create tab and offered
+  in the editor by Clue bank (`edBank`, fitting ones first; `edUse` puts one in with its parsing and definition).
 - Difficulty scores (`p.nitch`, added by the updater): `ncol`, `ngrade`, `mineOf` (personal score), `showNitch` (finish bar
   pill and results sheet with `ncurve`), `ntiles` (Stats).
 

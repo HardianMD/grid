@@ -4,6 +4,7 @@
   // stays with its slot while other squares change. Its letters (f, rows), parsings (p) and definitions (d, by slot too)
   // travel scrambled in x. The editor plays a draft as a puzzle (P.ed, made by edPuzzle) and numbers it like any other.
   // Once added, a draft is also a puzzle in the list (madePuzzle, p.made), built here rather than stored again.
+  // The clue bank's clues are drafts too (bank: 1), each a single row whose one slot is "0,0,a", edited the same way.
   var MADE = {}, MADECOL = null, madeQ = {}, madeT = null, ED = null;
   function scramble(s, key) {
     var b = new TextEncoder().encode(s), out = "";
@@ -33,12 +34,14 @@
     });
   }
 
-  // The Create tab: a New puzzle button, then each puzzle in number order.
+  // The Create tab: New puzzle and New clue, each puzzle in number order, then the clue bank.
   function showMade() {
-    var box = $("makeList"), nb = mk("button", "btn solid mknew", "New puzzle");
-    box.innerHTML = ""; nb.type = "button"; box.appendChild(nb);
+    var box = $("makeList"), row = mk("div", "mkrow"), nb = mk("button", "btn solid mknew", "New puzzle"), nc = mk("button", "btn mknew", "New clue");
+    box.innerHTML = ""; nb.type = nc.type = "button"; row.appendChild(nb); row.appendChild(nc); box.appendChild(row);
     nb.addEventListener("click", function () { gridPick(newMade); });
-    var list = Object.keys(MADE).map(function (k) { return MADE[k]; }).sort(function (a, b) { return a.n - b.n; });
+    nc.addEventListener("click", newClue);
+    var list = Object.keys(MADE).map(function (k) { return MADE[k]; }).filter(function (d) { return !d.bank; }).sort(function (a, b) { return a.n - b.n; }), bank = bankList();
+    box.appendChild(mk("h2", "hday", "Puzzles"));
     if (!list.length) box.appendChild(mk("p", "hempty", "Puzzles you make appear here, in number order."));
     list.forEach(function (d) {
       var b = mk("button", "hitem"); b.type = "button";
@@ -48,12 +51,32 @@
       b.addEventListener("click", function () { edOpen(d); });
       box.appendChild(b);
     });
+    box.appendChild(mk("h2", "hday", "Clue bank"));
+    if (!bank.length) box.appendChild(mk("p", "hempty", "Clues you write on their own appear here, to browse while making a puzzle."));
+    bank.forEach(function (c) { var b = bankItem(c); b.addEventListener("click", function () { edOpen(c); }); box.appendChild(b); });
   }
+  function today() { return new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10); }
   function newMade(g) {
-    var n = Object.keys(MADE).reduce(function (m, k) { return Math.max(m, MADE[k].n || 0); }, 0) + 1, id = "made-" + n;
-    var d = { id: id, n: n, title: "Crossword No. " + n, note: "", date: new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10),
+    var n = Object.keys(MADE).reduce(function (m, k) { return MADE[k].bank ? m : Math.max(m, MADE[k].n || 0); }, 0) + 1, id = "made-" + n;
+    var d = { id: id, n: n, title: "Crossword No. " + n, note: "", date: today(),
       grid: g, f: g.map(function (row) { return row.replace(/./g, " "); }), clues: {}, brk: {}, links: [], p: {}, d: {}, sym: 1 };
     madeSave(d); edOpen(d);
+  }
+  // A new clue opens at its clue sheet; it is kept once it has letters or wording, and the answer sets its length.
+  function newClue() {
+    edOpen({ id: "clue-" + Date.now().toString(36), bank: 1, title: "Clue bank", note: "", date: today(), grid: ["......."], f: ["       "], clues: {}, brk: {}, links: [], p: {}, d: {} });
+    edClue(words[0]);
+  }
+  // The clue bank in answer order; a clue's answer with its spaces and hyphens ("?" for a square not filled).
+  function bankList() { return Object.keys(MADE).map(function (k) { return MADE[k]; }).filter(function (d) { return d.bank; }).sort(function (a, b) { return cmp(bankAns(a), bankAns(b)); }); }
+  function bankAns(c) { return Array.from(c.f[0]).map(function (ch, i) { var b = c.brk["0," + i + ",a"]; return (ch.trim() || "?") + (b === "-" ? "-" : b ? " " : ""); }).join("").trim(); }
+  function bankItem(c, hs) {
+    var b = mk("button", "hitem"), x = (c.p || {})["0,0,a"], t = x && x.type !== "Parsing" ? x.type : "";
+    b.type = "button";
+    b.appendChild(mk("div", "ht")).appendChild(mk("span", null, bankAns(c)));
+    b.appendChild(mk("div", "hm", (c.clues["0,0,a"] || "No wording yet") + " (" + enumOf(c, Array.from(c.f[0]).map(function (ch, i) { return [0, i, "a"]; })) + ")"));
+    b.appendChild(mk("div", "hs", hs || t || "No parsing"));
+    return b;
   }
 
   // An added draft as a puzzle for the list, Quickfire and solving, in the shared puzzles' format (answers, definitions
@@ -183,7 +206,7 @@
     return out + n;
   }
   function edPuzzle(d) {
-    var p = { id: "edit", ed: 1, title: d.title, note: d.note, setter: prefs().name || "", date: d.date, grid: d.grid, across: {}, down: {}, links: [] };
+    var p = { id: "edit", ed: 1, title: d.bank ? "Clue bank" : d.title, note: d.note, setter: prefs().name || "", date: d.date, grid: d.grid, across: {}, down: {}, links: [] };
     var sl = slotsOf(d.grid), by = {}, head = {};
     sl.forEach(function (w) { by[skey(w)] = w; });
     (d.links || []).forEach(function (g) {
@@ -206,7 +229,7 @@
   function edLoad() {
     var d = ED.d, s = d.sel, sl = slotsOf(d.grid), at = function (w) { return w.cells.some(function (rc) { return rc[0] === s.r && rc[1] === s.c; }); };
     if (s && !sl.some(function (w) { return w.dir === s.dir && at(w); })) { var w = sl.filter(at)[0]; d.sel = w ? { r: s.r, c: s.c, dir: w.dir } : null; }
-    $("edSq").setAttribute("aria-pressed", String(ED.sq));
+    $("edSq").setAttribute("aria-pressed", String(ED.sq)); $("app").classList.toggle("bank", !!d.bank);
     load(edPuzzle(d)); size(); edStat();
   }
   // Parsings and definitions are kept by slot (d.p, d.d) and used by clue number (myParses, myDefs).
@@ -235,6 +258,7 @@
   }
   // Above the clue list: the grid's shape, then how many clues still need each part, kept up to date while editing.
   function edStat() {
+    if (ED.d.bank) { var m = edMiss(words[0]); $("edStat").textContent = m.length ? "Still needed: " + m.map(function (x) { return x === "clue" ? "wording" : x; }).join(", ") : "\u2713 Clue complete"; return; }
     var k = gridCheck(ED.d.grid), warn = [], need = {}, short = 0;
     if (!k.sym) warn.push("not symmetric");
     if (!k.joined) warn.push("squares cut off");
@@ -278,7 +302,7 @@
     var br = seps(w.breaks), any = w.cells.some(function (rc) { return fill[rc[0]][rc[1]]; });
     askMode = "clue"; askReset("Cancel");
     $("hintTitle").textContent = wordName(w); $("hintText").hidden = true; $("clueForm").hidden = $("clueParse").hidden = false;
-    $("clueLen").textContent = "(" + ((w.clue.match(/\(([\d,\-]+)\)$/) || [])[1] || w.cells.length) + ")";
+    $("clueLen").textContent = ED.d.bank && !any ? "" : "(" + ((w.clue.match(/\(([\d,\-]+)\)$/) || [])[1] || w.cells.length) + ")";
     $("clueText").value = ED.d.clues[skey(w)] || "";
     $("clueAns").value = any ? w.cells.map(function (rc, i) { return (fill[rc[0]][rc[1]] || "?") + (br[i] || ""); }).join("") : "";
     // Linking: the other slots this answer runs on into, in order; slots in other links are not offered.
@@ -287,7 +311,7 @@
     links.forEach(function (g) { if (g[0] !== k) g.forEach(function (x) { other[x] = 1; }); });
     var name = function (t) { var s = sl.filter(function (x) { return skey(x) === t; })[0]; return s.num + (s.dir === "a" ? " Across" : " Down"); };
     var sum = function () { $("clueLinkSum").textContent = ED.tails.length ? "· " + ED.tails.map(name).join(", ") : ""; };
-    box.innerHTML = ""; $("clueLinkBox").open = ED.tails.length > 0; sum();
+    box.innerHTML = ""; $("clueLinkBox").open = ED.tails.length > 0; $("clueLinkBox").hidden = !!ED.d.bank; sum();
     sl.forEach(function (s) {
       var sk = skey(s); if (sk === k || other[sk]) return;
       var b = mk("button", "chip", s.num + (s.dir === "a" ? " Across" : " Down") + " (" + s.cells.length + ")"); b.type = "button";
@@ -312,8 +336,13 @@
       madeSave(d); edLoad();
       w = words.filter(function (x) { return skey(x) === k; })[0];
     }
-    var n = w.cells.length, i = 0;
-    if (v && v.replace(/[^A-Z?]/g, "").length !== n) return toast("The answer needs " + n + " letters");
+    var n = w.cells.length, i = 0, len = v.replace(/[^A-Z?]/g, "").length;
+    if (d.bank && v && len !== n) {  // a bank clue takes the answer's length
+      if (len < 2 || len > 30) return toast("The answer needs 2 to 30 letters");
+      d.grid = [".".repeat(len)]; d.f = [" ".repeat(len)]; d.brk = {}; d.sel = { r: 0, c: 0, dir: "a" }; edLoad(); w = words[0]; n = len;
+    }
+    if (d.bank && !MADE[d.id] && !v && !$("clueText").value.trim()) { $("hintAsk").hidden = true; return true; }  // a new clue left empty isn't kept
+    if (v && len !== n) return toast("The answer needs " + n + " letters");
     d.clues[k] = $("clueText").value.replace(/\s+/g, " ").trim().replace(/\s*\([\d,\-\s]+\)$/, "");  // the count is added for you
     if (v) {
       w.cells.forEach(function (rc, j) { delete d.brk[rc.concat(w.cdir[j]).join()]; });
@@ -337,12 +366,51 @@
   $("edNote").addEventListener("change", function () { ED.d.note = this.value.trim(); madeSave(ED.d); });
   $("edSym").addEventListener("change", function () { ED.d.sym = this.checked ? 1 : 0; madeSave(ED.d); });
   $("edLayout").addEventListener("click", function () { $("edSheet").hidden = true; save(); gridPick(function (g) { edGrid(g); edLoad(); }); });
-  $("edDel").addEventListener("click", function () {
+  function edDrop() {
     if (!sure(this, "Tap to delete")) return;
     var id = ED.d.id;
     delete MADE[id]; delete madeQ[id]; if (MADECOL) MADECOL.doc(id).delete();
     $("edSheet").hidden = true; stopClock(); ED = null; P = null; TAB = "make"; showHome();
+  }
+  $("edDel").addEventListener("click", edDrop);
+  $("edBankDel").addEventListener("click", edDrop);
+  // The clue bank while making a puzzle: clues that fit the selected answer (its length, and any letters in the grid)
+  // first, each put in with a tap (two when the answer has wording already), with its parsing and definition.
+  $("edBank").addEventListener("click", function () {
+    save();
+    var w = curWord(), n = w.cells.length, box = $("bankList"), all = bankList(), had = ED.d.clues[skey(w)];
+    var fit = function (c) { var a = c.f[0]; return a.length === n && a.indexOf(" ") < 0 && w.cells.every(function (rc, i) { var x = fill[rc[0]][rc[1]]; return !x || x === a[i]; }); };
+    var yes = all.filter(fit), no = all.filter(function (c) { return !fit(c); });
+    box.innerHTML = "";
+    if (!all.length) box.appendChild(mk("p", "hempty", "No clues yet. Write some with New clue in the Create tab."));
+    else if (!yes.length) box.appendChild(mk("p", "hempty", "None fits " + wordName(w) + " (" + n + ") yet."));
+    [[yes, "Fits " + wordName(w) + " (" + n + ")"], [no, "Other clues"]].forEach(function (s) {
+      if (!s[0].length) return;
+      box.appendChild(mk("h2", "hday", s[1]));
+      s[0].forEach(function (c) {
+        var b = bankItem(c, s[0] === yes ? (had ? "Replace" : "Use") : null);
+        b.addEventListener("click", function () {
+          if (s[0] !== yes) return toast(c.f[0].length !== n ? "That answer has " + c.f[0].length + " letters, not " + n : "That doesn\u2019t fit the letters in the grid");
+          if (had && !sure(b.lastChild, "Tap to replace")) return;
+          edUse(w, c);
+        });
+        box.appendChild(b);
+      });
+    });
+    $("bankSheet").hidden = false; box.parentNode.scrollTop = 0;
   });
+  function edUse(w, c) {
+    var d = ED.d, k = skey(w), x = (c.p || {})["0,0,a"], df = (c.d || {})["0,0,a"];
+    ED.tails = ((d.links || []).filter(function (g) { return g[0] === k; })[0] || [k]).slice(1);
+    $("clueText").value = c.clues["0,0,a"] || ""; $("clueAns").value = bankAns(c);
+    edClueSave(w);
+    d.p = d.p || {}; d.d = d.d || {};
+    if (x) d.p[k] = x; else delete d.p[k];
+    if (df) d.d[k] = df; else delete d.d[k];
+    madeSave(d); edLoad(); $("bankSheet").hidden = true; toast("Clue put in " + wordName(w));
+  }
+  $("bankDone").addEventListener("click", function () { $("bankSheet").hidden = true; });
+  $("bankSheet").addEventListener("click", function (e) { if (e.target === this) this.hidden = true; });
   // Add to puzzles and the exports wait until every clue is complete (edMiss); until then a sheet lists each one short,
   // and a tap opens that clue. A published puzzle joins the list on the day it was made; later changes reach it too.
   function edReady() {

@@ -209,19 +209,22 @@
   }
   function wordShape(w) { return partsOf(w).map(function (p) { return p.len + p.kind; }).join(""); }
   // Whole entries in the list (phrases included) of the answer's length with any fixed letters in place, each once;
-  // fit: the entry's word lengths match the answer's. keep(L), when given, filters further.
+  // fit: the entry has the answer's word lengths, joined by spaces or hyphens. Entries with the answer's own breaks
+  // come first; the others follow, shown with the answer's breaks. keep(L), when given, filters further.
   function entries(list, w, fixed, keep) {
-    var n = fixed.length, want = wordShape(w), seen = {}, out = [];
+    var n = fixed.length, parts = partsOf(w), want = wordShape(w), loose = want.replace(/-/g, ","), seen = {}, out = [];
     list.forEach(function (e) {
       if (e.length < n) return;
       var L = plain(e);
       if (L.length !== n || seen[L]) return;
       for (var i = 0; i < n; i++) if (fixed[i] && L[i] !== fixed[i]) return;
       if (keep && !keep(L)) return;
-      seen[L] = 1; out.push({ text: e.toUpperCase(), L: L, fit: shapeOf(e) === want });
+      var sh = shapeOf(e), near = sh !== want && sh.replace(/-/g, ",") === loose;
+      seen[L] = 1; out.push({ text: near ? inShape(L, parts) : e.toUpperCase(), L: L, fit: near || sh === want, near: near });
     });
-    return out;
+    return out.filter(function (h) { return !h.near; }).concat(out.filter(function (h) { return h.near; }));
   }
+  function inShape(L, parts) { return parts.map(function (pt) { return L.substr(pt.at, pt.len) + (pt.kind === "-" ? "-" : pt.kind ? " " : ""); }).join(""); }
   // Load the word lists of these lengths for a button press (the button is disabled meanwhile); fn gets W(n), the list
   // of length n.
   function withWords(btn, lens, fn) {

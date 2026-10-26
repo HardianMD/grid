@@ -3,6 +3,7 @@
     $("appVer").textContent = isNaN(bt) ? "" : fmtDate(bt, { day: "numeric", month: "short", year: "numeric" }) + ", " + fmtDate(bt, { hour: "2-digit", minute: "2-digit" });
     var pf = prefs(), start = pf.start || "last", m = pf.mode || "easy";
     $("setName").value = pf.name || "";
+    var me = store.get("crossword:post") || {}; $("postName").value = me.name || ""; $("postAddr").value = me.addr || ""; $("postPhone").value = me.phone || "";
     // Chips: the saved choice, else the first.
     Array.prototype.forEach.call(document.querySelectorAll("#setSheet .chips[data-p]"), function (box) {
       var p = box.dataset.p, v = pf[p] || box.firstElementChild && box.firstElementChild.dataset.v;
@@ -21,6 +22,9 @@
   $("title").addEventListener("click", function () { this.parentNode.classList.toggle("full"); size(); });
   $("setBtn").addEventListener("click", showSettings); $("setBtn2").addEventListener("click", showSettings);
   $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
+  // The sender's details for printed prize entries stay in this browser's storage only (never synced).
+  ["postName", "postAddr", "postPhone"].forEach(function (id) { $(id).addEventListener("change", function () {
+    store.local("crossword:post", { name: $("postName").value.trim(), addr: $("postAddr").value.trim(), phone: $("postPhone").value.trim() }); }); });
   $("setSheet").addEventListener("change", function (e) {
     if (e.target.dataset.p) { setPref(e.target.dataset.p, e.target.checked); applyPrefs(); if (e.target.dataset.p === "listN") showSettings(); } });
   $("setSheet").addEventListener("click", function (e) {

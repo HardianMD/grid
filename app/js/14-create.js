@@ -573,8 +573,11 @@
       foot("Now go and wash your mind out");
       page();
     }
+    return pdfDoc(pages, { H: "Helvetica", HB: "Helvetica-Bold", HBO: "Helvetica-BoldOblique", TB: "Times-Bold", TBI: "Times-BoldItalic", C: "Courier", CB: "Courier-Bold" }, PW, PH);
+  }
+  // A PDF of pages (each a content stream) in the PDF's own fonts, named here by their resource names.
+  function pdfDoc(pages, fonts, PW, PH) {
     var objs = ["<< /Type /Catalog /Pages 2 0 R >>", ""], fr = [], kids = [];
-    var fonts = { H: "Helvetica", HB: "Helvetica-Bold", HBO: "Helvetica-BoldOblique", TB: "Times-Bold", TBI: "Times-BoldItalic", C: "Courier", CB: "Courier-Bold" };
     Object.keys(fonts).forEach(function (n) { objs.push("<< /Type /Font /Subtype /Type1 /BaseFont /" + fonts[n] + " /Encoding /WinAnsiEncoding >>"); fr.push("/" + n + " " + objs.length + " 0 R"); });
     pages.forEach(function (s) {
       kids.push(objs.length + 1 + " 0 R");
@@ -617,11 +620,13 @@
   function edExport(ext, k) {
     if (ext !== "json" && !edReady()) return;
     var p = madePuzzle(ED.d), name = (p.title.replace(/[^\w ]+/g, "").trim() || "crossword") + (ext === "json" ? " parsings" : "") + "." + ext;
-    var file = new File([ext === "pdf" ? pdfFile(p, k, ED.d) : ext === "json" ? jsonFile(ED.d) : puzFile(p)], name,
-      { type: ext === "pdf" ? "application/pdf" : ext === "json" ? "application/json" : "application/octet-stream" }), a = mk("a");
-    // Phones share the file (a Home Screen app can't download); computers download it.
+    giveFile(new File([ext === "pdf" ? pdfFile(p, k, ED.d) : ext === "json" ? jsonFile(ED.d) : puzFile(p)], name,
+      { type: ext === "pdf" ? "application/pdf" : ext === "json" ? "application/json" : "application/octet-stream" }));
+  }
+  // Phones share a file (a Home Screen app can't download); computers download it.
+  function giveFile(file) {
     if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file] }).catch(function () {});
-    a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    var a = mk("a"); a.href = URL.createObjectURL(file); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
   }
   $("edDone").addEventListener("click", function () { $("edSheet").hidden = true; });

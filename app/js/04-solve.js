@@ -162,8 +162,10 @@
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
-    // A puzzle that takes entries by email (P.entry from the updater: address and closing date) offers to send the full grid until it closes.
-    $("mailBtn").hidden = !P.entry || !!P.qf || !!P.ed || done < total || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10) > P.entry.by;
+    // A prize puzzle (P.entry from the updater: the closing date and an email address `to` or postal address lines `post`)
+    // offers the full grid as an entry until it closes: by email, or as a page to print and post.
+    var open = P.entry && !P.qf && !P.ed && done === total && new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10) <= P.entry.by;
+    $("mailBtn").hidden = !(open && P.entry.to); $("postBtn").hidden = !(open && P.entry.post);
     $("hintWrap").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
@@ -455,10 +457,7 @@
     var url = cv.toDataURL("image/png"), bin = atob(url.split(",")[1]), a = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
     var f = new File([a], P.id + ".png", { type: "image/png" }), to = P.entry.to, sub = P.entry.subject || P.title;
-    var text = ["a", "d"].map(function (d) {  // every answer in capitals under its clue number, Across then Down
-      return (d === "a" ? "Across" : "Down") + "\n" + words.filter(function (w) { return w.dir === d; }).sort(function (x, y) { return x.num - y.num; })
-        .map(function (w) { return numsOf(w) + " " + answerText(w).toUpperCase(); }).join("\n");
-    }).join("\n\n");
+    var text = entryAnswers().map(function (l) { return l.join("\n"); }).join("\n\n");
     if (navigator.clipboard) navigator.clipboard.writeText(to).catch(function () {});
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
       toast("Address copied: paste it into To");
@@ -467,6 +466,44 @@
     var d = mk("a"); d.href = url; d.download = f.name; d.click();
     toast("Picture saved: attach it to the email");
     location.href = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text);
+  });
+
+  // Every answer in capitals under its clue number: [Across lines, Down lines], each list headed by its name.
+  function entryAnswers() {
+    return ["a", "d"].map(function (d) {
+      return [d === "a" ? "Across" : "Down"].concat(words.filter(function (w) { return w.dir === d; }).sort(function (x, y) { return x.num - y.num; })
+        .map(function (w) { return numsOf(w) + " " + answerText(w).toUpperCase(); }));
+    });
+  }
+  // A postal entry: an A4 PDF to print, with the entry address at the top, the sender's details from Settings (lines to
+  // write on where none are saved), the filled grid and the answers in two columns.
+  $("postBtn").addEventListener("click", function () {
+    var PW = 595, PH = 842, M = 50, o = "", y = PH - M, me = store.get("crossword:post") || {}, f = function (n) { return +n.toFixed(2); };
+    var esc = function (s) { return String.fromCharCode.apply(null, lat(s)).replace(/[\\()]/g, "\\$&"); };
+    var wid = function (s, z) { return lat(s).reduce(function (n, c) { return n + +(FW.H[c - 32] || 556); }, 0) * z * 1.06 / 1000; };  // Helvetica-Bold
+    var text = function (s, x, y, ft, z) { o += "BT /" + ft + " " + z + " Tf " + f(x) + " " + f(y) + " Td (" + esc(s) + ") Tj ET\n"; };
+    text("Entries to:", M, y, "H", 10); y -= 18;
+    P.entry.post.forEach(function (l) { text(l, M, y, "HB", 13); y -= 17; });
+    y -= 12; text("From:", M, y, "H", 10); y -= 20;
+    var addr = (me.addr || "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    [["Name", me.name]].concat((addr.length ? addr : ["", ""]).map(function (l, i) { return [i ? "" : "Address", l]; }), [["Phone", me.phone]]).forEach(function (r) {
+      if (r[0]) text(r[0], M, y, "H", 10);
+      if (r[1]) text(r[1], M + 60, y, "H", 12); else o += "0.5 w " + (M + 60) + " " + f(y - 3) + " m " + (PW - M) + " " + f(y - 3) + " l S\n";
+      y -= 20;
+    });
+    y -= 8; text(P.title, M, y, "HB", 14); y -= 14;
+    var s = Math.min(22, (PW - 2 * M) / C), gx = (PW - C * s) / 2;
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
+      var x = gx + c * s, yy = y - (r + 1) * s;
+      if (cells[r][c].b) { o += f(x) + " " + f(yy) + " " + f(s) + " " + f(s) + " re f\n"; continue; }
+      o += "0.6 w " + f(x) + " " + f(yy) + " " + f(s) + " " + f(s) + " re S\n";
+      if (cells[r][c].num) text(cells[r][c].num, x + 1.5, yy + s - 6.5, "H", 6);
+      if (fill[r][c]) text(fill[r][c], x + (s - wid(fill[r][c], s * .55)) / 2, yy + s * .22, "HB", f(s * .55));
+    }
+    y -= R * s + 24;
+    var cols = entryAnswers(), lh = Math.min(12, (y - M) / Math.max(cols[0].length, cols[1].length));
+    cols.forEach(function (l, i) { l.forEach(function (t, j) { text(t, i ? PW / 2 : M, y - j * lh, j ? "H" : "HB", Math.min(10, lh - 1)); }); });
+    giveFile(new File([pdfDoc([o], { H: "Helvetica", HB: "Helvetica-Bold" }, PW, PH)], P.id + " entry.pdf", { type: "application/pdf" }));
   });
 
   function toast(msg) {

@@ -70,10 +70,10 @@
       }
       var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dot = function (on, cl) { return on ? '<span class="' + cl + '">\u25cf</span>' : ""; };
       var tb = mk("table", nt ? "htab ntab" : "htab"), hr = '<span class="hk"><span class="hh">Hints</span> <span class="rv">Reveals</span></span>';
-      tb.innerHTML = (nt ? "<tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th>You</th><th>WITCH</th><th>" + hr + '<span class="hl">Help</span>' : "<tr><th>Date and setter</th><th>Time</th><th></th><th>" + hr) + "</th></tr>" + shown.map(function (x) {
+      tb.innerHTML = (nt ? "<tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th></th><th>You</th><th>WITCH</th><th>" + hr + '<span class="hl">Help</span>' : "<tr><th>Date and setter</th><th>Time</th><th></th><th>" + hr) + "</th></tr>" + shown.map(function (x) {
         var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "", m = x.p.nitch ? mineOf(x.p) : {};
         return (x.p.nitch ? '<tr data-n="' + x.p.id + '">' : "<tr>") + hdt(x.p, d) + (nt ? "<td>" + nchip(x.p.nitch && x.p.nitch.n) + "</td>" : "") +
-          '<td class="tm' + (g.dnf ? " rv" : "") + '">' + fmt(g.time) + (nt ? "" : "</td><td>") +
+          '<td class="tm' + (g.dnf ? " rv" : "") + '">' + fmt(g.time) + "</td><td>" +
           (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td>" + (nt ? "<td>" + nchip(m.pn) + "</td><td>" + nchip(m.w) + "</td>" : "") + "<td>" +
           // One dot for any hints, one for any reveals.
           (g.hn || g.rf ? dot(g.hn, "hh") + dot(g.rf || g.rv, "rv") :

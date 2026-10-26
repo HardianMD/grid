@@ -58,8 +58,9 @@
           b = mk("b", pc > 0 ? "up" : "down", (pc > 0 ? "\u25b2 " : "\u25bc ") + Math.abs(pc) + "%");
         hl.appendChild(b); c.appendChild(hl);
       }
-      var nl = list.filter(function (x) { return x.p.nitch; });
-      if (nl.length) c.appendChild(nitchTable(nl, SOPEN[t.key] === 2));
+      // A series with difficulty scores gets their averages above the chart and their columns in the table.
+      var nl = list.filter(function (x) { return x.p.nitch; }), nt = nl.length;
+      if (nt) c.appendChild(ntiles(nl));
       if (ok.length > 1) {
         var ts = ok.map(function (x) { return x.g.time; }), lo = Math.min.apply(null, ts), hi = Math.max.apply(null, ts) || 1;
         var pts = ts.map(function (v, i) { return (i * 300 / (ts.length - 1)).toFixed(1) + "," + (40 - 36 * (v - lo) / (hi - lo || 1)).toFixed(1); });
@@ -68,12 +69,15 @@
         c.appendChild(sv);
       }
       var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dots = function (n, cl) { return n ? '<span class="' + cl + '">' + "\u25cf".repeat(Math.min(n, 8)) + (n > 8 ? "+" : "") + "</span>" : ""; };
-      var tb = mk("table", "htab");
-      tb.innerHTML = '<tr><th>Date and setter</th><th>Time</th><th></th><th><span class="hh">Hints</span> <span class="rv">Reveals</span></th></tr>' + shown.map(function (x) {
-        var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "";
-        return "<tr>" + hdt(x.p, d) + '<td class="' + (g.dnf ? "rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + "</td><td>" +
-          (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td><td>" +
-          (g.hn || g.rf ? dots(g.hn, "hh") + (g.rf && !g.rv ? '<span class="rv">reveals</span>' : dots(g.rv, "rv")) : '<span class="free">\u2713 no help</span>') + "</td></tr>";
+      var tb = mk("table", nt ? "htab ntab" : "htab"), hr = '<span class="hk"><span class="hh">Hints</span> <span class="rv">Reveals</span></span>';
+      tb.innerHTML = (nt ? "<tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th>You</th><th>WITCH</th><th>" + hr + '<span class="hl">Help</span>' : "<tr><th>Date and setter</th><th>Time</th><th></th><th>" + hr) + "</th></tr>" + shown.map(function (x) {
+        var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "", m = x.p.nitch ? mineOf(x.p) : {};
+        return (x.p.nitch ? '<tr data-n="' + x.p.id + '">' : "<tr>") + hdt(x.p, d) + (nt ? "<td>" + nchip(x.p.nitch && x.p.nitch.n) + "</td>" : "") +
+          '<td class="tm' + (g.dnf ? " rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + (nt ? "" : "</td><td>") +
+          (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td>" + (nt ? "<td>" + nchip(m.pn) + "</td><td>" + nchip(m.w) + "</td>" : "") + "<td>" +
+          // With the score columns there is room for one dot each: any hints, any reveals.
+          (g.hn || g.rf ? (nt ? dots(g.hn && 1, "hh") + dots(g.rf || g.rv ? 1 : 0, "rv") : dots(g.hn, "hh") + (g.rf && !g.rv ? '<span class="rv">reveals</span>' : dots(g.rv, "rv"))) :
+            '<span class="free">\u2713<span class="nh"> no help</span></span>') + "</td></tr>";
       }).join("");
       c.appendChild(tb);
       if (shown.length < rows.length) { var all = document.createElement("button"); all.type = "button"; all.className = "btn mini hall"; all.textContent = "Show all " + rows.length; c.appendChild(all); }

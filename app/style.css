@@ -229,7 +229,7 @@ button.nb { cursor: pointer; padding: 6px 11px; }
 .htab.ntab tr > :first-child { text-align: left; }
 .htab.ntab tr[data-n] { cursor: pointer; }
 .htab.ntab tr > :last-child { text-align: right; white-space: nowrap; }
-.htab .tm { white-space: nowrap; } .htab.ntab .tm .mico { margin-left: 5px; vertical-align: middle; }
+.htab .tm { white-space: nowrap; } .htab.ntab tr > :nth-child(3) { text-align: right; } .htab.ntab td:nth-child(4) { width: 26px; }
 .htab .hl { display: none; }
 @media (max-width: 520px) { .htab.ntab .nh, .htab.ntab .hk { display: none; } .htab.ntab .hl { display: inline; } }
 .htab td:nth-child(3) { width: 26px; text-align: center; }

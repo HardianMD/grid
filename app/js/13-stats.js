@@ -73,7 +73,7 @@
       tb.innerHTML = (nt ? "<tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th>You</th><th>WITCH</th><th>" + hr + '<span class="hl">Help</span>' : "<tr><th>Date and setter</th><th>Time</th><th></th><th>" + hr) + "</th></tr>" + shown.map(function (x) {
         var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "", m = x.p.nitch ? mineOf(x.p) : {};
         return (x.p.nitch ? '<tr data-n="' + x.p.id + '">' : "<tr>") + hdt(x.p, d) + (nt ? "<td>" + nchip(x.p.nitch && x.p.nitch.n) + "</td>" : "") +
-          '<td class="tm' + (g.dnf ? " rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + (nt ? "" : "</td><td>") +
+          '<td class="tm' + (g.dnf ? " rv" : "") + '">' + fmt(g.time) + (nt ? "" : "</td><td>") +
           (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td>" + (nt ? "<td>" + nchip(m.pn) + "</td><td>" + nchip(m.w) + "</td>" : "") + "<td>" +
           // One dot for any hints, one for any reveals.
           (g.hn || g.rf ? dot(g.hn, "hh") + dot(g.rf || g.rv, "rv") :

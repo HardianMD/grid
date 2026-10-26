@@ -11,7 +11,7 @@
 
   // Puzzle sheet
   function openSheet() {
-    // A finished puzzle keeps its mode, and one that has had a hint or reveal can't move up to Hard or Champ.
+    // A finished puzzle keeps its mode, and one that has had a hint or reveal can't move up to Hard or Competition.
     var helped = HN > 0 || REV;
     Array.prototype.forEach.call(document.querySelectorAll("#sheet .modesw button"), function (b) { b.disabled = solved || (helped && RANK[b.dataset.mode] >= 2); });
     $("sheet").hidden = false;

@@ -37,7 +37,7 @@
       if (state === "done") {
         if (g.dnf) b.classList.add("dnf");
         hs.textContent = g.dnf ? "DNF" : g.sub && !g.sub.res ? "Submitted" : "\u2713 Solved";
-        hs.appendChild(mk("small", null, (g.mode ? g.mode.charAt(0).toUpperCase() + g.mode.slice(1) + " \u00b7 " : "") + fmt(g.time)));
+        hs.appendChild(mk("small", null, (g.mode ? modeName(g.mode) + " \u00b7 " : "") + fmt(g.time)));
       }
       else if (state === "prog") { hs.textContent = Math.round(100 * g.n / g.t) + "% filled"; hs.appendChild(mk("small", null, fmt(g.time))); }
       else hs.appendChild(mk("span", "st", "New"));

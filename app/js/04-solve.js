@@ -130,7 +130,7 @@
       el.classList.toggle("word", !!inWord[k]);
       el.classList.toggle("cross", !inWord[k] && !!inCross[k]);
       el.classList.toggle("cur", r === sel.r && c === sel.c);
-      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout
+      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && !SUB && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout (a submitted one is unmarked)
       el.lastChild.textContent = fill[r][c];
     }
     var fl = favs(), nh = noHints();
@@ -140,7 +140,7 @@
       var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] ? parseFor(x).type : "", myDefs[k] || ""].join("|");
       if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
       x.el.classList.toggle("done", filled(x));
-      x.el.classList.toggle("right", !HARD && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
+      x.el.classList.toggle("right", !HARD && !SUB && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
     });
     $("nowTag").textContent = !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
@@ -159,8 +159,9 @@
     // Check needs a known answer; Champ never checks or hints, and a submitted grid is final.
     $("checkWordBtn").hidden = !known(w);
     $("chk").hidden = CHAMP || !!SUB || solved || !words.some(known); pop("chkPop", false); pop("hintPop", false);
-    $("noAns").hidden = !!SUB || words.some(known);  // in the Hint slot until the answers arrive
-    $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
+    // With a square filled, Hard and Champ can give up with the rest blank; Easy and Medium submit a full grid whose answers aren't out.
+    $("submitBtn").hidden = solved || !done || !HARD && (!!SOL || done < total);
+    $("noAns").hidden = !!SUB || words.some(known) || !$("submitBtn").hidden;  // in the Hint slot until the answers arrive, or Submit shows
     BLANKS = total - done;
     // A prize puzzle (P.entry from the updater: the closing date and an email address `to` or postal address lines `post`)
     // offers the full grid as an entry until it closes: by email, or as a page to print and post.
@@ -191,8 +192,9 @@
         : !SUB ? "\u2713 Solved in " + fmt(elapsed) : SUB.res === "ok" ? "\u2713 Finished in " + fmt(elapsed)
         : SUB.res === "dnf" ? dnfText(elapsed, bad, gap) : "Submitted in " + fmt(elapsed) + ". The answers aren\u2019t out yet";
       $("blogLink").hidden = !bl;
-      // A Hard grid submitted before its answers are out hasn't been marked, so it can still be reopened.
-      $("editBtn").hidden = !(SUB && !SUB.res && MODE === "hard" && !EDITED);  // once only
+      // A grid submitted before its answers are out hasn't been marked, so it can still be reopened: once in Hard, as often
+      // as wanted in Easy or Medium (with no Hard or Champ play recorded) until the parsings arrive, never in Champ.
+      $("editBtn").hidden = !(SUB && !SUB.res && (HARD ? MODE === "hard" && !EDITED : USED < RANK.hard && !PARSES));
       if (bl) { $("blogLink").href = bl.url; $("blogLink").textContent = "Blog \u2197"; $("blogLink").title = bl.exact ? "Read the blog" : "Find the blog"; }
     }
     if ((solved || barWas) && !P.qf) size();
@@ -367,7 +369,7 @@
   // A submitted grid marked wrong: bad squares wrong or blank, gap of them blank.
   function dnfText(t, bad, gap) { return "DNF in " + fmt(t) + ": " + (gap ? (bad > gap ? plural(bad - gap, "wrong square") + ", " : "") + gap + " blank" : plural(bad, "wrong square")); }
 
-  // Submitted grid (Hard, Champ): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
+  // Submitted grid (Hard, Champ, or Easy and Medium before the answers are out): SUB.res is "ok" when every known square is right, "dnf" when any is wrong, "" while no answers are known.
   function grade() {
     var any = false, bad = 0;
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
@@ -394,7 +396,8 @@
   $("submitBtn").addEventListener("click", function () {
     confirmAsk("submit", BLANKS ? "Give up?" : "Submit puzzle?",
       (BLANKS ? plural(BLANKS, "square") + (BLANKS === 1 ? " is" : " are") + " still blank, so this will be a DNF. " : "") +
-      (MODE === "hard" && !words.some(known) && !EDITED ? "The answers aren't out yet, so until they are you can reopen it once with Edit. Are you sure?" : "A submitted grid can't be changed. Are you sure?"),
+      (!HARD ? "The answers aren't out yet. The timer stops now, and until the parsings arrive you can reopen the grid with Edit as often as you like."
+        : MODE === "hard" && !words.some(known) && !EDITED ? "The answers aren't out yet, so until they are you can reopen it once with Edit. Are you sure?" : "A submitted grid can't be changed. Are you sure?"),
       BLANKS ? "Give up" : "Submit");
   });
   function submit() {
@@ -405,7 +408,7 @@
 
   $("editBtn").addEventListener("click", function () {
     confirmAsk("unsubmit", "Edit your grid?", "The answers aren't out yet, so your grid hasn't been marked. It will open again for you to change, " +
-      "and the timer carries on from " + fmt(elapsed) + ". You can only do this once: after you submit again, the grid is final.", "Edit grid");
+      "and the timer carries on from " + fmt(elapsed) + (!HARD ? ". You can do this as often as you like until the parsings arrive." : ". You can only do this once: after you submit again, the grid is final."), "Edit grid");
   });
 
   // The tick opens the two checks (and Hint its two hints); any other tap closes them.

@@ -68,15 +68,15 @@
         sv.innerHTML = '<svg viewBox="-4 0 308 44" preserveAspectRatio="none"><polyline points="' + pts.join(" ") + '" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>';
         c.appendChild(sv);
       }
-      var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dots = function (n, cl) { return n ? '<span class="' + cl + '">' + "\u25cf".repeat(Math.min(n, 8)) + (n > 8 ? "+" : "") + "</span>" : ""; };
+      var rows = list.slice().reverse(), shown = SOPEN[t.key] === 2 ? rows : rows.slice(0, 6), dot = function (on, cl) { return on ? '<span class="' + cl + '">\u25cf</span>' : ""; };
       var tb = mk("table", nt ? "htab ntab" : "htab"), hr = '<span class="hk"><span class="hh">Hints</span> <span class="rv">Reveals</span></span>';
       tb.innerHTML = (nt ? "<tr><th>Date and setter</th><th>NITCH</th><th>Time</th><th>You</th><th>WITCH</th><th>" + hr + '<span class="hl">Help</span>' : "<tr><th>Date and setter</th><th>Time</th><th></th><th>" + hr) + "</th></tr>" + shown.map(function (x) {
         var g = x.g, d = x.p.date ? fmtDate(new Date(x.p.date + "T12:00:00"), { day: "numeric", month: "short" }) : "", m = x.p.nitch ? mineOf(x.p) : {};
         return (x.p.nitch ? '<tr data-n="' + x.p.id + '">' : "<tr>") + hdt(x.p, d) + (nt ? "<td>" + nchip(x.p.nitch && x.p.nitch.n) + "</td>" : "") +
           '<td class="tm' + (g.dnf ? " rv" : "") + '">' + (g.dnf ? "DNF " : "") + fmt(g.time) + (nt ? "" : "</td><td>") +
           (g.mode ? '<i class="mico" data-mode="' + g.mode + '">' + g.mode[0].toUpperCase() + "</i>" : "") + "</td>" + (nt ? "<td>" + nchip(m.pn) + "</td><td>" + nchip(m.w) + "</td>" : "") + "<td>" +
-          // With the score columns there is room for one dot each: any hints, any reveals.
-          (g.hn || g.rf ? (nt ? dots(g.hn && 1, "hh") + dots(g.rf || g.rv ? 1 : 0, "rv") : dots(g.hn, "hh") + (g.rf && !g.rv ? '<span class="rv">reveals</span>' : dots(g.rv, "rv"))) :
+          // One dot for any hints, one for any reveals.
+          (g.hn || g.rf ? dot(g.hn, "hh") + dot(g.rf || g.rv, "rv") :
             '<span class="free">\u2713<span class="nh"> no help</span></span>') + "</td></tr>";
       }).join("");
       c.appendChild(tb);

@@ -31,7 +31,7 @@ Search for the function name; the comment above each says what it does.
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.
 - Elements: `mk(tag, class, text)` builds one.
 - Solving: `load` (grid numbering, linked clues, saved record), `build`, `size`, `render`, `typeLetter`, `del`, `put`,
-  `check`/`checkWords`, `grade`/`submit` (Hard and Champ), `save` (record format), `blank`.
+  `check`/`checkWords`, `grade`/`submit` (Hard and Champ), `save` (record format), `blank`, the `mailBtn` handler (a full grid emailed as an entry while `P.entry.by` is not past).
 - Hints and parsings: `nextAction`, the `hintBtn` and `hintYes` handlers (one pop-up, `askMode`), `showParse`,
   `openEditor` (definition picker, clue type chips, mark-up bar `MARKS`).
 - Tools: anagram wheel (`wheelOpen` … `wheelKey`, `solveAnagram`, `combos`), word finder (`findBtn`, its own button unless Settings switch it off; `partWords` for each word of a longer answer), dictionary

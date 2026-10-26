@@ -151,6 +151,8 @@ header .timer.stopped { color: var(--good); }
 .edstat { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.4; color: var(--ink-soft); }
 .edstat b { font-weight: 600; color: var(--warn); }
 .mknew { display: block; width: 100%; margin: 12px 0; padding: 10px; font-size: 14px; }
+.mkrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.app.ed.bank #edMenu, .app.ed.bank #edSq, .app.ed.bank #edBank, .app.ed.bank .list + .list, .app:not(.bank) .bko { display: none !important; }
 .gsec h4 { margin: 10px 0 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .gsec .btn { margin-top: 8px; }
 .gthumbs { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -430,8 +432,8 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .checks { grid-column: 1; grid-row: 2; align-self: start; }
   .solvedbar { grid-column: 1; grid-row: 3; align-self: start; }
   /* Settings opens as a wide two-column dialog. */
-  #setSheet, #qfSheet, #edSheet, #gridSheet { align-items: center; }
-  #edSheet .panel, #gridSheet .panel { border-radius: 14px; max-height: 90%; }
+  #setSheet, #qfSheet, #edSheet, #gridSheet, #bankSheet { align-items: center; }
+  #edSheet .panel, #gridSheet .panel, #bankSheet .panel { border-radius: 14px; max-height: 90%; }
   #qfSheet .panel { max-width: 520px; border-radius: 14px; max-height: 90%; }
   #setSheet .panel { max-width: 980px; border-radius: 14px; max-height: 90%; }
   /* Solving beside Account, then Clues beside Puzzle list with their previews level at the foot of the row. */

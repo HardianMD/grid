@@ -67,6 +67,7 @@
     for (var i = 0; i < (wide && !bar.hidden ? 2 : 1); i++) {
       var side = wide ? Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - (i ? bar.offsetHeight + 8 : 0) - 8) : inner;
       cs = Math.floor((Math.max(180, side) - 4 - (C - 1)) / C);
+      if (R === 1) cs = Math.min(cs, 48);  // a clue bank clue's one row
       $("checks").style.maxWidth = bar.style.maxWidth = wide ? (cs * C + C + 3) + "px" : "";
     }
     if (P.qf) cs = qfLines(inner);

@@ -18,6 +18,8 @@
     <button class="btn icon" id="clearBtn" type="button" hidden aria-label="Clear the grid" title="Clear the grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.34-5.66"/><path d="M4 4v5h5"/></svg></button>
     <button class="btn edo" id="edSq" type="button" aria-pressed="false">Squares</button>
     <button class="btn edo" id="edBrk" type="button">Break</button>
+    <button class="btn edo" id="edBank" type="button">Clue bank</button>
+    <button class="btn edo bko" id="edBankDel" type="button">Delete</button>
     <span class="chk" id="chk"><button class="btn icon" id="checkBtn" type="button" aria-label="Check" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
       <span class="chkpop" id="chkPop" hidden><button class="btn" id="checkWordBtn" type="button">Check word</button><button class="btn" id="checkAllBtn" type="button">Check all</button></span></span>
     <button class="btn icon" id="wheelBtn" type="button" aria-label="Anagram wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="4.5" r="1.6" fill="currentColor"/><circle cx="18.5" cy="15.5" r="1.6" fill="currentColor"/><circle cx="5.5" cy="15.5" r="1.6" fill="currentColor"/></svg></button>
@@ -118,6 +120,12 @@
   <div class="panel pad" role="dialog" aria-labelledby="edChkTitle">
     <div class="srow"><h3 id="edChkTitle">Not ready yet</h3><button class="btn" id="edChkDone" type="button">Close</button></div>
     <div id="edChkList" style="display:grid;gap:8px"></div>
+  </div>
+</div>
+<div class="sheet" id="bankSheet" hidden>
+  <div class="panel pad" role="dialog" aria-labelledby="bankTitle">
+    <div class="srow"><h3 id="bankTitle">Clue bank</h3><button class="btn" id="bankDone" type="button">Close</button></div>
+    <div id="bankList"></div>
   </div>
 </div>
 <div class="sheet" id="gridSheet" hidden>

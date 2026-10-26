@@ -34,7 +34,7 @@
     words.forEach(function (w, i) {
       var el = document.createElement("div");
       el.className = "clue"; el.tabIndex = 0; el.dataset.i = i;
-      var b = document.createElement("b"); b.textContent = w.parts ? w.parts.map(function (x) { return x.num + (x.dir === w.dir ? "" : x.dir); }).join(", ") : w.num;
+      var b = mk("b", null, numsOf(w));
       var s = document.createElement("span"); w.span = s; clueInto(s, w);
       el.appendChild(b); el.appendChild(s);
       w.el = el; items.push({ dir: w.dir, num: w.num, el: el });
@@ -51,6 +51,9 @@
     });
     size();
   }
+
+  // A clue's number as the clue list shows it: linked answers list every part ("1, 6d").
+  function numsOf(w) { return w.parts ? w.parts.map(function (x) { return x.num + (x.dir === w.dir ? "" : x.dir); }).join(", ") : w.num; }
 
   function isWide() { return window.matchMedia("(min-width: 900px) and (min-height: 700px), (min-width: 900px) and (pointer: fine)").matches; }
 
@@ -159,6 +162,8 @@
     $("noAns").hidden = !!SUB || words.some(known);  // in place of Check until the answers arrive
     $("submitBtn").hidden = !HARD || solved || !done;  // with a square filled, Hard and Champ can give up with the rest blank
     BLANKS = total - done;
+    // A puzzle that takes entries by email (P.entry from the updater: address and closing date) offers to send the full grid until it closes.
+    $("mailBtn").hidden = !P.entry || !!P.qf || !!P.ed || done < total || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10) > P.entry.by;
     $("hintWrap").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
     $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
@@ -431,6 +436,38 @@
   function flash(w) {
     w.cells.forEach(function (rc) { var el = cellEls[rc[0]][rc[1]]; el.animate && el.animate([{ filter: "brightness(1.15)" }, { filter: "none" }], { duration: 350 }); });
   }
+
+  // The grid as a picture (squares, numbers, letters) with the answers listed, shared to Mail where the device can attach files; elsewhere it is
+  // downloaded and an email opens to attach it to. The address is copied too, since a share can't fill in To.
+  $("mailBtn").addEventListener("click", function () {
+    var s = 40, m = 20, top = 56, cv = document.createElement("canvas"), x = cv.getContext("2d");
+    cv.width = C * s + 2 * m; cv.height = R * s + top + m;
+    x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height);
+    x.fillStyle = "#000"; x.font = "bold 20px sans-serif"; x.fillText(P.title, m, 34);
+    x.lineWidth = 1.5; x.textAlign = "center"; x.textBaseline = "middle";
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
+      var px = m + c * s, py = top + r * s;
+      if (cells[r][c].b) { x.fillRect(px, py, s, s); continue; }
+      x.strokeRect(px, py, s, s);
+      x.font = "24px sans-serif"; x.fillText(fill[r][c], px + s / 2, py + s / 2 + 3);
+      if (cells[r][c].num) { x.textAlign = "left"; x.font = "10px sans-serif"; x.fillText(cells[r][c].num, px + 2, py + 8); x.textAlign = "center"; }
+    }
+    var url = cv.toDataURL("image/png"), bin = atob(url.split(",")[1]), a = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+    var f = new File([a], P.id + ".png", { type: "image/png" }), to = P.entry.to, sub = P.entry.subject || P.title;
+    var text = ["a", "d"].map(function (d) {  // every answer in capitals under its clue number, Across then Down
+      return (d === "a" ? "Across" : "Down") + "\n" + words.filter(function (w) { return w.dir === d; }).sort(function (x, y) { return x.num - y.num; })
+        .map(function (w) { return numsOf(w) + " " + answerText(w).toUpperCase(); }).join("\n");
+    }).join("\n\n");
+    if (navigator.clipboard) navigator.clipboard.writeText(to).catch(function () {});
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      toast("Address copied: paste it into To");
+      return navigator.share({ files: [f], title: sub, text: text }).catch(function () {});
+    }
+    var d = mk("a"); d.href = url; d.download = f.name; d.click();
+    toast("Picture saved: attach it to the email");
+    location.href = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text);
+  });
 
   function toast(msg) {
     var t = $("toast"); t.textContent = msg; t.hidden = false;

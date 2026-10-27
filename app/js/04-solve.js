@@ -74,7 +74,7 @@
     // Phones: a finished grid shrinks so the finish bar fits on screen with the clue box and keys.
     var over = isWide() || $("solvedBar").hidden ? 0 : $("main").scrollHeight - $("main").clientHeight;
     if (over > 0) $("grid").style.setProperty("--cs", Math.max(10, cs - Math.ceil(over / R)) + "px");
-    var home = isWide() ? $("main") : $("app").querySelector(".dock");
+    var home = isWide() || P.bank ? $("main") : $("app").querySelector(".dock");
     if ($("clues").parentNode !== home) home.appendChild($("clues"));
   }
 

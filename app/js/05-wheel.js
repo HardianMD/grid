@@ -14,12 +14,12 @@
     // On phones the wheel covers everything down to the clue box, which shrinks to fit its clue meanwhile.
     var main = $("main"), el = $("wheel");
     showList(false); $("app").classList.add("aw");
-    // In Quickfire and a bank clue it covers the clue and squares instead, from the header down to the keyboard.
-    var one = P.qf || P.bank, hd = P.qf ? $("qfHead") : $("app").querySelector("header"), kb = $("kb"), top = one ? hd.offsetTop + hd.offsetHeight : main.offsetTop;
-    var h = one ? (kb.offsetHeight ? kb.offsetTop : $("app").clientHeight) - top : isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
+    // In Quickfire it covers the clue and squares instead, from the header down to the keyboard.
+    var hd = $("qfHead"), kb = $("kb"), top = P.qf ? hd.offsetTop + hd.offsetHeight : main.offsetTop;
+    var h = P.qf ? (kb.offsetHeight ? kb.offsetTop : $("app").clientHeight) - top : isWide() ? main.offsetHeight : $("app").querySelector(".bar").offsetTop - main.offsetTop;
     el.style.top = top + "px";
     el.style.height = h + "px";
-    el.classList.toggle("mid", one && !kb.offsetHeight);  // no keyboard (desktop): centred and larger
+    el.classList.toggle("mid", P.qf && !kb.offsetHeight);  // no keyboard (desktop): centred and larger
     el.hidden = false; AW.open = true;
     $("wheelTitle").innerHTML = "";
     $("wheelTitle").appendChild(document.createTextNode(wordName(w)));

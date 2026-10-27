@@ -120,16 +120,16 @@ header .timer.stopped { color: var(--good); }
 .hsum.qft { font-weight: 700; color: var(--ink); }
 /* The clue, then the squares and buttons (a clue bank clue's too), centred on the screen in one column (the keys stay at the foot on phones).
    The clue is drawn like the Settings preview; the squares are tiles in a row, with a wider gap between words. */
-.app.qf .dock, .app.bank .dock { display: contents; }
-.app.qf .bar, .app.bank .bar { order: 1; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 680px; margin: auto auto 0; }
-.app.qf .bar .now, .app.bank .bar .now { flex: 1; align-self: stretch; display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: visible; padding: 10px 14px; font: calc(16px * var(--cz))/1.3 var(--f-clue); }
-.app.qf .now .tag, .app.bank .now .tag { font-family: var(--f-ui); }
-.app.qf .main, .app.bank .main { order: 2; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 16px; margin-bottom: auto; }
-.app.qf .checks, .app.bank .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; margin-inline: auto; }
+.app.qf .dock { display: contents; }
+.app.qf .bar { order: 1; flex: 0 0 auto; box-sizing: border-box; width: 100%; max-width: 680px; margin: auto auto 0; }
+.app.qf .bar .now { flex: 1; align-self: stretch; display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: visible; padding: 10px 14px; font: calc(16px * var(--cz))/1.3 var(--f-clue); }
+.app.qf .now .tag { font-family: var(--f-ui); }
+.app.qf .main { order: 2; flex: 0 0 auto; overflow: visible; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 16px; margin-bottom: auto; }
+.app.qf .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; margin-inline: auto; }
 .checks .btn.qfa { padding-block: 0; font-size: 26px; line-height: 1; min-width: 40px; }
 .checks .btn.qfa:disabled, .checks #clearBtn:disabled, .checks #qfSolve:disabled { opacity: .35; cursor: default; }
-.app.qf #hintBtn, .app.bank #hintBtn { min-width: 68px; }  /* Hint, Reveal and Parse at one width */
-.app.qf .kb, .app.bank .kb { order: 3; }
+.app.qf #hintBtn { min-width: 68px; }  /* Hint, Reveal and Parse at one width */
+.app.qf .kb { order: 3; }
 .app.qf .gridwrap, .app.bank .gridwrap { padding-inline: 16px; }
 .app.qf .grid, .app.bank .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; background: none; border: 0; }
 .app.qf .qbr, .app.bank .qbr { flex-basis: 100%; height: 0; margin-top: -4px; }
@@ -152,8 +152,12 @@ header .timer.stopped { color: var(--good); }
 .edstat b { font-weight: 600; color: var(--warn); }
 .mknew { display: block; width: 100%; margin: 12px 0; padding: 10px; font-size: 14px; }
 .mkrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.app.bank #edMenu, .app.bank #cluesBtn, .app.bank #edSq, .app.bank #edBank, .app.bank .nav, .app.bank .clues .list, .app:not(.bank) .bko { display: none !important; }
-.app.bank .clues { display: block !important; order: 2; margin: 0 auto; padding: 0 16px 12px; text-align: center; }  /* only what the clue still needs */
+.app.bank #edMenu, .app.bank #cluesBtn, .app.bank #edSq, .app.bank #edBank, .app.bank .clues .list, .app:not(.bank) .bko { display: none !important; }
+/* A bank clue: the usual clue box and keys, with Quickfire's tiles and the buttons centred in the room above them. */
+.app.bank .main { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: safe center; align-items: center; gap: 12px; }
+.app.bank .dock, .app.bank .bar { flex: 0 0 auto; }
+.app.bank .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; margin-inline: auto; }
+.app.bank .clues { display: block !important; margin: 0; padding: 0 16px; text-align: center; }  /* only what the clue still needs */
 .gsec h4 { margin: 10px 0 6px; font: 700 12px var(--f-ui); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
 .gsec .btn { margin-top: 8px; }
 .gthumbs { display: flex; flex-wrap: wrap; gap: 8px; }

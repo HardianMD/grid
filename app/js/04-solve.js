@@ -468,7 +468,9 @@
     var url = cv.toDataURL("image/png"), bin = atob(url.split(",")[1]), a = new Uint8Array(bin.length);
     for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
     var f = new File([a], P.id + ".png", { type: "image/png" }), to = P.entry.to, sub = P.entry.subject || P.title;
-    var text = entryAnswers().map(function (l) { return l.join("\n"); }).join("\n\n");
+    // The answers, then the sender's name, address and phone from Settings (as on a postal entry).
+    var me = store.get("crossword:post") || {}, who = [me.name, me.addr, me.phone].filter(function (v) { return v; }).join("\n");
+    var text = entryAnswers().map(function (l) { return l.join("\n"); }).join("\n\n") + (who ? "\n\n" + who : "");
     ENTRY = { f: f, mail: "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text) };
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
       return confirmAsk("entry", "Email your entry", "First save the picture: choose Save Image, not Mail. Then Mail opens with the address, subject and answers, and you attach the picture.", "Save picture");

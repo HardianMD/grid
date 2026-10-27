@@ -22,7 +22,7 @@
   $("title").addEventListener("click", function () { this.parentNode.classList.toggle("full"); size(); });
   $("setBtn").addEventListener("click", showSettings); $("setBtn2").addEventListener("click", showSettings);
   $("setName").addEventListener("change", function () { setPref("name", this.value.trim()); });
-  // The sender's details for printed prize entries stay in this browser's storage only (never synced).
+  // The sender's details for prize entries (printed and emailed) stay in this browser's storage only (never synced).
   ["postName", "postAddr", "postPhone"].forEach(function (id) { $(id).addEventListener("change", function () {
     store.local("crossword:post", { name: $("postName").value.trim(), addr: $("postAddr").value.trim(), phone: $("postPhone").value.trim() }); }); });
   $("setSheet").addEventListener("change", function (e) {

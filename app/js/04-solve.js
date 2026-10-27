@@ -444,8 +444,8 @@
     w.cells.forEach(function (rc) { var el = cellEls[rc[0]][rc[1]]; el.animate && el.animate([{ filter: "brightness(1.15)" }, { filter: "none" }], { duration: 350 }); });
   }
 
-  // The grid as a picture (squares, numbers, letters) with the answers listed, shared to Mail where the device can attach files; elsewhere it is
-  // downloaded and an email opens to attach it to. The address is copied too, since a share can't fill in To.
+  // The grid as a picture (squares, numbers, letters), shared to be saved where the device can share files, else downloaded; then an
+  // email opens with the address, subject and answers, to attach it to.
   $("mailBtn").addEventListener("click", function () {
     var s = 40, m = 20, top = 56, cv = document.createElement("canvas"), x = cv.getContext("2d");
     cv.width = C * s + 2 * m; cv.height = R * s + top + m;
@@ -463,14 +463,15 @@
     for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
     var f = new File([a], P.id + ".png", { type: "image/png" }), to = P.entry.to, sub = P.entry.subject || P.title;
     var text = entryAnswers().map(function (l) { return l.join("\n"); }).join("\n\n");
-    if (navigator.clipboard) navigator.clipboard.writeText(to).catch(function () {});
+    // (A share to Mail drops the subject and the address.)
+    var mail = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text);
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      toast("Address copied: paste it into To");
-      return navigator.share({ files: [f], title: sub, text: text }).catch(function () {});
+      toast("Save the picture, then attach it to the email");
+      return navigator.share({ files: [f] }).then(function () { location.href = mail; }, function () {});
     }
     var d = mk("a"); d.href = url; d.download = f.name; d.click();
     toast("Picture saved: attach it to the email");
-    location.href = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text);
+    location.href = mail;
   });
 
   // Every answer in capitals under its clue number: [Across lines, Down lines], each list headed by its name.

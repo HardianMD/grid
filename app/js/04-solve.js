@@ -67,15 +67,14 @@
     for (var i = 0; i < (wide && !bar.hidden ? 2 : 1); i++) {
       var side = wide ? Math.min(inner * 0.6, $("main").clientHeight - $("checks").offsetHeight - (i ? bar.offsetHeight + 8 : 0) - 8) : inner;
       cs = Math.floor((Math.max(180, side) - 4 - (C - 1)) / C);
-      if (R === 1) cs = Math.min(cs, 48);  // a clue bank clue's one row
       $("checks").style.maxWidth = bar.style.maxWidth = wide ? (cs * C + C + 3) + "px" : "";
     }
-    if (P.qf) cs = qfLines(inner);
+    if (P.qf || P.bank) cs = qfLines(inner);
     $("grid").style.setProperty("--cs", cs + "px");
     // Phones: a finished grid shrinks so the finish bar fits on screen with the clue box and keys.
     var over = isWide() || $("solvedBar").hidden ? 0 : $("main").scrollHeight - $("main").clientHeight;
     if (over > 0) $("grid").style.setProperty("--cs", Math.max(10, cs - Math.ceil(over / R)) + "px");
-    var home = isWide() ? $("main") : $("app").querySelector(".dock");
+    var home = isWide() || P.bank ? $("main") : $("app").querySelector(".dock");
     if ($("clues").parentNode !== home) home.appendChild($("clues"));
   }
 
@@ -144,7 +143,7 @@
       x.el.classList.toggle("right", !HARD && !SUB && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
     });
-    $("nowTag").textContent = !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
+    $("nowTag").textContent = P.bank ? "Clue" : !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
     var fv = isFav(fl, P.id, w.dir + w.num);
     $("favBtn").classList.toggle("on", fv); $("favBtn").setAttribute("aria-pressed", String(fv));
     clueInto($("nowTxt"), w);

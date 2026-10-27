@@ -206,7 +206,7 @@
     return out + n;
   }
   function edPuzzle(d) {
-    var p = { id: "edit", ed: 1, title: d.bank ? "Clue bank" : d.title, note: d.note, setter: prefs().name || "", date: d.date, grid: d.grid, across: {}, down: {}, links: [] };
+    var p = { id: "edit", ed: 1, title: d.bank ? "Clue bank" : d.title, bank: d.bank, note: d.note, setter: prefs().name || "", date: d.date, grid: d.grid, across: {}, down: {}, links: [] };
     var sl = slotsOf(d.grid), by = {}, head = {};
     sl.forEach(function (w) { by[skey(w)] = w; });
     (d.links || []).forEach(function (g) {
@@ -229,7 +229,7 @@
   function edLoad() {
     var d = ED.d, s = d.sel, sl = slotsOf(d.grid), at = function (w) { return w.cells.some(function (rc) { return rc[0] === s.r && rc[1] === s.c; }); };
     if (s && !sl.some(function (w) { return w.dir === s.dir && at(w); })) { var w = sl.filter(at)[0]; d.sel = w ? { r: s.r, c: s.c, dir: w.dir } : null; }
-    $("edSq").setAttribute("aria-pressed", String(ED.sq)); $("app").classList.toggle("bank", !!d.bank);
+    $("edSq").setAttribute("aria-pressed", String(ED.sq));
     load(edPuzzle(d)); size(); edStat();
   }
   // Parsings and definitions are kept by slot (d.p, d.d) and used by clue number (myParses, myDefs).

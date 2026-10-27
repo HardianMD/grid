@@ -121,7 +121,7 @@
     words.sort(function (x, y) { return x.dir === y.dir ? x.num - y.num : (x.dir === "a" ? -1 : 1); });
     words.forEach(function (w, i) { w.cells.forEach(function (rc, j) { cells[rc[0]][rc[1]][w.cdir[j]] = i; }); });
 
-    $("app").classList.toggle("qf", !!p.qf); $("app").classList.toggle("ed", !!p.ed); $("app").classList.toggle("sq", !!(p.ed && ED.sq));
+    $("app").classList.toggle("qf", !!p.qf); $("app").classList.toggle("ed", !!p.ed); $("app").classList.toggle("bank", !!p.bank); $("app").classList.toggle("sq", !!(p.ed && ED.sq));
     var saved = p.qf ? {} : p.ed ? { fill: ED.d.f, sel: ED.d.sel, parses: edByNum(ED.d.p), defs: edByNum(ED.d.d) } : store.get("crossword:" + p.id) || {};
     if (!p.ed && blank(saved) && (saved.time || 0) < 5000) saved = {};  // an empty record (older versions saved one for untouched puzzles) is a fresh start
     fill = [];

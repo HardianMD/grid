@@ -445,7 +445,14 @@
   }
 
   // The grid as a picture (squares, numbers, letters), shared to be saved where the device can share files, else downloaded; then an
-  // email opens with the address, subject and answers, to attach it to.
+  // email opens with the address, subject and answers, to attach it to. A share to Mail drops the subject and address, and iPhone
+  // opens an email only from a tap, so there each step asks first (askMode "entry", then "email"; ENTRY holds the picture and email).
+  var ENTRY = null;
+  function entryShare() {
+    navigator.share({ files: [ENTRY.f] }).catch(function () {}).then(function () {
+      confirmAsk("email", "Open the email?", "Mail opens with the address, subject and answers filled in. Attach the picture you saved to it.", "Open email");
+    });
+  }
   $("mailBtn").addEventListener("click", function () {
     var s = 40, m = 20, top = 56, cv = document.createElement("canvas"), x = cv.getContext("2d");
     cv.width = C * s + 2 * m; cv.height = R * s + top + m;
@@ -463,15 +470,13 @@
     for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
     var f = new File([a], P.id + ".png", { type: "image/png" }), to = P.entry.to, sub = P.entry.subject || P.title;
     var text = entryAnswers().map(function (l) { return l.join("\n"); }).join("\n\n");
-    // (A share to Mail drops the subject and the address.)
-    var mail = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text);
+    ENTRY = { f: f, mail: "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(text) };
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      toast("Save the picture, then attach it to the email");
-      return navigator.share({ files: [f] }).then(function () { location.href = mail; }, function () {});
+      return confirmAsk("entry", "Email your entry", "First save the picture: choose Save Image, not Mail. Then Mail opens with the address, subject and answers, and you attach the picture.", "Save picture");
     }
     var d = mk("a"); d.href = url; d.download = f.name; d.click();
     toast("Picture saved: attach it to the email");
-    location.href = mail;
+    location.href = ENTRY.mail;
   });
 
   // Every answer in capitals under its clue number: [Across lines, Down lines], each list headed by its name.

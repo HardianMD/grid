@@ -401,6 +401,8 @@
       ok = {};  // the time, recorded mode, hints and reveals stay: clearing never makes a fresh attempt
       save(); render(); return toast("Grid cleared");
     }
+    if (askMode === "entry") { $("hintAsk").hidden = true; return entryShare(); }
+    if (askMode === "email") { $("hintAsk").hidden = true; location.href = ENTRY.mail; return; }
     if (askMode === "submit") { $("hintAsk").hidden = true; return submit(); }
     if (askMode === "unsubmit") { $("hintAsk").hidden = true; SUB = null; solved = false; EDITED = true; startClock(); save(); render(); return; }
     if (askMode === "add") {

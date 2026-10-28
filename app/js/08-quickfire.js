@@ -26,7 +26,7 @@
     ["a", "d"].forEach(function (dir) {
       Object.keys(h.qc[dir] || {}).forEach(function (num) {
         var k = dir + num, x = h.qc[dir][num];
-        if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] || (x[0] ? { type: x[0] } : null)) });
+        if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] && mine[k].s && mine[k].s.tree && !mine[k].off ? mine[k] : x[0] ? { type: x[0] } : null) });
       });
     });
     return out;
@@ -62,12 +62,12 @@
   function qfLoad(c, p) {
     var dir = c.k[0], num = c.k.slice(1), d = ((jsonOf(p, "hints") || {})[dir] || {})[num], rec = store.get("crossword:" + p.id) || {};
     c.p = p; c.a = rawAnswer(p, c.k, rec); c.clue = joinEnum((p[dir === "a" ? "across" : "down"] || {})[num] || "");
-    c.blog = ((jsonOf(p, "parses") || {})[dir] || {})[num]; c.mine = (rec.parses || {})[c.k]; if (c.mine && c.mine.off) c.mine = null;
+    c.blog = ((jsonOf(p, "parses") || {})[dir] || {})[num]; var raw = (rec.parses || {})[c.k]; c.mine = raw && !raw.off && raw.s && raw.s.tree ? raw : null;  // edits from before the tree editor stay saved, unshown
     QF.name = num + (dir === "a" ? " Across" : " Down");
     load({ id: "quickfire", qf: 1, title: "Quickfire", grid: [c.a.replace(/./g, ".")], across: { 1: c.clue },
       blog: c.p.blog, blog_name: c.p.blog_name, blog_keys: (c.p.blog_keys || []).indexOf(c.k) >= 0 ? ["a1"] : [] });
     SOL = [c.a]; DEFS = d ? { a: { 1: d } } : null; PARSES = c.blog ? { a: { 1: c.blog } } : null;
-    myParses = c.mine ? { a1: c.mine } : {}; myDefs = (rec.defs || {})[c.k] ? { a1: rec.defs[c.k] } : {};
+    myParses = raw ? { a1: raw } : {}; myDefs = (rec.defs || {})[c.k] ? { a1: rec.defs[c.k] } : {};
     render();
   }
   // Quickfire is a home tab: the home page's heading, summary and tabs move above it, and back when it closes.

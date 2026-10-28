@@ -55,7 +55,7 @@
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
     var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
-    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "" };
+    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "", s: !mine && blog && blog.s };
   }
   // Blog-style markup: _indicator_ in italics, ~letters~ struck through.
   function markup(el, text) {
@@ -157,6 +157,7 @@
     $("pvAns").textContent = answerText(w);
     $("pvType").textContent = r.type;
     markup($("pvWp"), r.wordplay);
+    showBuild(r.s, w);
     $("hintText").hidden = true; $("parseView").hidden = false;
     var bl = r.blog && fromBlog(w);
     $("parseNote").textContent = r.mine ? editedBy() + (bl ? ", from the " + blogName() + " blog\u2019s parsing. " : ".") : bl ? "Parsing from the " + blogName() + " blog. " : "No parsing from the blog yet.";
@@ -169,6 +170,36 @@
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
+  }
+  // How a piece of the answer is made, in words.
+  function howOf(q) {
+    var w = q.w ? "\u201c" + q.w + "\u201d" : "", of = w && " of " + w;
+    return { syn: w && "stands for " + w, lit: "as written", sel: "letters taken" + (w && " from " + w), del: (q.f || "") + " shortened" + (w && ", for " + w),
+      anag: "anagram" + of, rev: (w && w + ", ") + "reversed", hid: "hidden" + (w && " in " + w), ini: "first letters" + of, alt: "alternate letters" + of }[q.o] || "";
+  }
+  // The blog parsing's structure (s, from the updater's parse check): the answer's letters coloured by the piece that
+  // gives them, each piece with the clue words it comes from and how, the indicators, and whether the pieces were
+  // checked against the answer (v 2), only partly (1), or not at all (0: the blog's word).
+  function showBuild(s, w) {
+    var box = $("pvBuild"), ps = (s && s.p) || [], letters = w.cells.map(function (rc) { return fill[rc[0]][rc[1]]; });
+    box.textContent = ""; box.hidden = !s;
+    if (!s) return;
+    if (ps.length) {
+      var tiles = mk("div", "tiles"), own = letters.map(function () { return -1; });
+      ps.forEach(function (q, i) { q.at.forEach(function (a) { for (var k = a[0]; k < a[0] + a[1]; k++) own[k] = i; }); });
+      letters.forEach(function (ch, k) { tiles.appendChild(mk("b", own[k] >= 0 ? "k" + own[k] % 6 : "", ch)); });
+      var ul = mk("ul");
+      ps.forEach(function (q, i) {
+        var li = mk("li");
+        li.appendChild(mk("b", "k" + i % 6, q.l));
+        li.appendChild(document.createTextNode(" " + howOf(q)));
+        ul.appendChild(li);
+      });
+      box.appendChild(tiles); box.appendChild(ul);
+    }
+    if (s.ind) box.appendChild(mk("div", null, "Indicator" + (s.ind.length > 1 ? "s: " : ": ") + s.ind.join(", ")));
+    box.appendChild(mk("div", "chk", ["Not checked: this rests on the blog\u2019s word.", "Partly checked: some letters come from the pieces.",
+      "Checked: the pieces make the answer."][s.v]));
   }
   // Editor for a parsing; with withAnswer it also asks for the answer to a clue nobody had solved.
   function openEditor(w, withAnswer) {

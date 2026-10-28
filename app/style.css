@@ -427,6 +427,21 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .pbuild b.k0 { background: #cfe3f5; } .pbuild b.k1 { background: #f8dcb4; } .pbuild b.k2 { background: #cdeccf; }
 .pbuild b.k3 { background: #ead4f2; } .pbuild b.k4 { background: #f6d0d0; } .pbuild b.k5 { background: #fff0a8; }
 .pbuild .chk { font-size: 12px; color: var(--ink-soft); }
+.pbuild b.snd, .pclue .snd { background: none; box-shadow: inset 0 0 0 1px var(--accent); border-radius: 999px; }
+.pbuild ul b.snd::after { content: " \266a"; font-weight: 400; color: var(--accent); }
+.pclue .k0, .pclue .k1, .pclue .k2, .pclue .k3, .pclue .k4, .pclue .k5 { border-radius: 3px; padding: 0 1px; }
+.pclue .k0 { background: #cfe3f5; } .pclue .k1 { background: #f8dcb4; } .pclue .k2 { background: #cdeccf; }
+.pclue .k3 { background: #ead4f2; } .pclue .k4 { background: #f6d0d0; } .pclue .k5 { background: #fff0a8; }
+.pclue .mind { font-style: italic; color: var(--accent); }
+.pclue .mdef { text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+.defpick .tok.sel { background: var(--cell); box-shadow: inset 0 0 0 1px var(--ink); }
+.defpick .tok.ind { font-style: italic; color: var(--accent); }
+.defpick .tok.k0 { background: #cfe3f5; } .defpick .tok.k1 { background: #f8dcb4; } .defpick .tok.k2 { background: #cdeccf; }
+.defpick .tok.k3 { background: #ead4f2; } .defpick .tok.k4 { background: #f6d0d0; } .defpick .tok.k5 { background: #fff0a8; }
+#bBar { gap: 5px; position: static; }
+.brow { display: flex; gap: 6px; } .brow input { flex: 1; min-width: 0; text-transform: uppercase; font: 700 15px var(--f-ui); letter-spacing: .06em; }
+.pbuild .bx li { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+.pbuild .bx .x { font: 600 14px var(--f-ui); color: var(--bad); background: none; border: 0; padding: 0 4px; cursor: pointer; }
 .pedit label, .lnk summary { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 #ansInput { text-transform: uppercase; font: 800 18px var(--f-ui); letter-spacing: 0.08em; }
 .lnk summary { cursor: pointer; padding: 4px 0; }
@@ -508,3 +523,9 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
   .checks { gap: 2px; }
   .checks .btn.icon { padding-inline: 3px; }
 }
+.pclue .mdef.d0, .pbuild .mdef.d0 { text-decoration-color: #2f7fc1; } .pclue .mdef.d1, .pbuild .mdef.d1 { text-decoration-color: #d9822b; }
+.pbuild .mdef { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.pclue .mcd { text-decoration: underline dotted var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.pbuild .dd { margin: 6px 0; line-height: 1.45; }
+.pbuild .chk.agree { color: var(--good); } .pbuild .chk.differs { color: var(--bad); }
+.pbuild .tiles b.snd { border-radius: 4px; box-shadow: none; outline: 1.5px dashed var(--accent); outline-offset: -2px; }

@@ -125,7 +125,7 @@
     var heat = HEAT && heatOf();
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
       if (cells[r][c].b) continue;
-      var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
+      var el = cellEls[r][c], k = r + "," + c, a = !RP && SUB && solAt(r, c);
       if (heat || el.style.background) el.style.background = heat ? heat.bg(Math.max(heat.t[cells[r][c].a] || 0, heat.t[cells[r][c].d] || 0)) : "";
       total++; if (fill[r][c]) done++;
       if (a && fill[r][c] !== a) { bad++; if (!fill[r][c]) gap++; }
@@ -133,7 +133,7 @@
       el.classList.toggle("word", !!inWord[k]);
       el.classList.toggle("cross", !inWord[k] && !!inCross[k]);
       el.classList.toggle("cur", r === sel.r && c === sel.c);
-      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && !SUB && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout (a submitted one is unmarked)
+      el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && !SUB && !RP && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout (a submitted one is unmarked)
       el.lastChild.textContent = fill[r][c];
     }
     var fl = favs(), nh = noHints();
@@ -186,7 +186,7 @@
     $("solvedBar").hidden = !solved || !!P.qf;
     $("app").classList.toggle("fin", solved && !P.qf);
     $("qfSolve").disabled = locked(w);
-    $("heatBtn").hidden = !(solved && LG); $("heatBtn").setAttribute("aria-pressed", String(HEAT));
+    $("heatBtn").hidden = $("replayBtn").hidden = !(solved && LG); $("heatBtn").setAttribute("aria-pressed", String(HEAT));
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
@@ -443,6 +443,34 @@
     save(); render();
     toast(SUB.res === "ok" ? "Finished in " + fmt(elapsed) : SUB.res === "dnf" ? "DNF" : "Submitted");
   }
+
+  // Replay: a finished grid fills again in the order it was solved, from the fill log (LG, see logFill), squeezed into
+  // about 20 seconds with the longer pauses kept longest, the clock showing when each letter went in.
+  // Any other tap or key stops it and puts the grid back; nothing is saved meanwhile.
+  var RP = null;
+  function replayStop() {
+    if (!RP) return;
+    clearTimeout(RP.tm); fill = RP.fill; sel = RP.sel; RP = null;
+    replayLook(false); tick(); render();
+  }
+  function replayLook(on) { var b = $("replayBtn"); b.textContent = on ? "\u25a0\ufe0e" : "\u25b6\ufe0e"; b.setAttribute("aria-label", on ? "Stop replay" : "Replay"); }
+  $("replayBtn").addEventListener("click", function () {
+    if (RP) return replayStop();
+    var ev = logOf(LG), i = 0, k = 20 / ((ev[ev.length - 1][0] - ev[0][0]) || 1);
+    RP = { fill: fill, sel: sel }; HEAT = false;
+    fill = fill.map(function (row) { return row.map(function () { return ""; }); });
+    replayLook(true);
+    (function step() {
+      var e = ev[i++];
+      fill[e[1]][e[2]] = e[4]; sel = { r: e[1], c: e[2], dir: cells[e[1]][e[2]][e[3]] >= 0 ? e[3] : e[3] === "a" ? "d" : "a" };
+      render(); $("timer").textContent = fmt(e[0] * 1000);
+      RP.tm = setTimeout(i < ev.length ? step : replayStop, i < ev.length ? Math.min(1500, Math.max(40, (ev[i][0] - e[0]) * k * 1000)) : 1500);
+    })();
+  });
+  ["pointerdown", "keydown"].forEach(function (t) {
+    document.addEventListener(t, function (e) { if (RP && !(e.target.closest && e.target.closest("#replayBtn"))) replayStop(); }, true);
+  });
+  document.addEventListener("visibilitychange", replayStop);
 
   $("editBtn").addEventListener("click", function () {
     confirmAsk("unsubmit", "Edit your grid?", "The answers aren't out yet, so your grid hasn't been marked. It will open again for you to change, " +

@@ -88,6 +88,7 @@
   }
 
   function load(p) {
+    if (RP) replayStop();
     P = p; R = p.grid.length; C = p.grid[0].length;
     cells = []; words = [];
     for (var r = 0; r < R; r++) {
@@ -230,6 +231,7 @@
   // The clock and the cursor alone don't date or upload the record: a device left open on a puzzle would otherwise
   // look newer than progress made since on another device and overwrite it.
   function save() {
+    if (RP) return;
     if (P.qf) return qfSave();
     if (P.ed) return edSave();
     var k = "crossword:" + P.id, old = store.peek(k);

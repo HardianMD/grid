@@ -548,3 +548,4 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .pclue span[class*="t-"], .pclue u[class*="t-"] { border-radius: 3px; padding: 0 1px; }
 .pbuild .tiles b.sep { margin-left: 5px; }
 .pclue .sep, .defpick .tok .ch.sep { box-shadow: inset 2px 0 0 var(--ink-soft); }
+.chip.sugg { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }

@@ -128,9 +128,27 @@
     else { PE.ind.push({ w: w, op: op }); PE.pick = []; PE.target = null; }  // now its pieces are tapped
     PE.ask = null; PE.sel = null; bRender();
   }
+  // A container of the selected parts with part i outside.
+  function bIns(ns, i) {
+    var rest = ns.filter(function (x, j) { return j !== i; });
+    return { op: "ins", out: ns[i], in: rest.length === 1 ? rest[0] : { op: "cat", of: bOrder(rest, false) } };
+  }
+  // Which of the selected parts can go outside and give a run of the answer's letters.
+  function bInsFits(ns) {
+    var ans = bAnswer(), clue = DTOK.clue;
+    return ns.map(function (x, i) {
+      var t = JSON.parse(JSON.stringify(bIns(ns, i))), L = tSize(t, clue);
+      for (var a = 0; ans && a + L <= ans.length; a++) if (tFit(t, ans.substr(a, L), clue, new Map())) return true;
+      return false;
+    });
+  }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;
     if (!ns.length) return;
+    if (op === "ins" && extra == null && ns.length > 1) {  // when only one way round gives the answer's letters, take it
+      var fits = bInsFits(ns);
+      if (fits.filter(Boolean).length === 1) extra = fits.indexOf(true);
+    }
     if ((op === "cut" || op === "pick" || op === "snd" || op === "chg") && extra == null || op === "ins" && extra == null && ns.length > 1) {
       PE.ask = { op: op, drop: [] };
       if (op === "snd" || op === "chg") { $("bLet").value = ""; $("bLet").placeholder = op === "snd" ? "Letters as they sound in the answer, e.g. BRAKE" : "Letters it becomes, e.g. FEAST"; }
@@ -138,10 +156,7 @@
       return;
     }
     if (op === "cat") n = { op: "cat", of: bOrder(ns, false) };
-    else if (op === "ins") {
-      var out = ns[extra], rest = ns.filter(function (x, i) { return i !== extra; });
-      n = { op: "ins", out: out, in: rest.length === 1 ? rest[0] : { op: "cat", of: bOrder(rest, false) } };
-    }
+    else if (op === "ins") n = bIns(ns, extra);
     else if (op === "rev") n = { op: "rev", of: one || { op: "cat", of: bOrder(ns, true) } };
     else if (op === "anag") n = { op: "anag", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
     else if (op === "cut" || op === "pick") n = { op: op, of: one, at: extra };
@@ -305,7 +320,14 @@
         var b = box.appendChild(mk("button", "chip" + (says.indexOf(k[1]) >= 0 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
       });
     }
-    if (ask && ask.op === "ins") picked.forEach(function (n, i) { var b = box.appendChild(mk("button", "chip", tMake(n, clue) || OPNAME[n.op])); b.type = "button"; b.dataset.out = i; });
+    if (ask && ask.op === "ins") {  // each part by its letters, else by its words ("Anagram of “rude”"); those that fit marked
+      var fits = bInsFits(picked);
+      picked.forEach(function (n, i) {
+        var ws = tWalk(n).filter(function (x) { return x.w; }).map(function (x) { return tText(clue, x.w); }).join(" ");
+        var b = box.appendChild(mk("button", "chip" + (fits[i] ? " sugg" : ""), tMake(n, clue) || OPNAME[n.op] + (ws ? " of “" + ws + "”" : "")));
+        b.type = "button"; b.dataset.out = i;
+      });
+    }
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
     var waiting = PE.ind.filter(function (x) { return x.op; })[0];
     $("bHint").textContent = ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them."

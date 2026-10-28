@@ -167,11 +167,14 @@
     for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) ^ key.charCodeAt(i % key.length);
     return new TextDecoder().decode(bytes);
   }
+  // A solver's parsing made in the tree editor (19-editor.js). Edits from before it are kept but no longer shown,
+  // and their definitions with them, except in a created puzzle, where every parsing is the setter's.
+  function newEdit(rec) { return !!(rec && !rec.off && (P.ed || P.made || rec.s && rec.s.tree)); }
   // Clue text, with the definition underlined once its hint has been shown.
   // Definitions: the solver's own (saved per clue) win over the blog's.
   function defsFor(w) {
     var k = w.dir + w.num;
-    if (myDefs[k]) return myDefs[k];
+    if (myDefs[k] && (P.ed || P.made || newEdit(myParses[k]))) return myDefs[k];
     var d = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num];
     return d ? [d] : [];
   }
@@ -257,7 +260,7 @@
     });
     if (core(rec) === core(old)) return;
     rec.at = Date.now(); store.set(k, rec);
-    QF.c.mine = myParses.a1 && !myParses.a1.off ? myParses.a1 : null; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
+    QF.c.mine = newEdit(myParses.a1) ? myParses.a1 : null; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
   }
   function core(v) {
     var o = {}; Object.keys(v).forEach(function (k) { if (k !== "time" && k !== "sel" && k !== "at") o[k] = v[k]; });

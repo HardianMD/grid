@@ -54,7 +54,7 @@
   }
   function blogParse(w) { return PARSES && PARSES[w.dir] && PARSES[w.dir][w.num]; }
   function parseFor(w) {
-    var key = w.dir + w.num, mine = myParses[key] && !myParses[key].off ? myParses[key] : null, blog = blogParse(w);
+    var key = w.dir + w.num, mine = newEdit(myParses[key]) ? myParses[key] : null, blog = blogParse(w);
     var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
     // The structure: our own checked parsing where the data has one (x.ours), else the one read from the blog's or
     // the solver's words.
@@ -238,7 +238,7 @@
     $("parseForm").hidden = $("clueForm").hidden = $("clueParse").hidden = true;
     var rec = myParses[key], off = rec && rec.off;
     $("parseReset").textContent = off ? "Use mine" : "Use original";
-    $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !(off || r.mine || myDefs[key]);
+    $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !(off && newEdit(Object.assign({}, rec, { off: 0 })) || r.mine);
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
   }
@@ -252,7 +252,7 @@
   // come from); the tiles build as you go and the clue type follows from the pieces. A note at the bottom is free
   // text, shown under the parsing. The written wordplay and the type are made from the pieces when saving.
   function openEditor(w, withAnswer) {
-    var r = parseFor(w), mine = myParses[w.dir + w.num] || null, has = r.mine || r.blog;
+    var r = parseFor(w), mine = r.mine ? myParses[w.dir + w.num] : null, has = r.mine || r.blog;
     askMode = withAnswer ? "add" : "edit";
     $("hintTitle").textContent = (withAnswer ? "Add your answer for " : "") + wordName(w);
     $("ansRow").hidden = !withAnswer;

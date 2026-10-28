@@ -34,6 +34,19 @@ for (const [what, rec, mode, hn, rv, dnf, text] of CASES) {
   if (JSON.stringify(got) !== JSON.stringify(want)) { bad++; console.log("FAIL " + what + "\n  want " + JSON.stringify(want) + "\n  got  " + JSON.stringify(got)); }
 }
 console.log(bad ? bad + " of " + CASES.length + " failed" : "all " + CASES.length + " records read the same way");
+// The parsing tree: the same cases as crossword-data's tools/tree.py (tools/tree-cases.json is a copy of its file).
+const tree = {};
+vm.runInNewContext(fs.readFileSync(dir + "17-tree.js", "utf8") + "; this.tCheck = tCheck; this.tFit = tFit; this.tUnits = tUnits; this.tLetters = tLetters; this.tValid = tValid; this.tFromFlat = tFromFlat;", tree);
+const canon = (o) => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.keys(v).sort().reduce((a, x) => ((a[x] = v[x]), a), {}) : v);
+const TC = JSON.parse(fs.readFileSync(__dirname + "/tree-cases.json", "utf8"));
+let tbad = 0;
+for (const c of TC) {
+  if (c.flat && canon(tree.tFromFlat(c.flat, c.clue, c.answer)) !== canon(c.parse)) { tbad++; console.log("FAIL tree " + c.name + ": a different tree from the flat structure"); }
+  const t = c.parse.t, v = tree.tCheck(c.parse, c.clue, c.answer), pieces = t ? tree.tFit(t, tree.tLetters(c.answer), c.clue, tree.tUnits(t)) : null;
+  if (v !== c.v || (c.pieces && JSON.stringify(pieces) !== JSON.stringify(c.pieces)) || (t && tree.tValid(t).length)) { tbad++; console.log("FAIL tree " + c.name + ": v " + v + " (want " + c.v + "), pieces " + JSON.stringify(pieces)); }
+}
+bad += tbad;
+console.log(tbad ? tbad + " of " + TC.length + " tree cases failed" : "all " + TC.length + " tree cases check the same way");
 // The files share one scope (tools/build.py), so a second function of the same name silently replaces the first.
 const seen = {};
 for (const m of src.matchAll(/^  function ([A-Za-z_$][\w$]*)\(/gm)) { if (seen[m[1]]) { bad++; console.log("FAIL two functions named " + m[1]); } seen[m[1]] = 1; }

@@ -346,20 +346,18 @@
     var ans = w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || ""; }).join("");
     ans = ans.length === w.cells.length ? ans : "the answer";
     var dd = !ps.length && s.defs && s.defs.length > 1, cd = cryptic(s), who = mine ? "your" : "the blog\u2019s";
+    // Whole-clue kinds say only what they are: the definitions for a double definition, the clue's own words for a
+    // cryptic one (the setter's note, if any, does the explaining).
     if (dd) {
       var p = mk("p", "dd"); p.appendChild(mk("b", null, "Double definition: "));
       p.appendChild(mk("u", "mdef d0", s.defs[0])); p.appendChild(document.createTextNode(" and "));
-      p.appendChild(mk("u", "mdef d1", s.defs[1])); p.appendChild(document.createTextNode(" each mean " + ans + " on their own; the clue just puts the two side by side."));
+      p.appendChild(mk("u", "mdef d1", s.defs[1]));
       box.appendChild(p);
     }
-    if (cd) {
-      var c = mk("p", "dd"); c.appendChild(mk("b", null, "Cryptic definition: "));
-      c.appendChild(document.createTextNode("the whole clue is one playful hint at " + ans + ". Read straight it seems to mean one thing; read sideways it defines the answer. There is no wordplay to split out."));
-      box.appendChild(c);
-    }
+    if (cd) box.appendChild(mk("p", "dd", "Cryptic definition: the whole clue."));
     var note = function (head, text) { var n = mk("p", "dd"); n.appendChild(mk("b", null, head)); n.appendChild(document.createTextNode(text)); box.appendChild(n); };
-    if (isType(s, "&lit")) note("&lit: ", "the whole clue is the definition of " + ans + ", and the same words also give the wordplay above.");
-    if (isType(s, "Palindrome")) note("Palindrome: ", ans + " reads the same backwards" + (ans === "the answer" ? "." : ": " + ans.split("").reverse().join("") + "."));
+    if (isType(s, "&lit")) note("&lit: ", "the whole clue is the definition, and its words are also the wordplay.");
+    if (isType(s, "Palindrome")) note("Palindrome: ", ans === "the answer" ? "reads the same backwards." : ans + " reads the same backwards.");
     var sound = ps.some(function (q) { return q.o === "snd" || q.o === "spn"; });
     if (verdict) box.appendChild(mk("div", "chk", [dd || cd ? "Not checked: definitions can\u2019t be letter-checked, so this rests on " + who + " word."
       : sound ? "Sounds like: the sound can\u2019t be letter-checked, so it rests on " + who + " word."

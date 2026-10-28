@@ -56,7 +56,9 @@
   function parseFor(w) {
     var key = w.dir + w.num, mine = myParses[key], blog = blogParse(w);
     var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
-    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "", s: x.s || mine && readWp(w, mine) };
+    // The structure: our own checked parsing where the data has one (x.ours), else the one read from the blog's or
+    // the solver's words.
+    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "", s: (x.ours && x.ours.s) || x.s || mine && readWp(w, mine) };
   }
   // A structure for an edit saved before the Build step, read from its wordplay as the updater reads a blog's:
   // CAPITAL pieces (lower-case letters are the ones dropped), (WORDS)* anagrams, glosses in brackets or quotes,
@@ -69,8 +71,17 @@
     if (key in WPREAD) return WPREAD[key];
     var low = w.clue.toLowerCase(), inClue = function (t) {
       t = String(t || "").replace(/^[\s'"\u2018\u201c]+|[\s'"\u2019\u201d?!.,;:]+$/g, "");
-      var at = t.length > 1 ? low.indexOf(t.toLowerCase()) : -1;
-      return at >= 0 ? w.clue.substr(at, t.length) : null;
+      if (t.length < 2) return null;
+      var m = new RegExp("(^|[^a-z])(" + t.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")(?![a-z])").exec(low);  // whole words
+      return m ? w.clue.substr(m.index + m[1].length, t.length) : null;
+    };
+    // a gloss the clue doesn't have whole: the part it quotes, or its longest run of words at either end
+    var loose = function (g) {
+      var t = inClue(g); if (t || !g) return t;
+      var q = g.match(/['"\u2018\u201c]([^'"\u2019\u201d]+)['"\u2019\u201d]/); if (q && inClue(q[1])) return inClue(q[1]);
+      var wd = g.trim().split(/\s+/);
+      for (var n = wd.length - 1; n > 0; n--) { t = inClue(wd.slice(0, n).join(" ")) || inClue(wd.slice(-n).join(" ")); if (t) return t; }
+      return null;
     };
     var ps = [], used = {}, re = /\(([A-Z][A-Z ]+)\)\*|((?:[A-Z]+|\([a-z]+\)|[a-z]*\[[a-z]+\])+)(?:\s*[(\u2018\u201c'"]([^)\u2019\u201d'"]+)[)\u2019\u201d'"])?/g, m;
     while ((m = re.exec(wp)) && ps.length < 12) {
@@ -83,9 +94,15 @@
       }
       if (/[a-z]/.test(wp.charAt(m.index + m[0].length)) && !g || /[A-Za-z]/.test(wp.charAt(m.index - 1))) continue;  // a word in the prose
       if (!l || l === ans || /^[AI]$/.test(l) && !g) continue;
-      var p = { k: k, l: l, f: f, w: (k === "anag" ? inClue(m[1]) : null) || inClue(g) || (k === "syn" ? inClue(l) : null) };
+      var p = { k: k, l: l, f: f, w: (k === "anag" ? inClue(m[1]) : null) || loose(g) || (k === "syn" ? inClue(l) : null) };
       if (p.w && k === "syn" && bLetters(p.w) === l) p.k = "lit";
       ps.push(p);
+    }
+    // a clue word quoted on its own ("plus 'is'") is a candidate piece as written; it counts only if it fits the answer
+    var quoted = /[\u2018\u201c'"]([a-z]+)[\u2019\u201d'"]/g, qm;
+    while ((qm = quoted.exec(wp))) {
+      var c = inClue(qm[1]), l2 = bLetters(qm[1]);
+      if (c && l2.length >= 2 && !ps.some(function (p) { return p.l === l2 || p.w === c; })) ps.push({ k: "lit", l: l2, f: l2, w: c });
     }
     var s = null;
     if (ps.length) {
@@ -201,25 +218,20 @@
     askMode = "parse";
     $("hintTitle").textContent = wordName(w);
     hinted[key] = 1; clueInto($("pvClue"), w, true); if (had) hinted[key] = had; else delete hinted[key];
-    $("pvAns").textContent = answerText(w);
     var s = r.s || defsOnly(w, r.type) || (/&lit|palindrome/i.test(r.type) ? { v: 0, dev: [] } : null);
     if (s) s = Object.assign({}, s, { ty: r.type });
     if (s) markClue($("pvClue"), w, s);
+    $("pvAns").textContent = answerText(w); $("pvAns").hidden = !!s;
     $("pvType").textContent = r.type;
-    // The blog's own words are a background check, not the parsing: hidden once its pieces make the answer.
-    var head = w.clue.toLowerCase().split(/\s+/).slice(0, 3).join(" ").replace(/[^a-z ]/g, "");
-    var hide = s && (r.mine ? r.wordplay.toLowerCase().replace(/[^a-z ]/g, "").indexOf(head) >= 0 || /^(double|cryptic) definition\.?$/i.test(r.wordplay.trim())
-      : s.v === 2 || cryptic(s) || s.defs && s.defs.length > 1 || (s.p || []).some(function (q) { return q.o === "snd" || q.o === "spn"; }));
-    markup($("pvWp"), hide ? "" : r.wordplay);
-    showBuild(s, w, null, r.mine, agreement(w, r));
+    // With a structure the marked clue and the tiles are the parsing; the written parsing shows only when there is
+    // none, or when Blog parse is tapped (the blog's words, verbatim).
+    markup($("pvWp"), s ? "" : r.wordplay);
+    var bp = blogParse(w); $("pvBlog").hidden = !(s && bp && bp.wordplay); $("pvBlog").classList.remove("on");
+    showBuild(s, w, null, r.mine);
     $("hintText").hidden = true; $("parseView").hidden = false;
-    var bl = r.blog && fromBlog(w);
-    $("parseNote").textContent = r.mine ? editedBy() + (bl ? ", from the " + blogName() + " blog\u2019s parsing. " : ".") : bl ? "Parsing from the " + blogName() + " blog. " : "No parsing from the blog yet.";
-    if (bl) {
-      var a = document.createElement("a"); a.href = P.blog; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Read the post";
-      $("parseNote").appendChild(a);
-    }
-    $("parseNote").hidden = !!(P.ed || P.made);  // a created puzzle's parsings are all the setter's
+    // The blog is linked from the finish bar; the note only says when the parsing is the solver's own or missing.
+    $("parseNote").textContent = r.mine || r.blog ? "" : "No parsing from the blog yet.";
+    $("parseNote").hidden = !!(P.ed || P.made) || !$("parseNote").textContent;  // a created puzzle's parsings are all the setter's
     $("parseForm").hidden = $("clueForm").hidden = $("clueParse").hidden = true;
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !r.mine && !myDefs[key];
     $("hintNo").hidden = true;
@@ -231,30 +243,6 @@
     if (/double definition/i.test(type) && defsFor(w).length > 1) return { v: 0, dev: ["Double definition"], defs: defsFor(w) };
   }
   function cryptic(s) { return (s.dev || []).indexOf("Cryptic definition") >= 0 && !(s.p || []).length; }
-  // The devices that matter when two parsings are compared (as the updater's parse.core): order, Charade and
-  // Wordplay left out, a deletion counted as the letter selection it often is.
-  function devCore(t) {
-    var out = {};
-    String(t || "").split(/,| and /).forEach(function (x) {
-      x = x.trim(); x = x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
-      if (x === "Deletion") x = "Letter selection";
-      if (x && x !== "Charade" && x !== "Wordplay") out[x] = 1;
-    });
-    return Object.keys(out).sort().join(",");
-  }
-  // The blog's parsing as a check on the one shown: [agrees, text], or null when there is nothing to compare.
-  function agreement(w, r) {
-    var b = blogParse(w);
-    if (!b || !b.type) return null;
-    var bt = (b.s && b.s.bt) || b.type, name = "the " + blogName() + " blog";
-    if (r.mine) {
-      var same = devCore(r.type) === devCore(b.type) || devCore(r.type) === devCore(bt);
-      return [same, same ? "Agrees with " + name + "\u2019s parsing." : "Differs from " + name + ": it reads this as " + bt.toLowerCase() + "."];
-    }
-    if (b.s && b.s.bt && devCore(b.s.bt) !== devCore(b.type)) return [false, "Differs from " + name + ": it calls this " + b.s.bt.toLowerCase() + ", but its pieces read as " + b.type.toLowerCase() + "."];
-    if (b.s && b.s.v === 2) return [true, "The check agrees with " + name + "."];
-    return null;
-  }
   // A spoonerism: the first and last words swap their opening consonants (NOSY COOK -> COSY NOOK), as letters.
   function spoon(t) {
     var ws = String(t || "").toUpperCase().split(/\s+/).filter(Boolean), on = /^(QU|[^AEIOUY]*)/;
@@ -269,33 +257,72 @@
     var w = q.w ? "\u201c" + q.w + "\u201d" : "", of = w && " of " + w, ps = s.p || [];
     var inside = ps.some(function (x) { return x !== q && x.at.length > 1 && x.at[0][0] + x.at[0][1] <= q.at[0][0] && q.at[0][0] < x.at[1][0]; });
     var plain = q.at.length > 1 ? "container" : inside ? "inserted" : ps.length > 1 ? "charade" : "synonym";
-    return { syn: plain + (w && " for " + w), lit: plain + (w && ", " + w + " as written"), sel: "letter selection" + (w && " from " + w),
+    if (q.o === "syn" && !w) return plain + " (the blog doesn\u2019t say from which words)";
+    return { syn: plain + (w && " for " + w), lit: w ? w + " as written" : "as written", sel: "letter selection" + (w && " from " + w),
       del: "deletion: " + (q.f || "") + " cut short" + (w && ", for " + w), anag: "anagram" + of, rev: "reversal" + of, hid: "hidden" + (w && " in " + w),
       ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l,
       chg: "letter change: " + (q.f || "") + " becomes " + q.l + (w && ", from " + w), spn: "spoonerism" + of + ": swap the first sounds of " + (q.f || "") }[q.o] || "";
   }
   // The clue once, marked up from the structure: the definition underlined, indicators in italics, and each piece's
   // words tinted like its tiles.
+  // Which characters of a clue phrase give the letters taken from it: first, last, middle or alternate letters of
+  // its words, a run hidden across them, a word with letters cut, or failing those the first way the letters fit.
+  function takenMask(phrase, taken) {
+    var ch = phrase.split(""), idx = [], up = "";
+    ch.forEach(function (c, i) { if (/[a-z]/i.test(c)) { idx.push(i); up += c.toUpperCase(); } });
+    var words = [], cur = null;
+    ch.forEach(function (c, i) { if (/[a-z]/i.test(c)) { if (!cur) { cur = []; words.push(cur); } cur.push(i); } else cur = null; });
+    var mark = function (list) { var m = []; list.forEach(function (i) { m[i] = 1; }); return m; };
+    var tries = [
+      function () { return words.map(function (w) { return w[0]; }); },
+      function () { return words.map(function (w) { return w[w.length - 1]; }); },
+      function () { return idx.filter(function (_, k) { return k % 2 === 0; }); },
+      function () { return idx.filter(function (_, k) { return k % 2 === 1; }); },
+      function () { return [].concat.apply([], words.map(function (w) { return w.slice((w.length - 1) >> 1, (w.length + 2) >> 1); })); }
+    ];
+    for (var t = 0; t < tries.length; t++) { var list = tries[t], got = list().map(function (i) { return ch[i].toUpperCase(); }).join(""); if (got === taken) return mark(list()); }
+    var run = up.indexOf(taken);  // hidden, or a word's start or end
+    if (run >= 0) return mark(idx.slice(run, run + taken.length));
+    for (var cut = 1; cut < up.length; cut++) for (var at = 0; at + cut <= up.length; at++)  // one stretch cut out
+      if (up.slice(0, at) + up.slice(at + cut) === taken) return mark(idx.slice(0, at).concat(idx.slice(at + cut)));
+    var out = [], k = 0;  // the letters in order, wherever they first fit
+    for (var i = 0; i < up.length && k < taken.length; i++) if (up[i] === taken[k]) { out.push(idx[i]); k++; }
+    return k === taken.length ? mark(out) : null;
+  }
   function markClue(el, w, s) {
-    var clue = w.clue, low = clue.toLowerCase(), mark = [];
+    var clue = w.clue, low = clue.toLowerCase(), n = clue.length;
     if (cryptic(s)) { el.textContent = ""; el.appendChild(mk("span", "mcd", clue)); return; }  // the whole clue is the definition
-    var put = function (t, cls) { var at = t ? low.indexOf(t.toLowerCase()) : -1; if (at >= 0) mark.push([at, at + t.length, cls]); };
-    (s.p || []).forEach(function (q, i) { put(q.w, "k" + i % 6 + (q.o === "snd" ? " snd" : "")); });
-    (s.ind || []).forEach(function (t) { put(t, "mind"); });
-    if (s.defs && s.defs.length > 1) s.defs.forEach(function (t, i) { put(t, "mdef d" + i % 2); });
-    else defsFor(w).concat(s.def ? [s.def] : []).forEach(function (t) { put(t, "mdef"); });
-    el.textContent = ""; mark.sort(function (x, y) { return x[0] - y[0]; });
-    var pos = 0;
-    mark.forEach(function (m) {
-      if (m[0] < pos) return;
-      el.appendChild(document.createTextNode(clue.slice(pos, m[0])));
-      el.appendChild(mk(m[2].indexOf("mdef") === 0 ? "u" : "span", m[2], clue.slice(m[0], m[1])));
-      pos = m[1];
+    // Marks can sit inside one another ("ending in Chicago" indicates, "Chicago" is a piece's source), so each
+    // character carries all of its marks and the clue is emitted in runs of equal marks.
+    var piece = [], ind = [], def = [], plain = [];
+    var put = function (t, arr, v) { var at = t ? low.indexOf(t.toLowerCase()) : -1; if (at < 0) return; for (var c = at; c < at + t.length; c++) if (arr[c] == null) arr[c] = v; };
+    (s.p || []).forEach(function (q, i) {
+      var cls = "k" + i % 6 + (q.o === "snd" ? " snd" : ""), at = q.w ? low.indexOf(q.w.toLowerCase()) : -1;
+      if (at < 0) return;
+      // Letters taken from the clue's words (selections, hiddens, deletions) tint those letters alone; the rest of
+      // the word stays plain, outside any indicator.
+      var mask = /^(sel|ini|alt|hid|del)$/.test(q.o) && takenMask(q.w, q.l);
+      for (var c = at; c < at + q.w.length; c++) {
+        if (mask) { plain[c] = 1; if (mask[c - at] && piece[c] == null) piece[c] = cls; }
+        else if (piece[c] == null) piece[c] = cls;
+      }
     });
-    el.appendChild(document.createTextNode(clue.slice(pos)));
+    (s.ind || []).forEach(function (t) { put(t, ind, "mind"); });
+    plain.forEach(function (v, c) { if (v) ind[c] = null; });
+    if (s.defs && s.defs.length > 1) s.defs.forEach(function (t, i) { put(t, def, "mdef d" + i % 2); });
+    else defsFor(w).concat(s.def ? [s.def] : []).forEach(function (t) { put(t, def, "mdef"); });
+    el.textContent = "";
+    for (var a = 0; a < n;) {
+      var key = [piece[a], ind[a], def[a]].join("|"), b = a + 1;
+      while (b < n && [piece[b], ind[b], def[b]].join("|") === key) b++;
+      var cls = [piece[a], ind[a], def[a]].filter(Boolean).join(" "), text = clue.slice(a, b);
+      el.appendChild(cls ? mk(def[a] ? "u" : "span", cls, text) : document.createTextNode(text));
+      a = b;
+    }
     if (isType(s, "&lit")) { var all = mk("span", "mcd"); while (el.firstChild) all.appendChild(el.firstChild); el.appendChild(all); }  // the whole clue is also the definition
   }
-  function showBuild(s, w, box, mine, agree) {
+  function showBuild(s, w, box, mine) {
+    var verdict = !!box;  // the editor shows the check's verdict; the view shows the pieces alone
     box = box || $("pvBuild");
     var ps = (s && s.p) || [], letters = w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || "\u00a0"; });
     box.textContent = ""; box.hidden = !s;
@@ -331,11 +358,10 @@
     if (isType(s, "&lit")) note("&lit: ", "the whole clue is the definition of " + ans + ", and the same words also give the wordplay above.");
     if (isType(s, "Palindrome")) note("Palindrome: ", ans + " reads the same backwards" + (ans === "the answer" ? "." : ": " + ans.split("").reverse().join("") + "."));
     var sound = ps.some(function (q) { return q.o === "snd" || q.o === "spn"; });
-    box.appendChild(mk("div", "chk", [dd || cd ? "Not checked: definitions can\u2019t be letter-checked, so this rests on " + who + " word."
+    if (verdict) box.appendChild(mk("div", "chk", [dd || cd ? "Not checked: definitions can\u2019t be letter-checked, so this rests on " + who + " word."
       : sound ? "Sounds like: the sound can\u2019t be letter-checked, so it rests on " + who + " word."
       : mine ? "Not checked: no pieces make letters of the answer yet." : "Not checked: this rests on the blog\u2019s word.",
       "Partly checked: some letters come from the pieces.", "Checked: the pieces make the answer."][s.v]));
-    if (agree) box.appendChild(mk("div", "chk " + (agree[0] ? "agree" : "differs"), agree[1]));
   }
   // Editor for a parsing; with withAnswer it also asks for the answer to a clue nobody had solved.
   function openEditor(w, withAnswer) {
@@ -351,7 +377,7 @@
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;
     $("parseView").hidden = $("parseNote").hidden = $("clueForm").hidden = $("clueParse").hidden = true; $("parseForm").hidden = false;
-    $("parseEdit").hidden = true; $("parseReset").hidden = true;
+    $("parseEdit").hidden = true; $("parseReset").hidden = true; $("pvBlog").hidden = true;
     $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
     $("hintYes").textContent = "Save";
     $("hintAsk").hidden = false;
@@ -359,6 +385,10 @@
   // A puzzle's note (a rule or its theme), from the i button.
   $("infoBtn").addEventListener("click", function () { confirmAsk("info", P.title, P.note, "Close"); $("hintNo").hidden = true; });
   $("parseEdit").addEventListener("click", function () { openEditor(curWord(), false); });
+  $("pvBlog").addEventListener("click", function () {
+    var on = this.classList.toggle("on"), bp = blogParse(curWord());
+    markup($("pvWp"), on && bp ? bp.wordplay : "");
+  });
   // Build: the clue as tappable words (DTOK). Tap one, then another, to select a run, then say what it does: the
   // definition (its words "on"), an indicator (and what it signals), or a piece of the answer. Pieces made from the
   // clue's own letters get them at once; "stands for", "shortened" and "sounds like" ask for letters. bFit fits the

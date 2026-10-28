@@ -531,3 +531,5 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .pbuild .dd { margin: 6px 0; line-height: 1.45; }
 .pbuild .chk.agree { color: var(--good); } .pbuild .chk.differs { color: var(--bad); }
 .pbuild .tiles b.snd { border-radius: 4px; box-shadow: none; outline: 1.5px dashed var(--accent); outline-offset: -2px; }
+
+#pvBlog { margin-right: auto; }

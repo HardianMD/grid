@@ -69,10 +69,8 @@
   // like its tiles (letters picked or kept from words tint those letters alone).
   // Each kind of piece has its own colour, the same in every clue: a synonym is always blue, an anagram orange.
   // Two pieces of one kind side by side get a separator between them.
-  var T_KIND = { syn: ["t-syn", "Synonym"], abr: ["t-abr", "Abbreviation"], lit: ["t-lit", "As written"], pick: ["t-pick", "Letters picked"],
-    cut: ["t-cut", "Letters dropped"], anag: ["t-anag", "Anagram"], rev: ["t-rev", "Reversal"], snd: ["t-snd", "Sounds like"], spn: ["t-snd", "Spoonerism"],
-    chg: ["t-chg", "Letter change"] };
-  function tKind(n) { return (T_KIND[n.op] || T_KIND.syn)[0] + (tTrusted(n) ? " snd" : ""); }
+  var T_KIND = { syn: "t-syn", abr: "t-abr", lit: "t-lit", pick: "t-pick", cut: "t-cut", anag: "t-anag", rev: "t-rev", snd: "t-snd", spn: "t-snd", chg: "t-chg" };
+  function tKind(n) { return (T_KIND[n.op] || T_KIND.syn) + (tTrusted(n) ? " snd" : ""); }
   // Each clue character's marks from a tree: the piece's kind (its colour), which piece it is, and the indicator mark.
   function tMarks(p, clue) {
     var piece = [], unit = [], ind = [], plain = [];
@@ -154,12 +152,7 @@
         tPut(li, parts);
         ul.appendChild(li);
       });
-      // the key: each kind of piece in this parsing, in its colour
-      var kinds = [];
-      list.forEach(function (unit) { var k = T_KIND[unit.op] || T_KIND.syn; if (kinds.indexOf(k) < 0) kinds.push(k); });
-      var key = mk("div", "tkey");
-      kinds.forEach(function (k) { key.appendChild(mk("span", k[0], k[1])); });
-      box.appendChild(tiles); box.appendChild(key); box.appendChild(ul);
+      box.appendChild(tiles); box.appendChild(ul);
       (function groups(n) {
         if (n.op === "rev" && (n.of.op === "cat" || n.of.op === "ins")) {
           var by = (n.ind || []).map(function (sp) { return { ind: tText(clue, sp) }; });

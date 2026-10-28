@@ -544,9 +544,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 /* Piece colours by kind, the same in every clue (T_KIND in 18-tview.js); .sep parts two pieces of one kind side by side. */
 .t-syn { --tk: #cfe3f5; } .t-abr { --tk: #bfe8e4; } .t-lit { --tk: #e2e6ea; } .t-pick { --tk: #cdeccf; } .t-cut { --tk: #f6d0d0; }
 .t-anag { --tk: #f8dcb4; } .t-rev { --tk: #ead4f2; } .t-snd { --tk: #fff0a8; } .t-chg { --tk: #e8dcc6; }
-.pbuild b[class*="t-"], .pclue span[class*="t-"], .pclue u[class*="t-"], .defpick .tok .ch[class*="t-"], #bOut ul.tray li b[class*="t-"], .tkey span { background: var(--tk); }
+.pbuild b[class*="t-"], .pclue span[class*="t-"], .pclue u[class*="t-"], .defpick .tok .ch[class*="t-"], #bOut ul.tray li b[class*="t-"] { background: var(--tk); }
 .pclue span[class*="t-"], .pclue u[class*="t-"] { border-radius: 3px; padding: 0 1px; }
 .pbuild .tiles b.sep { margin-left: 5px; }
 .pclue .sep, .defpick .tok .ch.sep { box-shadow: inset 2px 0 0 var(--ink-soft); }
-.tkey { display: flex; flex-wrap: wrap; gap: 4px; }
-.tkey span { font-size: 11px; font-weight: 600; color: var(--ink); border-radius: 999px; padding: 2px 8px; }

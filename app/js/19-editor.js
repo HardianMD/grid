@@ -100,6 +100,13 @@
   });
   // Selected parts wrapped in an operation. Several parts are put in the order whose letters sit in the answer
   // (backwards for a reversal), else in clue order.
+  // Can this part give a run of the answer's letters? (Its letters needn't be known: an anagram fits any run of the
+  // same letters.)
+  function bFitsIn(n, ans) {
+    var t = JSON.parse(JSON.stringify(n)), clue = DTOK.clue, L = tSize(t, clue);
+    for (var a = 0; L && a + L <= ans.length; a++) if (tFit(t, ans.substr(a, L), clue, new Map())) return true;
+    return false;
+  }
   function bOrder(ns, back) {
     var ans = bAnswer(), byClue = ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); });
     if (!ans || ns.length > 6) return byClue;
@@ -107,8 +114,7 @@
     (function perm(done, left) {
       if (best) return;
       if (!left.length) {
-        var l = tMake({ op: "cat", of: done }, DTOK.clue);
-        if (l && ans.indexOf(back ? l.split("").reverse().join("") : l) >= 0) best = done;
+        if (bFitsIn(back ? { op: "rev", of: { op: "cat", of: done } } : { op: "cat", of: done }, ans)) best = done;
         return;
       }
       left.forEach(function (n, i) { perm(done.concat([n]), left.slice(0, i).concat(left.slice(i + 1))); });
@@ -135,12 +141,8 @@
   }
   // Which of the selected parts can go outside and give a run of the answer's letters.
   function bInsFits(ns) {
-    var ans = bAnswer(), clue = DTOK.clue;
-    return ns.map(function (x, i) {
-      var t = JSON.parse(JSON.stringify(bIns(ns, i))), L = tSize(t, clue);
-      for (var a = 0; ans && a + L <= ans.length; a++) if (tFit(t, ans.substr(a, L), clue, new Map())) return true;
-      return false;
-    });
+    var ans = bAnswer();
+    return ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), ans); });
   }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;

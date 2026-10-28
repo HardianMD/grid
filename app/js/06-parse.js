@@ -255,16 +255,20 @@
     return ws.join("");
   }
   function isType(s, t) { return (s.dev || []).concat(String(s.ty || "").split(/,\s*/)).indexOf(t) >= 0; }
-  // What a piece does, in clue-type terms: "charade for “street”", "anagram of “climate sun”".
-  function howOf(q, s) {
+  // What a piece is, from its clue words, and where it sits: "synonym of “Lout”, around VERLE", "anagram of “lever”, inside OAF".
+  function howOf(q, s, letters) {
     var w = q.w ? "\u201c" + q.w + "\u201d" : "", of = w && " of " + w, ps = s.p || [];
-    var inside = ps.some(function (x) { return x !== q && x.at.length > 1 && x.at[0][0] + x.at[0][1] <= q.at[0][0] && q.at[0][0] < x.at[1][0]; });
-    var plain = q.at.length > 1 ? "container" : inside ? "inserted" : ps.length > 1 ? "charade" : "synonym";
-    if (q.o === "syn" && !w) return plain + " (the blog doesn\u2019t say from which words)";
-    return { syn: plain + (w && " for " + w), lit: w ? w + " as written" : "as written", sel: "letter selection" + (w && " from " + w),
+    // What the piece is, from its clue words; then, apart from that, where it sits: around the pieces inside it, or
+    // inside another. "Lout carrying broken lever": OAF is a synonym of "Lout", and goes around the anagram of "lever".
+    var holds = function (x, y) { return x !== y && x.at.length > 1 && x.at[0][0] + x.at[0][1] <= y.at[0][0] && y.at[0][0] < x.at[1][0]; };
+    var outer = ps.filter(function (x) { return holds(x, q); })[0], inner = ps.filter(function (y) { return holds(q, y); });
+    var shown = function (y) { return letters ? y.at.map(function (a) { return letters.slice(a[0], a[0] + a[1]).join(""); }).join("") : y.l; };  // as it sits in the answer
+    var where = q.at.length > 1 && inner.length ? ", around " + inner.map(shown).join(" + ") : outer ? ", inside " + shown(outer) : "";
+    var what = q.o === "syn" && !w ? "synonym (the blog doesn\u2019t say of which words)" : { syn: "synonym" + of, lit: w ? w + " as written" : "as written", sel: "letter selection" + (w && " from " + w),
       del: "deletion: " + (q.f || "") + " cut short" + (w && ", for " + w), anag: "anagram" + (q.x ? " of \u201c" + q.w.slice(q.x[0], q.x[1] + 1) + "\u201d" : of), rev: "reversal" + of, hid: "hidden" + (w && " in " + w),
       ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l,
       chg: "letter change: " + (q.f || "") + " becomes " + q.l + (w && ", from " + w), spn: "spoonerism" + of + ": swap the first sounds of " + (q.f || "") }[q.o] || "";
+    return what + where;
   }
   // The clue once, marked up from the structure: the definition underlined, indicators in italics, and each piece's
   // words tinted like its tiles.
@@ -354,7 +358,7 @@
       ps.forEach(function (q, i) {
         var li = mk("li");
         li.appendChild(mk("b", "k" + i % 6 + (q.o === "snd" ? " snd" : ""), q.o === "snd" ? q.at.map(function (a) { return letters.slice(a[0], a[0] + a[1]).join(""); }).join("") : q.l));
-        li.appendChild(document.createTextNode(" " + howOf(q, s)));
+        li.appendChild(document.createTextNode(" " + howOf(q, s, letters)));
         ul.appendChild(li);
       });
       box.appendChild(tiles); box.appendChild(ul);

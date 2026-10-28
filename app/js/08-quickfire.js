@@ -62,7 +62,7 @@
   function qfLoad(c, p) {
     var dir = c.k[0], num = c.k.slice(1), d = ((jsonOf(p, "hints") || {})[dir] || {})[num], rec = store.get("crossword:" + p.id) || {};
     c.p = p; c.a = rawAnswer(p, c.k, rec); c.clue = joinEnum((p[dir === "a" ? "across" : "down"] || {})[num] || "");
-    c.blog = ((jsonOf(p, "parses") || {})[dir] || {})[num]; c.mine = (rec.parses || {})[c.k];
+    c.blog = ((jsonOf(p, "parses") || {})[dir] || {})[num]; c.mine = (rec.parses || {})[c.k]; if (c.mine && c.mine.off) c.mine = null;
     QF.name = num + (dir === "a" ? " Across" : " Down");
     load({ id: "quickfire", qf: 1, title: "Quickfire", grid: [c.a.replace(/./g, ".")], across: { 1: c.clue },
       blog: c.p.blog, blog_name: c.p.blog_name, blog_keys: (c.p.blog_keys || []).indexOf(c.k) >= 0 ? ["a1"] : [] });

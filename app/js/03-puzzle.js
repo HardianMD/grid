@@ -257,7 +257,7 @@
     });
     if (core(rec) === core(old)) return;
     rec.at = Date.now(); store.set(k, rec);
-    QF.c.mine = myParses.a1; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
+    QF.c.mine = myParses.a1 && !myParses.a1.off ? myParses.a1 : null; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
   }
   function core(v) {
     var o = {}; Object.keys(v).forEach(function (k) { if (k !== "time" && k !== "sel" && k !== "at") o[k] = v[k]; });

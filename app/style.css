@@ -389,32 +389,18 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .chip.del, .btn.mini.danger { color: var(--bad); border-color: #e3b4b0; }
 .selbar { display: grid; gap: 6px; background: var(--cross); border-radius: 8px; padding: 8px; position: sticky; top: -18px; z-index: 2; }
 .selrow { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
-.wptok { font: 17px/2 var(--f-ui); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; min-height: 2em; -webkit-user-select: none; user-select: none; }
-.wptok .tok { cursor: pointer; border-radius: 3px; padding: 2px 1px; }
-.wptok.letters .tok { padding: 2px 3px; margin: 0 1px; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--rule); }
-.wptok .tok.sel { background: var(--cell); box-shadow: inset 0 0 0 1px var(--ink); }
-.wptok .tok.isdef { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-color: var(--accent); }
 .defpick.flash { animation: defflash 1.2s ease-out; }
 @keyframes defflash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
-.wptok .empty { color: var(--ink-soft); font-style: italic; }
 #lettersBtn[aria-pressed="true"], #typeBtn.on { background: var(--accent); color: var(--sheet); border-color: var(--accent); }
 .selbar.live { box-shadow: inset 0 0 0 2px var(--accent); }
 .btn.mini { padding: 3px 10px; font-size: 12px; white-space: nowrap; }
 .lbtns { display: flex; gap: 8px; align-items: center; }
-.confirm p.pprev { font: 15px/1.45 var(--f-ui); color: var(--ink); background: var(--paper); border-radius: 8px; padding: 8px 10px; min-height: 1.4em; }
-.pprev s { text-decoration-thickness: 2px; color: var(--ink-soft); }
 .lrow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
 .lrow .lbtns, .selrow .lbtns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .pedit > *, .selbar > * { min-width: 0; }
 .info { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); background: var(--sheet); color: var(--accent); font: italic 700 14px var(--f-ui); cursor: pointer; padding: 0; }
 .info[aria-expanded="true"] { background: var(--accent); color: var(--sheet); }
-.phelp { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--ink); }
-.confirm .phelp p { margin: 0; font-size: 13px; color: var(--ink); }
-.phelp code { font: 13px ui-monospace, Menlo, monospace; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0 4px; }
-.phelp dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
-.phelp dt { font-weight: 600; color: var(--ink-soft); }
-.phelp dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.ctype { display: inline-block; font: italic 600 12px var(--f-ui); color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 2px; }
+.confirm .ctype { display: inline-block; font: italic 600 12px var(--f-ui); color: var(--sheet); background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 2px; }
 .pview { display: grid; gap: 8px; }
 .pview p { margin: 0; }
 .confirm .pview .pclue { font: calc(16px * var(--cz))/1.4 var(--f-clue); color: var(--ink); }
@@ -443,7 +429,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 #bBar { gap: 5px; position: static; }
 .brow { display: flex; gap: 6px; } .brow input { flex: 1; min-width: 0; text-transform: uppercase; font: 700 15px var(--f-ui); letter-spacing: .06em; }
 .pbuild .bx li { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
-.pbuild .bx .x { font: 600 14px var(--f-ui); color: var(--bad); background: none; border: 0; padding: 0 4px; cursor: pointer; }
+.pbuild .x { font: 600 14px var(--f-ui); color: var(--bad); background: none; border: 0; padding: 0 4px; cursor: pointer; }
 .pedit label, .lnk summary { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 #ansInput { text-transform: uppercase; font: 800 18px var(--f-ui); letter-spacing: 0.08em; }
 .lnk summary { cursor: pointer; padding: 4px 0; }
@@ -533,3 +519,17 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .pbuild .tiles b.snd { border-radius: 4px; box-shadow: none; outline: 1.5px dashed var(--accent); outline-offset: -2px; }
 
 #pvBlog { margin-right: auto; }
+
+/* Parsing editor: the clue's words (and in Letters mode its letters) are the controls; one row of choices for the selection. */
+.lrow .sub { font-size: 13px; color: var(--ink-soft); }
+.defpick .tok .ch { border-radius: 3px; }
+.defpick .tok.on.d1 { text-decoration-color: #d9822b; }
+.defpick.letters .tok { background: none; }
+.defpick.letters .tok .ch { padding: 2px 2px; margin: 0 1px; background: var(--sheet); box-shadow: inset 0 0 0 1px var(--rule); cursor: pointer; }
+.defpick .tok .ch.sel { background: var(--cell); box-shadow: inset 0 0 0 1px var(--ink); }
+.defpick .tok .ch.k0 { background: #cfe3f5; } .defpick .tok .ch.k1 { background: #f8dcb4; } .defpick .tok .ch.k2 { background: #cdeccf; }
+.defpick .tok .ch.k3 { background: #ead4f2; } .defpick .tok .ch.k4 { background: #f6d0d0; } .defpick .tok .ch.k5 { background: #fff0a8; }
+#bRoles .lbl { align-self: center; font-size: 12px; color: var(--ink-soft); margin: 0 2px; }
+.pbuild li .x { margin-left: 2px; }
+.chips.whole .chip { font-size: 11px; padding: 4px 8px; }
+.confirm .pnote { margin: 0; font: 14px/1.45 var(--f-ui); color: var(--ink); background: var(--paper); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; }

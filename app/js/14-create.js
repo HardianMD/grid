@@ -251,7 +251,7 @@
     if (!filled(w)) miss.push("answer");
     if ((d.links || []).some(function (g) { return g.indexOf(k) > 0; })) return miss;
     if (!d.clues[k]) miss.push("clue");
-    if (!(x.wordplay || "").trim()) miss.push("parsing");
+    if (!(x.wordplay || "").trim() && !/definition|&lit|Palindrome/i.test(t)) miss.push("parsing");
     if (!t || t === "Parsing") miss.push("clue type");
     if (!((d.d || {})[k] || []).length && !/\bCD\b|&lit/.test(t)) miss.push("definition");
     return miss;

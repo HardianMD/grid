@@ -300,7 +300,7 @@
       box.appendChild(mk("button", "btn mini", ask.op === "cut" ? "Drop" : "Pick")).dataset.go = 1;
     }
     if (ask && ask.ind) {
-      var says = INDS[tText(clue, ask.ind).toLowerCase().replace(/[\s'"\u2019\u201d,;:.!?]+$/, "")] || [];
+      var says = INDS[indKey(tText(clue, ask.ind))] || [];
       IND_KINDS.slice().sort(function (x, y) { var i = says.indexOf(x[1]), j = says.indexOf(y[1]); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); }).forEach(function (k) {
         var b = box.appendChild(mk("button", "chip" + (says.indexOf(k[1]) >= 0 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
       });

@@ -36,7 +36,7 @@ for (const [what, rec, mode, hn, rv, dnf, text] of CASES) {
 console.log(bad ? bad + " of " + CASES.length + " failed" : "all " + CASES.length + " records read the same way");
 // The parsing tree: the same cases as crossword-data's tools/tree.py (tools/tree-cases.json is a copy of its file).
 const tree = {};
-vm.runInNewContext(fs.readFileSync(dir + "17-tree.js", "utf8") + "; this.tCheck = tCheck; this.tFit = tFit; this.tUnits = tUnits; this.tLetters = tLetters; this.tValid = tValid; this.tFromFlat = tFromFlat;", tree);
+vm.runInNewContext(fs.readFileSync(dir + "17-tree.js", "utf8") + fs.readFileSync(dir + "20-ind.js", "utf8") + "; this.tCheck = tCheck; this.tFit = tFit; this.tUnits = tUnits; this.tLetters = tLetters; this.tValid = tValid; this.tFromFlat = tFromFlat;", tree);
 const canon = (o) => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.keys(v).sort().reduce((a, x) => ((a[x] = v[x]), a), {}) : v);
 const TC = JSON.parse(fs.readFileSync(__dirname + "/tree-cases.json", "utf8"));
 let tbad = 0;

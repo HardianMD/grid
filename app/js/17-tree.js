@@ -292,7 +292,8 @@
     }).filter(Boolean);
   }
   // Gives each indicator ([span, kind, index]) to an operation: the kind the solver chose if any, then the nearest
-  // operation still without one. Returns the indicators left over.
+  // operation still without one, of a kind the words are known to signal (INDS) when there is one. Returns the
+  // indicators left over.
   function tAttach(t, inds, clue) {
     var ops = t ? tWalk(t) : [];
     ops.forEach(function (n) {
@@ -302,18 +303,20 @@
     });
     var cand = ops.filter(function (n) { return /^(rev|ins|anag|cut|pick|snd|spn|chg)$/.test(n.op) && !n.ind; }), pairs = [];
     inds.forEach(function (it) {
-      var x = it[0], kind = it[1];
+      var x = it[0], kind = it[1], says = kind ? [] : INDS[indKey(clue.slice(x[0], x[1]))] || [];
+      if (says.indexOf("pick") >= 0 || says.indexOf("cut") >= 0) says = says.concat(["pick", "cut"]);  // letters kept or dropped: the same words say either
+      if (!cand.some(function (n) { return says.indexOf(n.op) >= 0; })) says = [];
       cand.forEach(function (n) {
-        if (kind && T_IND_KIND[kind] !== n.op) return;
+        if (kind && T_IND_KIND[kind] !== n.op || says.length && says.indexOf(n.op) < 0) return;
         var rs = tReach(n);
         if (!rs.length || tWalk(n).some(function (y) { return y.w && y.w[0] < x[1] && x[0] < y.w[1]; })) return;
         var gap = Math.min.apply(null, rs.map(function (r) { return Math.max(r[0] - x[1], x[0] - r[1], 0); }));
         var size = Math.max.apply(null, rs.map(function (r) { return r[1]; })) - Math.min.apply(null, rs.map(function (r) { return r[0]; }));
-        pairs.push([gap, size, x, n]);
+        pairs.push([gap, size, x, n, says.length ? 0 : 1]);
       });
     });
     var used = {}, taken = [];
-    pairs.sort(function (u, v) { return u[0] - v[0] || u[1] - v[1]; }).forEach(function (p) {
+    pairs.sort(function (u, v) { return u[4] - v[4] || u[0] - v[0] || u[1] - v[1]; }).forEach(function (p) {  // words known to signal the kind go first
       if (used[p[2]] || taken.indexOf(p[3]) >= 0) return;
       p[3].ind = [p[2]]; used[p[2]] = 1; taken.push(p[3]);
     });

@@ -34,4 +34,7 @@ for (const [what, rec, mode, hn, rv, dnf, text] of CASES) {
   if (JSON.stringify(got) !== JSON.stringify(want)) { bad++; console.log("FAIL " + what + "\n  want " + JSON.stringify(want) + "\n  got  " + JSON.stringify(got)); }
 }
 console.log(bad ? bad + " of " + CASES.length + " failed" : "all " + CASES.length + " records read the same way");
+// The files share one scope (tools/build.py), so a second function of the same name silently replaces the first.
+const seen = {};
+for (const m of src.matchAll(/^  function ([A-Za-z_$][\w$]*)\(/gm)) { if (seen[m[1]]) { bad++; console.log("FAIL two functions named " + m[1]); } seen[m[1]] = 1; }
 process.exit(bad ? 1 : 0);

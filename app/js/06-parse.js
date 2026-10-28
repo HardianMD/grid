@@ -202,13 +202,14 @@
     $("hintTitle").textContent = wordName(w);
     hinted[key] = 1; clueInto($("pvClue"), w, true); if (had) hinted[key] = had; else delete hinted[key];
     $("pvAns").textContent = answerText(w);
-    var s = r.s || defsOnly(w, r.type);
+    var s = r.s || defsOnly(w, r.type) || (/&lit|palindrome/i.test(r.type) ? { v: 0, dev: [] } : null);
+    if (s) s = Object.assign({}, s, { ty: r.type });
     if (s) markClue($("pvClue"), w, s);
     $("pvType").textContent = r.type;
     // The blog's own words are a background check, not the parsing: hidden once its pieces make the answer.
     var head = w.clue.toLowerCase().split(/\s+/).slice(0, 3).join(" ").replace(/[^a-z ]/g, "");
     var hide = s && (r.mine ? r.wordplay.toLowerCase().replace(/[^a-z ]/g, "").indexOf(head) >= 0 || /^(double|cryptic) definition\.?$/i.test(r.wordplay.trim())
-      : s.v === 2 || cryptic(s) || s.defs && s.defs.length > 1 || (s.p || []).some(function (q) { return q.o === "snd"; }));
+      : s.v === 2 || cryptic(s) || s.defs && s.defs.length > 1 || (s.p || []).some(function (q) { return q.o === "snd" || q.o === "spn"; }));
     markup($("pvWp"), hide ? "" : r.wordplay);
     showBuild(s, w, null, r.mine, agreement(w, r));
     $("hintText").hidden = true; $("parseView").hidden = false;
@@ -254,6 +255,15 @@
     if (b.s && b.s.v === 2) return [true, "The check agrees with " + name + "."];
     return null;
   }
+  // A spoonerism: the first and last words swap their opening consonants (NOSY COOK -> COSY NOOK), as letters.
+  function spoon(t) {
+    var ws = String(t || "").toUpperCase().split(/\s+/).filter(Boolean), on = /^(QU|[^AEIOUY]*)/;
+    if (ws.length < 2) return "";
+    var a = ws[0], b = ws[ws.length - 1], x = a.match(on)[0], y = b.match(on)[0];
+    ws[0] = y + a.slice(x.length); ws[ws.length - 1] = x + b.slice(y.length);
+    return ws.join("");
+  }
+  function isType(s, t) { return (s.dev || []).concat(String(s.ty || "").split(/,\s*/)).indexOf(t) >= 0; }
   // What a piece does, in clue-type terms: "charade for “street”", "anagram of “climate sun”".
   function howOf(q, s) {
     var w = q.w ? "\u201c" + q.w + "\u201d" : "", of = w && " of " + w, ps = s.p || [];
@@ -261,7 +271,8 @@
     var plain = q.at.length > 1 ? "container" : inside ? "inserted" : ps.length > 1 ? "charade" : "synonym";
     return { syn: plain + (w && " for " + w), lit: plain + (w && ", " + w + " as written"), sel: "letter selection" + (w && " from " + w),
       del: "deletion: " + (q.f || "") + " cut short" + (w && ", for " + w), anag: "anagram" + of, rev: "reversal" + of, hid: "hidden" + (w && " in " + w),
-      ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l }[q.o] || "";
+      ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l,
+      chg: "letter change: " + (q.f || "") + " becomes " + q.l + (w && ", from " + w), spn: "spoonerism" + of + ": swap the first sounds of " + (q.f || "") }[q.o] || "";
   }
   // The clue once, marked up from the structure: the definition underlined, indicators in italics, and each piece's
   // words tinted like its tiles.
@@ -282,6 +293,7 @@
       pos = m[1];
     });
     el.appendChild(document.createTextNode(clue.slice(pos)));
+    if (isType(s, "&lit")) { var all = mk("span", "mcd"); while (el.firstChild) all.appendChild(el.firstChild); el.appendChild(all); }  // the whole clue is also the definition
   }
   function showBuild(s, w, box, mine, agree) {
     box = box || $("pvBuild");
@@ -315,8 +327,14 @@
       c.appendChild(document.createTextNode("the whole clue is one playful hint at " + ans + ". Read straight it seems to mean one thing; read sideways it defines the answer. There is no wordplay to split out."));
       box.appendChild(c);
     }
-    box.appendChild(mk("div", "chk", [dd || cd ? "Not checked: definitions can\u2019t be letter-checked, so this rests on " + who + " word." : mine ? "Not checked: no pieces make letters of the answer yet." : "Not checked: this rests on the blog\u2019s word.", ps.some(function (q) { return q.o === "snd"; }) ? "Sounds like: the sound can\u2019t be letter-checked, so it rests on " + (mine ? "your" : "the blog\u2019s") + " word." : "Partly checked: some letters come from the pieces.",
-      "Checked: the pieces make the answer."][s.v]));
+    var note = function (head, text) { var n = mk("p", "dd"); n.appendChild(mk("b", null, head)); n.appendChild(document.createTextNode(text)); box.appendChild(n); };
+    if (isType(s, "&lit")) note("&lit: ", "the whole clue is the definition of " + ans + ", and the same words also give the wordplay above.");
+    if (isType(s, "Palindrome")) note("Palindrome: ", ans + " reads the same backwards" + (ans === "the answer" ? "." : ": " + ans.split("").reverse().join("") + "."));
+    var sound = ps.some(function (q) { return q.o === "snd" || q.o === "spn"; });
+    box.appendChild(mk("div", "chk", [dd || cd ? "Not checked: definitions can\u2019t be letter-checked, so this rests on " + who + " word."
+      : sound ? "Sounds like: the sound can\u2019t be letter-checked, so it rests on " + who + " word."
+      : mine ? "Not checked: no pieces make letters of the answer yet." : "Not checked: this rests on the blog\u2019s word.",
+      "Partly checked: some letters come from the pieces.", "Checked: the pieces make the answer."][s.v]));
     if (agree) box.appendChild(mk("div", "chk " + (agree[0] ? "agree" : "differs"), agree[1]));
   }
   // Editor for a parsing; with withAnswer it also asks for the answer to a clue nobody had solved.
@@ -348,10 +366,12 @@
   // so, one piece around others), and the result is saved as the parsing's structure (s), as the blog's parsings carry.
   var DTOK = [], BLD = { sel: null, ps: [], ind: [], ask: null, gen: "", w: null };
   var ROLES = [["Definition", "def"], ["As written", "lit"], ["Stands for\u2026", "syn"], ["First letters", "ini"], ["Last letters", "end"],
-    ["Middle", "mid"], ["Alternate letters", "alt"], ["Shortened\u2026", "del"], ["Anagram fodder", "anag"], ["Hidden in", "hid"], ["Sounds like\u2026", "snd"]];
+    ["Middle", "mid"], ["Alternate letters", "alt"], ["Shortened\u2026", "del"], ["Anagram fodder", "anag"], ["Hidden in", "hid"], ["Sounds like\u2026", "snd"],
+    ["Letter changed\u2026", "chg"], ["Spoonerism of\u2026", "spn"]];
   var SIGNALS = [["anagram", "Anagram"], ["reversal", "Reversal"], ["container", "Container"], ["deletion", "Deletion"], ["selection", "Letter selection"],
     ["hidden", "Hidden"], ["sound", "Homophone"], ["link", ""]];
-  var ASK = { syn: "Letters it stands for, e.g. AB", del: "The whole word before it is cut, e.g. PARTY", snd: "Letters as they sound in the answer" };
+  var ASK = { syn: "Letters it stands for, e.g. AB", del: "The whole word before it is cut, e.g. PARTY", snd: "Letters as they sound in the answer",
+    chg: "The word, then what it becomes, e.g. BEAST>FEAST", spn: "The two words before the swap, e.g. NOSY COOK" };
   ROLES.forEach(function (r) { $("bRoles").appendChild(mk("button", "chip" + (r[1] === "def" ? " def" : ""), r[0])).dataset.r = r[1]; });
   SIGNALS.forEach(function (r) { $("bSigs").appendChild(mk("button", "chip", r[0])).dataset.t = r[1]; });
   function buildDefPick(w) {
@@ -395,6 +415,8 @@
       if (r === "alt") { var j = ws.join(""), odd = j.replace(/(.)./g, "$1"), even = j.replace(/.(.)?/g, "$1"); p.l = ans && ans.indexOf(even) >= 0 && ans.indexOf(odd) < 0 ? even : odd; }
       if (r === "syn" || r === "snd") p.l = bLetters(letters);
       if (r === "del") p.f = bLetters(letters);
+      if (r === "chg") { var two = String(letters).split(/[>\u2192]|\s+to\s+/i); p.f = bLetters(two[0]); p.l = bLetters(two[1]); if (!p.l) return toast("Write it as BEAST>FEAST"); }
+      if (r === "spn") { p.f = String(letters).toUpperCase().replace(/[^A-Z ]/g, "").trim(); p.l = spoon(p.f); if (!p.l) return toast("Give two words, e.g. NOSY COOK"); }
       if (!p.l && !p.f) return toast("No letters given");
       BLD.ps.push(p);
     }
@@ -469,7 +491,8 @@
       if (x.op === "rev") { o = q.k === "hid" ? "hid" : "rev"; dev.push("Reversal"); }
       if (x.op === "anag") o = "anag";
       if (x.at.length > 1) dev.push("Container");
-      dev.push({ anag: "Anagram", hid: "Hidden", del: "Deletion", sel: "Letter selection", ini: "Letter selection", alt: "Letter selection", snd: "Homophone" }[o]);
+      dev.push({ anag: "Anagram", hid: "Hidden", del: "Deletion", sel: "Letter selection", ini: "Letter selection", alt: "Letter selection", snd: "Homophone",
+        chg: "Letter change", spn: "Spoonerism" }[o]);
       var out = { l: o === "rev" ? q.l : l, o: o, at: x.at };
       if (q.a != null) out.w = bText(q.a, q.b);
       if (q.f) out.f = q.f;
@@ -497,6 +520,8 @@
       if (q.o === "hid") return "hidden in " + w;
       if (q.o === "del") return q.l + " (" + (w ? w + ", " : "") + q.f.toLowerCase() + " cut short)";
       if (q.o === "rev") return "(" + q.l + ")<" + g;
+      if (q.o === "chg") return q.f + ">" + q.l + g;
+      if (q.o === "spn") return "spoonerism of " + q.f + g;
       if (/^(sel|ini|alt)$/.test(q.o)) return q.l + " (" + (q.o === "ini" ? "first letters of " : q.o === "alt" ? "alternate letters of " : "from ") + w + ")";
       return q.l + g + (q.at.length > 1 ? " around" : "");
     }).join(" + ").replace(/ around \+/g, " around");
@@ -504,7 +529,8 @@
   }
   function bChanged() {
     var s = bStructure(), ta = $("parseText"), gen = bNotation(s);
-    if (s.dev.length) buildTypeChips(s.dev.join(", "));
+    var keep = ["&lit", "Palindrome", "Cryptic definition"].filter(function (t) { return $("parseType").value.split(/,\s*/).indexOf(t) >= 0 && s.dev.indexOf(t) < 0; });
+    if (s.dev.length) buildTypeChips(s.dev.concat(keep).join(", "));
     if (gen && (!ta.value.trim() || ta.value === BLD.gen)) { keepUndo(ta.value); ta.value = gen; preview(); }
     BLD.gen = gen; bRender(s);
   }
@@ -542,6 +568,7 @@
       var r = find(q.w), k = { sel: "syn", rev: "syn", ins: "syn" }[q.o] || q.o, p = { a: r ? r[0] : null, b: r ? r[1] : null, k: r || !/^(lit|ini|alt|anag|hid)$/.test(k) ? k : "syn", l: q.l };
       if (q.o === "rev") p.rev = true;
       if (q.o === "del") { p.f = q.f || q.l; if (!q.f) p.k = "syn"; }
+      if (q.o === "chg" || q.o === "spn") p.f = q.f;
       BLD.ps.push(p);
     });
     ((s && s.ind) || []).forEach(function (t) { var r = find(t); if (r) BLD.ind.push({ a: r[0], b: r[1], t: "" }); });

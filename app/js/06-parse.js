@@ -262,7 +262,7 @@
     var plain = q.at.length > 1 ? "container" : inside ? "inserted" : ps.length > 1 ? "charade" : "synonym";
     if (q.o === "syn" && !w) return plain + " (the blog doesn\u2019t say from which words)";
     return { syn: plain + (w && " for " + w), lit: w ? w + " as written" : "as written", sel: "letter selection" + (w && " from " + w),
-      del: "deletion: " + (q.f || "") + " cut short" + (w && ", for " + w), anag: "anagram" + of, rev: "reversal" + of, hid: "hidden" + (w && " in " + w),
+      del: "deletion: " + (q.f || "") + " cut short" + (w && ", for " + w), anag: "anagram" + (q.x ? " of \u201c" + q.w.slice(q.x[0], q.x[1] + 1) + "\u201d" : of), rev: "reversal" + of, hid: "hidden" + (w && " in " + w),
       ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l,
       chg: "letter change: " + (q.f || "") + " becomes " + q.l + (w && ", from " + w), spn: "spoonerism" + of + ": swap the first sounds of " + (q.f || "") }[q.o] || "";
   }
@@ -435,7 +435,7 @@
   WHOLE.forEach(function (r) { $("bWhole").appendChild(mk("button", "chip", r[0])).dataset.k = r[1]; });
   // Letters mode: a run of letters tapped inside the clue's words, taken as they stand (a hidden word, a word's
   // start or end) or cut out of their word (a deletion).
-  [["Taken", "pick"], ["Cut out", "cut"]].forEach(function (r) { $("bLRoles").appendChild(mk("button", "chip", r[0])).dataset.r = r[1]; });
+  [["Taken", "pick"], ["Cut out", "cut"], ["Anagram fodder", "anag"]].forEach(function (r) { $("bLRoles").appendChild(mk("button", "chip", r[0])).dataset.r = r[1]; });
   $("bLetters").addEventListener("click", function () {
     BLD.lmode = !BLD.lmode; this.setAttribute("aria-pressed", String(BLD.lmode));
     BLD.sel = BLD.lsel = null; BLD.ask = null; bRender();
@@ -630,7 +630,7 @@
     if (!(s.p || []).length) return s.defs && s.defs.length > 1 ? "Double definition: " + s.defs.join(" / ") : s.dev.indexOf("Cryptic definition") >= 0 ? "Cryptic definition" : "";
     var txt = (s.p || []).map(function (q) {
       var w = q.w || "", g = w ? " (" + w + ")" : "";
-      if (q.o === "anag") return "(" + w.toUpperCase() + ")*";
+      if (q.o === "anag") return "(" + (q.x ? w.slice(q.x[0], q.x[1] + 1) : w).toUpperCase() + ")*";  // tapped letters, or the words
       if (q.o === "lit") return q.l;
       if (q.o === "hid") return "hidden in " + w;
       if (q.o === "del") return q.l + " (" + (w ? w + ", " : "") + q.f.toLowerCase() + " cut short)";
@@ -700,7 +700,7 @@
       var r = find(q.w, q.c), k = { sel: "syn", rev: "syn", ins: "syn" }[q.o] || q.o, p = { a: r ? r[0] : null, b: r ? r[1] : null, k: r || !/^(lit|ini|alt|anag|hid)$/.test(k) ? k : "syn", l: q.l };
       if (q.o === "rev") p.rev = true;
       if (q.o === "del") { p.f = q.f || q.l; if (!q.f) p.k = "syn"; }
-      if (r && q.x && DTOK[r[0]].a === q.c) { p.cs = [q.x[0] + q.c, q.x[1] + q.c]; if (q.o !== "del") p.k = "pick"; }
+      if (r && q.x && DTOK[r[0]].a === q.c) { p.cs = [q.x[0] + q.c, q.x[1] + q.c]; if (!/^(del|anag)$/.test(q.o)) p.k = "pick"; }
       if (q.o === "chg" || q.o === "spn") p.f = q.f;
       BLD.ps.push(p);
     });

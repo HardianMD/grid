@@ -304,6 +304,8 @@ html[data-mode="hard"] .mtab tr > :nth-child(4), html[data-mode="champ"] .mtab t
 .solvedbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-block: 8px; background: var(--good-bg); border-top: 1px solid var(--ok-word); border-bottom: 1px solid var(--ok-word); font: 700 14px var(--f-ui); color: var(--good); }
 .sbtns { display: flex; gap: 6px; flex: 0 0 auto; }
 .solvedbar a { text-decoration: none; background: var(--sheet); white-space: nowrap; }
+#heatBtn { background: var(--sheet); } #heatBtn[aria-pressed="true"] { background: #d64820; border-color: #d64820; color: #fff; }
+.clue[data-t] { grid-template-columns: 22px 1fr auto; } .clue[data-t]::after { content: attr(data-t); padding-top: 2px; font: 600 12px var(--f-ui); color: #b03a18; font-variant-numeric: tabular-nums; }
 .solvedbar.dnf { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 .fbar { display: flex; align-items: center; gap: clamp(6px, 2vw, 10px); margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
 .fbar .btn { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding-inline: clamp(8px, 2.6vw, 12px); }  /* the four tabs fit a phone's width */

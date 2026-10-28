@@ -121,9 +121,12 @@
       var v = REVW[x.dir + x.num];
       if (v) x.cells.forEach(function (rc, i) { if (v === 1 || v.indexOf(i) >= 0) rv[rc[0] + "," + rc[1]] = 1; });
     });
+    logFill();
+    var heat = HEAT && heatOf();
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
       if (cells[r][c].b) continue;
       var el = cellEls[r][c], k = r + "," + c, a = SUB && solAt(r, c);
+      if (heat || el.style.background) el.style.background = heat ? heat.bg(Math.max(heat.t[cells[r][c].a] || 0, heat.t[cells[r][c].d] || 0)) : "";
       total++; if (fill[r][c]) done++;
       if (a && fill[r][c] !== a) { bad++; if (!fill[r][c]) gap++; }
       el.classList.toggle("rv", !!rv[k] || (!!a && fill[r][c] !== a));
@@ -142,6 +145,7 @@
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && !SUB && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
+      if (heat) x.el.dataset.t = fmt((heat.t[words.indexOf(x)] || 0) * 1000); else delete x.el.dataset.t;
     });
     $("nowTag").textContent = P.bank ? "Clue" : !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
     var fv = isFav(fl, P.id, w.dir + w.num);
@@ -182,6 +186,7 @@
     $("solvedBar").hidden = !solved || !!P.qf;
     $("app").classList.toggle("fin", solved && !P.qf);
     $("qfSolve").disabled = locked(w);
+    $("heatBtn").hidden = !(solved && LG); $("heatBtn").setAttribute("aria-pressed", String(HEAT));
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
@@ -200,6 +205,39 @@
     if ((solved || barWas) && !P.qf) size();
     scrollClue(w.el);
   }
+
+  // The fill log: every change to a square while unsolved, as "<seconds on the clock>.<row>.<col><a|d: direction being
+  // solved><letter, or - when cleared>", space-separated. Typing, Check removals, reveals and Clear all pass through render.
+  function logFill() {
+    if (LG === null || solved) return;
+    var t = Math.round(now() / 1000), ev = [];
+    for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) if (fill[r][c] !== SNAP[r][c]) {
+      SNAP[r][c] = fill[r][c]; ev.push(t + "." + r + "." + c + sel.dir + (fill[r][c] || "-"));
+    }
+    if (ev.length) LG += (LG ? " " : "") + ev.join(" ");
+  }
+  // The log as [[sec, r, c, dir, letter], ...] ("" when cleared).
+  function logOf(lg) {
+    return (lg || "").split(" ").filter(Boolean).map(function (e) {
+      var m = /^(\d+)\.(\d+)\.(\d+)([ad])(.)$/.exec(e);
+      return m ? [+m[1], +m[2], +m[3], m[4], m[5] === "-" ? "" : m[5]] : null;
+    }).filter(Boolean);
+  }
+  // Heatmap: the seconds since the previous change count towards the answer being solved (the direction typed in, else
+  // the square's only answer); a square takes the hotter of its two answers.
+  function heatOf() {
+    var t = {}, prev = 0, max = 1;
+    logOf(LG).forEach(function (e) {
+      var cl = cells[e[1]] && cells[e[1]][e[2]]; if (!cl || cl.b) return;
+      var i = cl[e[3]] >= 0 ? cl[e[3]] : cl[e[3] === "a" ? "d" : "a"];
+      t[i] = (t[i] || 0) + e[0] - prev; prev = e[0]; max = Math.max(max, t[i]);
+    });
+    return { t: t, bg: function (s) {  // white to deep orange
+      var f = 0.06 + 0.7 * s / max;
+      return "rgb(" + [214, 72, 32].map(function (v) { return Math.round(255 - (255 - v) * f); }) + ")";
+    } };
+  }
+  $("heatBtn").addEventListener("click", function () { HEAT = !HEAT; render(); });
 
   // Timer: counts up while the page is open and visible, stops when every answer is right.
   function now() { return elapsed + (since ? Date.now() - since : 0); }

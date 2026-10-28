@@ -154,7 +154,7 @@
   }
 
   var myDefs = {}, HARD = false, MED = false, CHAMP = false, SUB = null, MODE = "easy", USED = 0, REV = false, REVW = {}, HN = 0, BLANKS = 0, EDITED = false, SEES = [], P, R, C, cells, words, fill, sel, cellEls, SOL, ok, DEFS, hinted, PARSES, myParses, UNSOLVED, userAns, userSol;
-  var elapsed = 0, since = null, solved = false;
+  var elapsed = 0, since = null, solved = false, LG = null, SNAP = null, HEAT = false;
 
   // Linked groups: p.links ([["a1","a6"], ...], head first), else inferred from "See N" clues.
   // Easy (default): hints, reveals and green-locked answers; Check removes only the wrong letters.

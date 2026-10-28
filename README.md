@@ -31,7 +31,7 @@ Search for the function name; the comment above each says what it does.
 - Modes: comment block above `RANK`; `setMode`, `lastMode`, `prefs`/`setPref`.
 - Elements: `mk(tag, class, text)` builds one.
 - Solving: `load` (grid numbering, linked clues, saved record), `build`, `size`, `render`, `typeLetter`, `del`, `put`,
-  `check`/`checkWords`, `grade`/`submit` (Hard and Competition), `save` (record format), `blank`, the `mailBtn` and `postBtn` handlers (a full grid as a prize entry while `P.entry.by` is not past: emailed to `P.entry.to`, or an A4 PDF to post to `P.entry.post` with the sender's details from Settings, kept on this device as `crossword:post`; `entryAnswers`, `pdfDoc`, `giveFile`).
+  `check`/`checkWords`, `grade`/`submit` (Hard and Competition), `save` (record format), `logFill` (the fill log `lg`, read by `logOf`) and `heatOf` (the Heat view of a finished grid), `blank`, the `mailBtn` and `postBtn` handlers (a full grid as a prize entry while `P.entry.by` is not past: emailed to `P.entry.to`, or an A4 PDF to post to `P.entry.post` with the sender's details from Settings, kept on this device as `crossword:post`; `entryAnswers`, `pdfDoc`, `giveFile`).
 - Hints and parsings: `nextAction`, the `hintBtn` and `hintYes` handlers (one pop-up, `askMode`), `showParse`,
   `openEditor` (definition picker, clue type chips, mark-up bar `MARKS`).
 - Tools: anagram wheel (`wheelOpen` … `wheelKey`, `solveAnagram`, `combos`), word finder (`findBtn`, its own button unless Settings switch it off; `partWords` for each word of a longer answer), dictionary

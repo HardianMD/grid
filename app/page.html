@@ -216,8 +216,16 @@
         <label for="ansInput">Your answer</label>
         <input id="ansInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       </div>
-      <div class="lrow"><label>Definition <span class="sub">tap the words that define the answer</span></label><button class="btn mini" id="defClear" type="button">Clear</button></div>
+      <div class="lrow"><label>Build <span class="sub">tap words, then say what they do</span></label><button class="btn mini" id="defClear" type="button">Clear</button></div>
       <div class="defpick" id="defPick"></div>
+      <div class="selbar" id="bBar">
+        <span class="sub" id="bHint"></span>
+        <div class="chips" id="bRoles"></div>
+        <span class="sub">Indicator of</span>
+        <div class="chips" id="bSigs"></div>
+        <div class="brow" id="bAsk" hidden><input id="bLet" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn mini" id="bAdd" type="button">Add</button></div>
+      </div>
+      <div class="pbuild" id="bOut"></div>
       <label>Clue type <span class="sub">tap all that apply</span></label>
       <div class="chips" id="typeChips"></div>
       <input id="parseType" type="hidden">

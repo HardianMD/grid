@@ -65,6 +65,7 @@
   // A new piece; letters picked or cut are an operation already, so the next indicator tapped is theirs.
   function bAdd(n) {
     PE.parts.push(n); var op = n.op === "pick" || n.op === "cut";
+    if (op) bClaim(n);
     PE.pick = op ? [PE.parts.length - 1] : []; PE.target = op ? n : null; PE.sel = null; PE.lset = []; PE.ask = null; bRender();
   }
   // The words' role: the definition, an indicator, or a piece.
@@ -72,13 +73,9 @@
     var s = PE.sel; if (!s) return;
     var w = bSpan(s[0], s[1]), text = bText(s[0], s[1]);
     if (r === "def") { defOn(s[0], s[1]); PE.sel = null; return bRender(); }
-    if (r === "ind") {
-      // to the operation just made, else to the one selected part's operation, else loose until one is made
-      var to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
-      if (to && !/^(lit|syn|abr)$/.test(to.op)) { (to.ind = to.ind || []).push(w); }
-      else PE.ind.push(w);
-      PE.sel = null; return bRender();
-    }
+    // an indicator: say what it signals; it goes on the step just made if that is its kind, else waits for the
+    // next step of its kind (tap the pieces, then that step)
+    if (r === "ind") { PE.ask = { ind: w }; return bRender(); }
     if (r === "lit") return bAdd({ op: "lit", w: w });
     if (letters == null) {
       PE.ask = { r: r };
@@ -118,6 +115,19 @@
     })([], byClue);
     return best || byClue;
   }
+  // An indicator tapped first waits, with its kind, for the next step of that kind.
+  function bClaim(n) {
+    var i = PE.ind.map(function (x) { return x.op; }).indexOf(n.op);
+    if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); PE.ind.splice(i, 1); }
+  }
+  var IND_KINDS = [["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
+    ["Spoonerism", "spn"], ["Letter change", "chg"]];
+  function bIndKind(op) {
+    var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
+    if (to && to.op === op) (to.ind = to.ind || []).push(w);
+    else { PE.ind.push({ w: w, op: op }); PE.pick = []; PE.target = null; }  // now its pieces are tapped
+    PE.ask = null; PE.sel = null; bRender();
+  }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;
     if (!ns.length) return;
@@ -137,6 +147,7 @@
     else if (op === "cut" || op === "pick") n = { op: op, of: one, at: extra };
     else if (op === "snd" || op === "chg") n = { op: op, of: one, l: bLetters(extra) };
     else if (op === "spn") n = { op: "spn", of: one };
+    bClaim(n);
     PE.parts = PE.parts.filter(function (x) { return ns.indexOf(x) < 0; });
     PE.parts.push(n); PE.pick = [PE.parts.length - 1]; PE.target = n; PE.ask = null; PE.sel = null; PE.lset = [];
     bRender();
@@ -154,6 +165,7 @@
     var a = PE.ask, b = e.target.closest("button"); if (!a || !b) return;
     if (b.dataset.j != null) { var j = +b.dataset.j, i = a.drop.indexOf(j); if (i >= 0) a.drop.splice(i, 1); else a.drop.push(j); return bRender(); }
     if (b.dataset.out != null) return bWrap("ins", +b.dataset.out);
+    if (b.dataset.kind) return bIndKind(b.dataset.kind);
     if (b.dataset.go != null) {
       var whole = tMake(PE.parts[PE.pick[0]], DTOK.clue) || "";
       if (!a.drop.length) return toast("Tap the letters first");
@@ -237,12 +249,12 @@
     var kind = ["dd", "cd", "&lit"].filter(function (k) { return PE.whole.indexOf(k) >= 0; })[0];
     if (kind) p.kind = kind;
     if (PE.whole.indexOf("pal") >= 0) p.pal = true;
-    if (PE.ind.length) p.ind = PE.ind.slice();
+    if (PE.ind.length) p.ind = PE.ind.map(function (x) { return x.w; });
     return p;
   }
   // A part as a line of the tray, and its parts below it.
-  function bLine(n, depth, us, ul) {
-    var li = mk("li", "pt" + (depth ? " sub" : "")), l = tMake(n, DTOK.clue);
+  function bLine(n, depth, us, ul, got) {
+    var li = mk("li", "pt" + (depth ? " sub" : "")), l = tMake(n, DTOK.clue) || got(n);
     li.style.paddingLeft = depth * 14 + "px";
     var u = us.has(n) ? us.get(n) : null;
     li.appendChild(mk("b", u != null ? tKind(n) : "op", l || "?"));
@@ -250,7 +262,7 @@
     li.appendChild(document.createTextNode(t));
     (n.ind || []).forEach(function (sp) { li.appendChild(document.createTextNode(" ")); li.appendChild(mk("i", "mind", tText(DTOK.clue, sp))); });
     ul.appendChild(li);
-    if (!/^(lit|syn|abr)$/.test(n.op) && !(n.op === "pick" || n.op === "cut") || (n.op === "pick" || n.op === "cut") && n.of.op !== "lit") tKids(n).forEach(function (k) { bLine(k, depth + 1, us, ul); });
+    if (!/^(lit|syn|abr)$/.test(n.op) && !(n.op === "pick" || n.op === "cut") || (n.op === "pick" || n.op === "cut") && n.of.op !== "lit") tKids(n).forEach(function (k) { bLine(k, depth + 1, us, ul, got); });
     return li;
   }
   function bRender() {
@@ -274,7 +286,7 @@
     $("bRoles").hidden = !!ask || !sel; $("bLRoles").hidden = !!ask || !ls.length || !!sel;
     var wrap = $("bWrap"); wrap.textContent = ""; wrap.hidden = !!ask || !!sel || !!ls.length || !picked.length;
     (picked.length === 1 ? WRAP1 : WRAPN).forEach(function (r) {
-      var b = wrap.appendChild(mk("button", "chip", r[0])); b.type = "button"; b.dataset.op = r[1];
+      var b = wrap.appendChild(mk("button", "chip" + (PE.ind.some(function (x) { return x.op === r[1]; }) ? " sugg" : ""), r[0])); b.type = "button"; b.dataset.op = r[1];
       if ((r[1] === "cut" || r[1] === "pick") && !tMake(picked[0] || {}, clue)) b.disabled = true;
     });
     // the ask: letters to type, letters to tap, or which part goes outside
@@ -287,10 +299,18 @@
       });
       box.appendChild(mk("button", "btn mini", ask.op === "cut" ? "Drop" : "Pick")).dataset.go = 1;
     }
+    if (ask && ask.ind) {
+      var says = INDS[tText(clue, ask.ind).toLowerCase().replace(/[\s'"\u2019\u201d,;:.!?]+$/, "")] || [];
+      IND_KINDS.slice().sort(function (x, y) { var i = says.indexOf(x[1]), j = says.indexOf(y[1]); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); }).forEach(function (k) {
+        var b = box.appendChild(mk("button", "chip" + (says.indexOf(k[1]) >= 0 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
+      });
+    }
     if (ask && ask.op === "ins") picked.forEach(function (n, i) { var b = box.appendChild(mk("button", "chip", tMake(n, clue) || OPNAME[n.op])); b.type = "button"; b.dataset.out = i; });
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
-    $("bHint").textContent = ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them."
-      : ask ? "Type the letters, then Add." : sel ? q + " is:" : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected. ") + "Put together as:"
+    var waiting = PE.ind.filter(function (x) { return x.op; })[0];
+    $("bHint").textContent = ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them."
+      : ask ? "Type the letters, then Add." : sel ? q + (indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? "Now tap the pieces “" + tText(clue, waiting.w) + "” works on, then " + IND_KINDS.filter(function (k) { return k[1] === waiting.op; })[0][0] + "."
+      : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected. ") + "Put together as:"
       : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time." : "Tap a word, or two for a run. Tap pieces below to put them together.";
     Array.prototype.forEach.call($("bWhole").children, function (b) { b.classList.toggle("on", PE.whole.indexOf(b.dataset.k) >= 0); });
     // the tray, then the live check
@@ -298,19 +318,29 @@
     var any = PE.parts.length || PE.ind.length || runs.length || PE.whole.length;
     out.hidden = !any;
     if (!any) return;
-    var us = p.t ? tUnits(p.t) : new Map();
+    var us = p.t ? tUnits(p.t) : new Map(), ans0 = bAnswer(), own = p.t && ans0 ? tFit(p.t, ans0, clue, us) : null;
+    // a part's letters as they land in the answer (an anagram's, a container's), when the parsing fits
+    var got = function (n) {
+      if (!own) return "";
+      var u = []; (function g(k) { if (us.has(k)) u.push(us.get(k)); else tKids(k).forEach(g); })(n);
+      return ans0.split("").filter(function (_, i) { return u.indexOf(own[i]) >= 0; }).join("");
+    };
     if (PE.parts.length) {
       out.appendChild(mk("p", "lbl", "Pieces · tap to select"));
       PE.parts.forEach(function (n, i) {
         var ul = out.appendChild(mk("ul", "tray" + (PE.pick.indexOf(i) >= 0 ? " on" : "")));
         ul.dataset.pt = i;
-        var top = bLine(n, 0, us, ul);
+        var top = bLine(n, 0, us, ul, got);
         var x = top.appendChild(mk("button", "x", "×")); x.type = "button"; x.dataset.x = i;
         x.setAttribute("aria-label", /^(lit|syn|abr)$/.test(n.op) ? "Remove this piece" : "Take this apart");
       });
     }
     var more = mk("ul", "bx");
-    PE.ind.forEach(function (sp, i) { var li = more.appendChild(mk("li", null, "Indicator, not yet on an operation: ")); li.appendChild(mk("i", "mind", tText(clue, sp))); li.appendChild(mk("button", "x", "×")).dataset.di = i; });
+    PE.ind.forEach(function (x, i) {
+      var k = IND_KINDS.filter(function (y) { return y[1] === x.op; })[0];
+      var li = more.appendChild(mk("li", null, k ? k[0] + " indicator, waiting for its pieces: " : "Indicator, not yet on a step: "));
+      li.appendChild(mk("i", "mind", tText(clue, x.w))); li.appendChild(mk("button", "x", "×")).dataset.di = i;
+    });
     runs.forEach(function (r, i) { var li = more.appendChild(mk("li", null, "Definition: " + bText(r[0], r[1]) + " ")); li.appendChild(mk("button", "x", "×")).dataset.dr = i; });
     if (more.children.length) out.appendChild(more);
     var view = out.appendChild(mk("div", "pbuild"));
@@ -357,7 +387,7 @@
     $("bLetters").setAttribute("aria-pressed", "false");
     if (!p) return;
     if (p.t) PE.parts = [JSON.parse(JSON.stringify(p.t))];
-    PE.ind = (p.ind || []).slice();
+    PE.ind = (p.ind || []).map(function (w) { return { w: w, op: null }; });
     if (p.kind) PE.whole.push(p.kind);
     if (p.pal) PE.whole.push("pal");
   }

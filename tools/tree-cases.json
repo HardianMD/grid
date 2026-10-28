@@ -1,0 +1,1092 @@
+[
+ {
+  "name": "cut synonym inside a container, abbreviation first",
+  "clue": "Second option with no footing to retain previous academic (10)",
+  "answer": "SCHOLASTIC",
+  "v": 2,
+  "pieces": [
+   0,
+   1,
+   1,
+   1,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1
+  ],
+  "parse": {
+   "t": {
+    "op": "cat",
+    "of": [
+     {
+      "op": "abr",
+      "w": [
+       0,
+       6
+      ],
+      "l": "S"
+     },
+     {
+      "op": "ins",
+      "ind": [
+       [
+        30,
+        39
+       ]
+      ],
+      "out": {
+       "op": "cut",
+       "ind": [
+        [
+         14,
+         29
+        ]
+       ],
+       "at": [
+        5
+       ],
+       "of": {
+        "op": "syn",
+        "w": [
+         7,
+         13
+        ],
+        "l": "CHOICE"
+       }
+      },
+      "in": {
+       "op": "syn",
+       "w": [
+        40,
+        48
+       ],
+       "l": "LAST"
+      }
+     }
+    ]
+   },
+   "def": [
+    [
+     49,
+     57
+    ]
+   ]
+  }
+ },
+ {
+  "name": "the same without the cut does not fit",
+  "clue": "Second option with no footing to retain previous academic (10)",
+  "answer": "SCHOLASTIC",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "cat",
+    "of": [
+     {
+      "op": "abr",
+      "w": [
+       0,
+       6
+      ],
+      "l": "S"
+     },
+     {
+      "op": "ins",
+      "out": {
+       "op": "syn",
+       "w": [
+        7,
+        13
+       ],
+       "l": "CHOICE"
+      },
+      "in": {
+       "op": "syn",
+       "w": [
+        40,
+        48
+       ],
+       "l": "LAST"
+      }
+     }
+    ]
+   },
+   "def": [
+    [
+     49,
+     57
+    ]
+   ]
+  }
+ },
+ {
+  "name": "one reversal over a whole charade",
+  "clue": "Recall poem for introduction of The Wreck (7)",
+  "answer": "TORPEDO",
+  "v": 2,
+  "pieces": [
+   2,
+   1,
+   1,
+   1,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "rev",
+    "ind": [
+     [
+      0,
+      6
+     ]
+    ],
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "w": [
+        7,
+        11
+       ],
+       "l": "ODE"
+      },
+      {
+       "op": "syn",
+       "w": [
+        12,
+        15
+       ],
+       "l": "PRO"
+      },
+      {
+       "op": "pick",
+       "ind": [
+        [
+         16,
+         31
+        ]
+       ],
+       "at": [
+        0
+       ],
+       "of": {
+        "op": "lit",
+        "w": [
+         32,
+         35
+        ]
+       }
+      }
+     ]
+    }
+   },
+   "def": [
+    [
+     36,
+     41
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a container holding an anagram",
+  "clue": "Lout carrying broken lever on the other side (8)",
+  "answer": "OVERLEAF",
+  "v": 2,
+  "pieces": [
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "ins",
+    "ind": [
+     [
+      5,
+      13
+     ]
+    ],
+    "out": {
+     "op": "syn",
+     "w": [
+      0,
+      4
+     ],
+     "l": "OAF"
+    },
+    "in": {
+     "op": "anag",
+     "ind": [
+      [
+       14,
+       20
+      ]
+     ],
+     "of": {
+      "op": "lit",
+      "w": [
+       21,
+       26
+      ]
+     }
+    }
+   },
+   "def": [
+    [
+     27,
+     44
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a word as written, then a container",
+  "clue": "Bishop eaten by a dangerous beast in Britain once (6)",
+  "answer": "ALBION",
+  "v": 2,
+  "pieces": [
+   0,
+   1,
+   2,
+   1,
+   1,
+   1
+  ],
+  "parse": {
+   "t": {
+    "op": "cat",
+    "of": [
+     {
+      "op": "lit",
+      "w": [
+       16,
+       17
+      ]
+     },
+     {
+      "op": "ins",
+      "ind": [
+       [
+        7,
+        15
+       ]
+      ],
+      "out": {
+       "op": "syn",
+       "w": [
+        18,
+        33
+       ],
+       "l": "LION"
+      },
+      "in": {
+       "op": "abr",
+       "w": [
+        0,
+        6
+       ],
+       "l": "B"
+      }
+     }
+    ]
+   },
+   "def": [
+    [
+     37,
+     49
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a double definition has no tree",
+  "clue": "One is present, nervous (5)",
+  "answer": "TENSE",
+  "v": 0,
+  "parse": {
+   "kind": "dd",
+   "def": [
+    [
+     0,
+     14
+    ],
+    [
+     16,
+     23
+    ]
+   ]
+  }
+ },
+ {
+  "name": "letters hidden across words",
+  "clue": "Holds in damp letters (4)",
+  "answer": "AMPL",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "pick",
+    "ind": [
+     [
+      0,
+      8
+     ]
+    ],
+    "at": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "of": {
+     "op": "lit",
+     "w": [
+      9,
+      21
+     ]
+    }
+   },
+   "def": []
+  }
+ },
+ {
+  "name": "a homophone is taken on trust",
+  "clue": "We hear you sheep (3)",
+  "answer": "EWE",
+  "v": 1,
+  "pieces": [
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "snd",
+    "ind": [
+     [
+      0,
+      7
+     ]
+    ],
+    "l": "EWE",
+    "of": {
+     "op": "syn",
+     "w": [
+      8,
+      11
+     ],
+     "l": "U"
+    }
+   },
+   "def": [
+    [
+     12,
+     17
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a spoonerism is worked out",
+  "clue": "Spooner's nosy cook makes snug corner (4,4)",
+  "answer": "COSY NOOK",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "spn",
+    "ind": [
+     [
+      0,
+      9
+     ]
+    ],
+    "of": {
+     "op": "lit",
+     "w": [
+      10,
+      19
+     ]
+    }
+   },
+   "def": [
+    [
+     26,
+     37
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a wrong anagram fails",
+  "clue": "Rats circling one rodent (4)",
+  "answer": "MICE",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "anag",
+    "of": {
+     "op": "lit",
+     "w": [
+      0,
+      4
+     ]
+    }
+   },
+   "def": [
+    [
+     18,
+     24
+    ]
+   ]
+  }
+ },
+ {
+  "name": "letters picked at intervals across two words",
+  "clue": "Even samples from skin and mouth form a confused mass (4)",
+  "answer": "KNOT",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "pick",
+    "ind": [
+     [
+      0,
+      17
+     ]
+    ],
+    "at": [
+     1,
+     3,
+     5,
+     7
+    ],
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "lit",
+       "w": [
+        18,
+        22
+       ]
+      },
+      {
+       "op": "lit",
+       "w": [
+        27,
+        32
+       ]
+      }
+     ]
+    }
+   },
+   "def": [
+    [
+     38,
+     53
+    ]
+   ]
+  }
+ },
+ {
+  "name": "from flat: cut from a synonym (partial) (guardian-cryptic-30132 d14)",
+  "clue": "Layer of skin almost eaten by venom-producing pest (6,4)",
+  "answer": "SPIDERMITE",
+  "flat": {
+   "v": 1,
+   "dev": [
+    "Letter selection"
+   ],
+   "p": [
+    {
+     "l": "PIDERMI",
+     "o": "del",
+     "at": [
+      [
+       1,
+       7
+      ]
+     ],
+     "w": "Layer of skin",
+     "f": "EPIDERMIS"
+    }
+   ],
+   "ind": [
+    "Layer of skin almost"
+   ],
+   "def": "pest"
+  },
+  "parse": {
+   "def": [
+    [
+     46,
+     50
+    ]
+   ],
+   "t": {
+    "op": "cut",
+    "of": {
+     "op": "syn",
+     "l": "EPIDERMIS",
+     "w": [
+      0,
+      13
+     ]
+    },
+    "at": [
+     0,
+     8
+    ]
+   },
+   "ind": [
+    [
+     0,
+     20
+    ]
+   ]
+  },
+  "v": 0
+ },
+ {
+  "name": "from flat: reversed charade read in clue order (guardian-cryptic-30136 a1)",
+  "clue": "Quote this writer – rolling it will make you sick (6)",
+  "answer": "EMETIC",
+  "flat": {
+   "v": 1,
+   "dev": [
+    "Container",
+    "Reversal"
+   ],
+   "p": [
+    {
+     "l": "CITE",
+     "o": "syn",
+     "at": [
+      [
+       0,
+       1
+      ],
+      [
+       3,
+       3
+      ]
+     ],
+     "w": "Quote"
+    },
+    {
+     "l": "ME",
+     "o": "syn",
+     "at": [
+      [
+       1,
+       2
+      ]
+     ],
+     "w": "this writer"
+    }
+   ],
+   "ind": [
+    "rolling"
+   ],
+   "def": "it will make you sick"
+  },
+  "parse": {
+   "def": [
+    [
+     28,
+     49
+    ]
+   ],
+   "t": {
+    "op": "rev",
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "l": "CITE",
+       "w": [
+        0,
+        5
+       ]
+      },
+      {
+       "op": "syn",
+       "l": "ME",
+       "w": [
+        6,
+        17
+       ]
+      }
+     ]
+    },
+    "ind": [
+     [
+      20,
+      27
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "from flat: container around a reversed outer part (guardian-cryptic-30144 a25)",
+  "clue": "Inventor is absorbed by revolutionary point (6)",
+  "answer": "EDISON",
+  "flat": {
+   "v": 1,
+   "dev": [
+    "Container",
+    "Reversal"
+   ],
+   "p": [
+    {
+     "l": "NODE",
+     "o": "syn",
+     "at": [
+      [
+       0,
+       2
+      ],
+      [
+       4,
+       2
+      ]
+     ]
+    },
+    {
+     "l": "IS",
+     "o": "lit",
+     "at": [
+      [
+       2,
+       2
+      ]
+     ],
+     "w": "is"
+    }
+   ],
+   "def": "Inventor"
+  },
+  "parse": {
+   "def": [
+    [
+     0,
+     8
+    ]
+   ],
+   "t": {
+    "op": "ins",
+    "out": {
+     "op": "rev",
+     "of": {
+      "op": "syn",
+      "l": "NODE"
+     }
+    },
+    "in": {
+     "op": "lit",
+     "w": [
+      9,
+      11
+     ]
+    },
+    "k": 2
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "from flat: reversal of a whole container (times-29675 a11)",
+  "clue": "Extremely old lady has recalled nothing about guild member (9)",
+  "answer": "LIVERYMAN",
+  "flat": {
+   "v": 1,
+   "dev": [
+    "Container",
+    "Charade",
+    "Reversal"
+   ],
+   "p": [
+    {
+     "l": "NIL",
+     "o": "syn",
+     "at": [
+      [
+       0,
+       2
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "w": "nothing"
+    },
+    {
+     "l": "VERY",
+     "o": "syn",
+     "at": [
+      [
+       2,
+       4
+      ]
+     ],
+     "w": "Extremely"
+    },
+    {
+     "l": "MA",
+     "o": "syn",
+     "at": [
+      [
+       6,
+       2
+      ]
+     ],
+     "w": "old lady"
+    }
+   ],
+   "ind": [
+    "about"
+   ],
+   "def": "guild member"
+  },
+  "parse": {
+   "def": [
+    [
+     46,
+     58
+    ]
+   ],
+   "t": {
+    "op": "ins",
+    "out": {
+     "op": "rev",
+     "of": {
+      "op": "syn",
+      "l": "NIL",
+      "w": [
+       32,
+       39
+      ]
+     },
+     "ind": [
+      [
+       40,
+       45
+      ]
+     ]
+    },
+    "in": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "l": "VERY",
+       "w": [
+        0,
+        9
+       ]
+      },
+      {
+       "op": "syn",
+       "l": "MA",
+       "w": [
+        10,
+        18
+       ]
+      }
+     ]
+    },
+    "k": 2
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "from flat: homophone (everyman-4173 d21)",
+  "clue": "Stopping mechanism to develop a fault, as can be heard (5)",
+  "answer": "BRAKE",
+  "flat": {
+   "v": 0,
+   "dev": [
+    "Homophone"
+   ],
+   "p": [
+    {
+     "l": "BREAK",
+     "o": "snd",
+     "at": [
+      [
+       0,
+       5
+      ]
+     ],
+     "w": "as can be heard"
+    }
+   ],
+   "def": "Stopping mechanism"
+  },
+  "parse": {
+   "def": [
+    [
+     0,
+     18
+    ]
+   ],
+   "t": {
+    "op": "snd",
+    "l": "BRAKE",
+    "of": {
+     "op": "syn",
+     "l": "BREAK",
+     "w": [
+      39,
+      54
+     ]
+    }
+   }
+  },
+  "v": 1
+ },
+ {
+  "name": "from flat: alternate letters (guardian-cryptic-30135 a19)",
+  "clue": "Oddly, equal pay was enshrined in these regulations (2,4)",
+  "answer": "EULAWS",
+  "flat": {
+   "v": 2,
+   "dev": [
+    "Letter selection"
+   ],
+   "p": [
+    {
+     "l": "EULAWS",
+     "w": "equal pay was",
+     "o": "alt",
+     "at": [
+      [
+       0,
+       6
+      ]
+     ]
+    }
+   ],
+   "ind": [
+    "Oddly"
+   ],
+   "def": "these regulations"
+  },
+  "parse": {
+   "def": [
+    [
+     34,
+     51
+    ]
+   ],
+   "t": {
+    "op": "pick",
+    "of": {
+     "op": "lit",
+     "w": [
+      7,
+      20
+     ]
+    },
+    "at": [
+     0,
+     2,
+     4,
+     6,
+     8,
+     10
+    ],
+    "ind": [
+     [
+      0,
+      5
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "from flat: hidden word (everyman-4173 a1)",
+  "clue": "Bawdiest heresy describing OT character (6)",
+  "answer": "ESTHER",
+  "flat": {
+   "v": 2,
+   "dev": [
+    "Hidden"
+   ],
+   "p": [
+    {
+     "l": "ESTHER",
+     "w": "Bawdiest heresy",
+     "o": "hid",
+     "at": [
+      [
+       0,
+       6
+      ]
+     ]
+    }
+   ],
+   "ind": [
+    "describing"
+   ],
+   "def": "OT character"
+  },
+  "parse": {
+   "def": [
+    [
+     27,
+     39
+    ]
+   ],
+   "t": {
+    "op": "pick",
+    "of": {
+     "op": "lit",
+     "w": [
+      0,
+      15
+     ]
+    },
+    "at": [
+     5,
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    "ind": [
+     [
+      16,
+      26
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "from flat: indicators attached to two operations (everyman-4173 a17)",
+  "clue": "Regrettably seedy, entertaining commercial gets you looking glum (3-4)",
+  "answer": "SADEYED",
+  "flat": {
+   "v": 2,
+   "dev": [
+    "Anagram",
+    "Container",
+    "Charade"
+   ],
+   "p": [
+    {
+     "l": "SEEDY",
+     "o": "anag",
+     "at": [
+      [
+       0,
+       1
+      ],
+      [
+       3,
+       4
+      ]
+     ],
+     "w": "seedy"
+    },
+    {
+     "l": "AD",
+     "o": "syn",
+     "at": [
+      [
+       1,
+       2
+      ]
+     ]
+    }
+   ],
+   "ind": [
+    "entertaining",
+    "Regrettably"
+   ],
+   "def": "looking glum",
+   "bt": "Container, Anagram"
+  },
+  "parse": {
+   "def": [
+    [
+     52,
+     64
+    ]
+   ],
+   "t": {
+    "op": "ins",
+    "out": {
+     "op": "anag",
+     "of": {
+      "op": "lit",
+      "w": [
+       12,
+       17
+      ]
+     },
+     "ind": [
+      [
+       19,
+       31
+      ]
+     ]
+    },
+    "in": {
+     "op": "syn",
+     "l": "AD"
+    },
+    "k": 1,
+    "ind": [
+     [
+      0,
+      11
+     ]
+    ]
+   }
+  },
+  "v": 2
+ }
+]

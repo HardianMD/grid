@@ -145,7 +145,10 @@
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && !SUB && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
-      if (heat) x.el.dataset.t = fmt((heat.t[words.indexOf(x)] || 0) * 1000); else delete x.el.dataset.t;
+      // With Heat on, each clue shows its time, after a blue dot if hinted and a brown one if revealed (as in Stats).
+      if (heat && (!x.ht || x.ht.parentNode !== x.el)) x.el.appendChild(x.ht = mk("i", "ht"));
+      if (heat) x.ht.innerHTML = (hinted[k] ? '<span class="hh">\u25cf</span>' : "") + (REVW[k] ? '<span class="rv">\u25cf</span>' : "") + fmt((heat.t[words.indexOf(x)] || 0) * 1000);
+      else if (x.ht) { x.ht.remove(); x.ht = null; }
     });
     $("nowTag").textContent = P.bank ? "Clue" : !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
     var fv = isFav(fl, P.id, w.dir + w.num);
@@ -232,9 +235,9 @@
       var i = cl[e[3]] >= 0 ? cl[e[3]] : cl[e[3] === "a" ? "d" : "a"];
       t[i] = (t[i] || 0) + e[0] - prev; prev = e[0]; max = Math.max(max, t[i]);
     });
-    return { t: t, bg: function (s) {  // white to deep orange
+    return { t: t, bg: function (s) {  // white to the accent blue
       var f = 0.06 + 0.7 * s / max;
-      return "rgb(" + [214, 72, 32].map(function (v) { return Math.round(255 - (255 - v) * f); }) + ")";
+      return "rgb(" + [29, 95, 153].map(function (v) { return Math.round(255 - (255 - v) * f); }) + ")";
     } };
   }
   $("heatBtn").addEventListener("click", function () { HEAT = !HEAT; render(); });

@@ -181,6 +181,7 @@
       [["Solution", "pans", function (x) { x.textContent = answerOf(p, f.k, s.firstChild.textContent); }],
        ["Parse", "pwp", function (x) {
         var mine = ((store.peek("crossword:" + p.id) || {}).parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
+        if (mine && mine.off) mine = null;
         var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
         var t = mk("i", null, ctype(r.type)); var wp = mk("span"); markup(wp, r.wordplay || "");
         x.appendChild(t); x.appendChild(wp);

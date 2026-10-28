@@ -209,6 +209,7 @@
       <p class="pans" id="pvAns"></p>
       <p class="pwp"><i id="pvType"></i><span id="pvWp"></span></p>
       <div class="pbuild" id="pvBuild" hidden></div>
+      <p class="pnote" id="pvNote" hidden></p>
     </div>
     <p class="note" id="parseNote" hidden></p>
     <div class="pedit" id="parseForm" hidden>
@@ -216,45 +217,18 @@
         <label for="ansInput">Your answer</label>
         <input id="ansInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       </div>
-      <div class="lrow"><label>Build <span class="sub">tap words, then say what they do</span></label><button class="btn mini" id="defClear" type="button">Clear</button></div>
+      <div class="lrow"><span class="sub" id="bHint">Tap a word, or two for a run.</span><span class="lbtns"><button class="btn mini" id="bLetters" type="button" aria-pressed="false">Letters</button><button class="btn mini" id="defClear" type="button">Start over</button></span></div>
       <div class="defpick" id="defPick"></div>
-      <div class="selbar" id="bBar">
-        <span class="sub" id="bHint"></span>
+      <div class="selbar" id="bBar" hidden>
         <div class="chips" id="bRoles"></div>
-        <span class="sub">Indicator of</span>
-        <div class="chips" id="bSigs"></div>
+        <div class="chips" id="bLRoles"></div>
+        <div class="chips" id="bSigs" hidden></div>
         <div class="brow" id="bAsk" hidden><input id="bLet" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn mini" id="bAdd" type="button">Add</button></div>
       </div>
       <div class="pbuild" id="bOut"></div>
-      <label>Clue type <span class="sub">tap all that apply</span></label>
-      <div class="chips" id="typeChips"></div>
-      <input id="parseType" type="hidden">
-      <div class="lrow"><label for="parseText">Wordplay</label><span class="lbtns"><button class="btn mini" id="useClue" type="button">From clue</button><button class="btn mini" id="lettersBtn" type="button" aria-pressed="false">Letters</button><button class="btn mini" id="typeBtn" type="button">Type</button><button class="btn mini danger" id="wpClear" type="button">Delete all</button><button class="info" id="parseInfo" type="button" aria-label="How to type parsings" aria-expanded="false">i</button></span></div>
-      <div class="selbar" id="selBar">
-        <div class="selrow"><span class="sub" id="selHint">Tap a word, then tap another to select a run, then pick what they do.</span><span class="lbtns"><button class="btn mini" id="undoBtn" type="button" hidden>Undo</button><button class="btn mini" id="selClear" type="button" hidden aria-label="Clear selection">×</button></span></div>
-        <div class="chips" id="markChips"></div>
-      </div>
-      <div class="wptok" id="wpTok"></div>
-      <textarea id="parseText" rows="4" hidden></textarea>
-      <p class="pprev" id="parsePrev"></p>
-      <div class="phelp" id="parseHelp" hidden>
-        <p><b>Two special marks</b></p>
-        <p><code>_word_</code> shows an indicator in <i>italics</i>. <code>~X~</code> shows letters <s>struck out</s> as removed.</p>
-        <p><b>How to write each type</b></p>
-        <dl>
-          <dt>Anagram</dt><dd><code>(LISTEN)* _broken_</code></dd>
-          <dt>Charade</dt><dd><code>CAR (vehicle) + PET (favourite)</code></dd>
-          <dt>Container</dt><dd><code>PA(R)T: R inside PAT, _holding_</code></dd>
-          <dt>Reversal</dt><dd><code>(STAR)< _back_</code></dd>
-          <dt>Hidden</dt><dd><code>_some_ aPE Time</code>, answer letters in capitals</dd>
-          <dt>Deletion</dt><dd><code>~B~RAIN (mind) _headless_</code></dd>
-          <dt>Initial letters</dt><dd><code>_first of_ Every Very Excited Nurse</code></dd>
-          <dt>Homophone</dt><dd><code>NEW, _sounds like_ KNEW</code></dd>
-          <dt>Double definition</dt><dd><code>PUNCH (hit) / PUNCH (drink)</code></dd>
-          <dt>Cryptic definition</dt><dd>A sentence explaining the pun</dd>
-        </dl>
-        <p>Put the clue type, such as Anagram, in the Clue type box. The definition is underlined for you, so you don't need to write it.</p>
-      </div>
+      <div class="chips whole" id="bWhole"></div>
+      <label for="parseNotes">Notes <span class="sub">shown under the parsing</span></label>
+      <textarea id="parseNotes" rows="2" placeholder="Anything else worth saying"></textarea>
     </div>
     <div class="pedit" id="clueForm" hidden>
       <label for="clueText">Clue</label>

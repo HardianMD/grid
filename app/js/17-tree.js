@@ -213,15 +213,16 @@
   }
   function tSeg(ans, q) { return q.at.map(function (a) { return ans.substr(a[0], a[1]); }).join(""); }
   // The first reading of the old pieces whose tree gives the answer: as placed (a backwards container mirrored, then
-  // with only its outer part reversed), else their charade in clue order, backwards or forwards.
+  // else their charade in clue order backwards,
+  // else a container around its reversed outer part, else the charade forwards.
   function tBest(ps, rv, clue, ans) {
     var clueOrder = function (back) {
       var ks = ps.map(function (q) { var g = tSeg(ans, q); return tLeaf(q, clue, g === tLetters(q.l) ? g : tLetters(q.l)); });
       var t = ks.length === 1 ? ks[0] : { op: "cat", of: ks };
       return back ? { op: "rev", of: t } : t;
     };
-    var tries = [function () { return tPlaced(ps, rv, clue, ans, true); }, function () { return tPlaced(ps, rv, clue, ans, false); },
-      function () { return clueOrder(true); }, function () { return clueOrder(false); }], first = null;
+    var tries = [function () { return tPlaced(ps, rv, clue, ans, true); }, function () { return clueOrder(true); },
+      function () { return tPlaced(ps, rv, clue, ans, false); }, function () { return clueOrder(false); }], first = null;
     for (var i = 0; i < tries.length; i++) {
       var t;
       try { t = tries[i](); } catch (e) { continue; }

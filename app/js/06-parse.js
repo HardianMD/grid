@@ -220,14 +220,16 @@
     hinted[key] = 1; clueInto($("pvClue"), w, true); if (had) hinted[key] = had; else delete hinted[key];
     var s = r.s || defsOnly(w, r.type) || (/&lit|palindrome/i.test(r.type) ? { v: 0, dev: [] } : null);
     if (s) s = Object.assign({}, s, { ty: r.type });
-    if (s) markClue($("pvClue"), w, s);
+    var t = s && treeFor(w, s, w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || ""; }).join(""));
+    if (t) tMarkClue($("pvClue"), w, t);
     $("pvAns").textContent = answerText(w); $("pvAns").hidden = !!s;
-    $("pvType").textContent = r.type;
+    // a tree that gives the answer names the type from its operations; else the blog's or the solver's words
+    $("pvType").textContent = t && t.t && tCheck(t, w.clue, w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || ""; }).join("")) ? tTypes(t, w.clue) : r.type;
     // With a structure the marked clue and the tiles are the parsing; the written parsing shows only when there is
     // none, or when Blog parse is tapped (the blog's words, verbatim).
     markup($("pvWp"), s ? "" : r.wordplay);
     var bp = blogParse(w); $("pvBlog").hidden = !(s && bp && bp.wordplay); $("pvBlog").classList.remove("on");
-    showBuild(s, w, null, r.mine);
+    tShowBuild(t, w, $("pvBuild"));
     $("pvNote").textContent = r.mine && myParses[key].note || ""; $("pvNote").hidden = !$("pvNote").textContent;
     $("hintText").hidden = true; $("parseView").hidden = false;
     // The blog is linked from the finish bar; the note only says when the parsing is the solver's own or missing.
@@ -269,80 +271,6 @@
       abr: "abbreviation" + of, ini: "first letters" + of, alt: "alternate letters" + of, snd: "homophone" + of + ": sounds like " + q.l,
       chg: "letter change: " + (q.f || "") + " becomes " + q.l + (w && ", from " + w), spn: "spoonerism" + of + ": swap the first sounds of " + (q.f || "") }[q.o] || "";
     return what + where;
-  }
-  // The clue once, marked up from the structure: the definition underlined, indicators in italics, and each piece's
-  // words tinted like its tiles.
-  // Which characters of a clue phrase give the letters taken from it: first, last, middle or alternate letters of
-  // its words, a run hidden across them, a word with letters cut, or failing those the first way the letters fit.
-  function takenMask(phrase, taken) {
-    var ch = phrase.split(""), idx = [], up = "";
-    ch.forEach(function (c, i) { if (/[a-z]/i.test(c)) { idx.push(i); up += c.toUpperCase(); } });
-    var words = [], cur = null;
-    ch.forEach(function (c, i) { if (/[a-z]/i.test(c)) { if (!cur) { cur = []; words.push(cur); } cur.push(i); } else cur = null; });
-    var mark = function (list) { var m = []; list.forEach(function (i) { m[i] = 1; }); return m; };
-    var tries = [
-      function () { return words.map(function (w) { return w[0]; }); },
-      function () { return words.map(function (w) { return w[w.length - 1]; }); },
-      function () { return idx.filter(function (_, k) { return k % 2 === 0; }); },
-      function () { return idx.filter(function (_, k) { return k % 2 === 1; }); },
-      function () { return [].concat.apply([], words.map(function (w) { return w.slice((w.length - 1) >> 1, (w.length + 2) >> 1); })); }
-    ];
-    for (var t = 0; t < tries.length; t++) { var list = tries[t], got = list().map(function (i) { return ch[i].toUpperCase(); }).join(""); if (got === taken) return mark(list()); }
-    var run = up.indexOf(taken);  // hidden, or a word's start or end
-    if (run >= 0) return mark(idx.slice(run, run + taken.length));
-    for (var cut = 1; cut < up.length; cut++) for (var at = 0; at + cut <= up.length; at++)  // one stretch cut out
-      if (up.slice(0, at) + up.slice(at + cut) === taken) return mark(idx.slice(0, at).concat(idx.slice(at + cut)));
-    var out = [], k = 0;  // the letters in order, wherever they first fit
-    for (var i = 0; i < up.length && k < taken.length; i++) if (up[i] === taken[k]) { out.push(idx[i]); k++; }
-    return k === taken.length ? mark(out) : null;
-  }
-  // Where a piece's source words sit in the clue: at the offset the solver tapped when there is one, else the first
-  // whole-word match ("a" is the word, not the a in "eaten"), else anywhere.
-  function wordAt(low, t, c) {
-    if (!t) return -1;
-    t = t.toLowerCase();
-    if (c != null && low.substr(c, t.length) === t) return c;
-    for (var at = low.indexOf(t); at >= 0; at = low.indexOf(t, at + 1))
-      if (!/[a-z]/.test(low.charAt(at - 1)) && !/[a-z]/.test(low.charAt(at + t.length))) return at;
-    return low.indexOf(t);
-  }
-  // The letters the solver tapped (q.x, within the piece's words): the run itself, or for a cut the rest of the words.
-  function tappedMask(q) {
-    var m = [];
-    for (var i = 0; i < q.w.length; i++) if (/[a-z]/i.test(q.w[i]) && (q.o === "del" ? i < q.x[0] || i > q.x[1] : i >= q.x[0] && i <= q.x[1])) m[i] = 1;
-    return m;
-  }
-  function markClue(el, w, s) {
-    var clue = w.clue, low = clue.toLowerCase(), n = clue.length;
-    if (cryptic(s)) { el.textContent = ""; el.appendChild(mk("span", "mcd", clue)); return; }  // the whole clue is the definition
-    // Marks can sit inside one another ("ending in Chicago" indicates, "Chicago" is a piece's source), so each
-    // character carries all of its marks and the clue is emitted in runs of equal marks.
-    var piece = [], ind = [], def = [], plain = [];
-    var put = function (t, arr, v) { var at = wordAt(low, t); if (at < 0) return; for (var c = at; c < at + t.length; c++) if (arr[c] == null) arr[c] = v; };
-    (s.p || []).forEach(function (q, i) {
-      var cls = "k" + i % 6 + (q.o === "snd" ? " snd" : ""), at = wordAt(low, q.w, q.c);
-      if (at < 0) return;
-      // Letters taken from the clue's words (selections, hiddens, deletions) tint those letters alone; the rest of
-      // the word stays plain, outside any indicator.
-      var mask = q.x ? tappedMask(q) : /^(sel|ini|alt|hid|del)$/.test(q.o) && takenMask(q.w, q.l);
-      for (var c = at; c < at + q.w.length; c++) {
-        if (mask) { plain[c] = 1; if (mask[c - at] && piece[c] == null) piece[c] = cls; }
-        else if (piece[c] == null) piece[c] = cls;
-      }
-    });
-    (s.ind || []).forEach(function (t) { put(t, ind, "mind"); });
-    plain.forEach(function (v, c) { if (v) ind[c] = null; });
-    if (s.defs && s.defs.length > 1) s.defs.forEach(function (t, i) { put(t, def, "mdef d" + i % 2); });
-    else defsFor(w).concat(s.def ? [s.def] : []).forEach(function (t) { put(t, def, "mdef"); });
-    el.textContent = "";
-    for (var a = 0; a < n;) {
-      var key = [piece[a], ind[a], def[a]].join("|"), b = a + 1;
-      while (b < n && [piece[b], ind[b], def[b]].join("|") === key) b++;
-      var cls = [piece[a], ind[a], def[a]].filter(Boolean).join(" "), text = clue.slice(a, b);
-      el.appendChild(cls ? mk(def[a] ? "u" : "span", cls, text) : document.createTextNode(text));
-      a = b;
-    }
-    if (isType(s, "&lit")) { var all = mk("span", "mcd"); while (el.firstChild) all.appendChild(el.firstChild); el.appendChild(all); }  // the whole clue is also the definition
   }
   function showBuild(s, w, box, mine) {
     var verdict = !!box;  // the editor shows the check's verdict; the view shows the pieces alone

@@ -429,6 +429,10 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 #bBar { gap: 5px; position: static; }
 .brow { display: flex; gap: 6px; } .brow input { flex: 1; min-width: 0; text-transform: uppercase; font: 700 15px var(--f-ui); letter-spacing: .06em; }
 .pbuild .bx li { display: flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+.pbuild .bx li.rvp { flex-wrap: wrap; padding-left: 12px; }
+.pbuild .bx li.rvp .chip { font-size: 11px; padding: 3px 8px; }
+.pbuild .bx li.rvp .chip.cut { min-width: 24px; }
+.pbuild .bx li.rvp .chip.cut.on { background: none; color: var(--bad); border-color: var(--bad); text-decoration: line-through; }
 .pbuild .x { font: 600 14px var(--f-ui); color: var(--bad); background: none; border: 0; padding: 0 4px; cursor: pointer; }
 .pedit label, .lnk summary { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 #ansInput { text-transform: uppercase; font: 800 18px var(--f-ui); letter-spacing: 0.08em; }

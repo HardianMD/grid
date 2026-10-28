@@ -67,21 +67,26 @@
   function tPut(el, parts) { parts.forEach(function (x) { el.appendChild(typeof x === "string" ? document.createTextNode(x) : mk("i", "mind", x.ind)); }); }
   // The clue once, marked from the tree: the definition underlined, indicators in italics, each piece's words tinted
   // like its tiles (letters picked or kept from words tint those letters alone).
-  function tMarkClue(el, w, p) {
-    var clue = w.clue, n = clue.length, piece = [], ind = [], def = [], plain = [];
-    if (p.kind === "cd") { el.textContent = ""; el.appendChild(mk("span", "mcd", clue)); return; }  // the whole clue is the definition
+  // Each kind of piece has its own colour, the same in every clue: a synonym is always blue, an anagram orange.
+  // Two pieces of one kind side by side get a separator between them.
+  var T_KIND = { syn: ["t-syn", "Synonym"], abr: ["t-abr", "Abbreviation"], lit: ["t-lit", "As written"], pick: ["t-pick", "Letters picked"],
+    cut: ["t-cut", "Letters dropped"], anag: ["t-anag", "Anagram"], rev: ["t-rev", "Reversal"], snd: ["t-snd", "Sounds like"], spn: ["t-snd", "Spoonerism"],
+    chg: ["t-chg", "Letter change"] };
+  function tKind(n) { return (T_KIND[n.op] || T_KIND.syn)[0] + (tTrusted(n) ? " snd" : ""); }
+  // Each clue character's marks from a tree: the piece's kind (its colour), which piece it is, and the indicator mark.
+  function tMarks(p, clue) {
+    var piece = [], unit = [], ind = [], plain = [];
     var span = function (sp, arr, v) { for (var c = sp[0]; c < sp[1]; c++) if (arr[c] == null) arr[c] = v; };
     if (p.t) {
-      var us = tUnits(p.t);
-      us.forEach(function (u, unit) {
-        var cls = "k" + u % 6 + (tTrusted(unit) ? " snd" : "");
+      tUnits(p.t).forEach(function (u, unit) {
+        var cls = tKind(unit);
         (function tint(k) {
           var chars = (k.op === "pick" || k.op === "cut") && tLitChars(k.of, clue);
           if (chars) {
-            chars.forEach(function (c, j) { plain[c] = 1; if ((k.at.indexOf(j) >= 0) === (k.op === "pick") && piece[c] == null) piece[c] = cls; });
+            chars.forEach(function (c, j) { plain[c] = 1; if ((k.at.indexOf(j) >= 0) === (k.op === "pick") && piece[c] == null) { piece[c] = cls; unit[c] = u; } });
             return;
           }
-          if (k.w) span(k.w, piece, cls);
+          if (k.w) { span(k.w, unit, u); span(k.w, piece, cls); }
           tKids(k).forEach(tint);
         })(unit);
       });
@@ -89,14 +94,22 @@
     }
     (p.ind || []).forEach(function (sp) { span(sp, ind, "mind"); });
     plain.forEach(function (v, c) { if (v && piece[c] == null) ind[c] = null; });
+    return { piece: piece, unit: unit, ind: ind };
+  }
+  function tMarkClue(el, w, p) {
+    var clue = w.clue, n = clue.length, def = [];
+    if (p.kind === "cd") { el.textContent = ""; el.appendChild(mk("span", "mcd", clue)); return; }  // the whole clue is the definition
+    var span = function (sp, arr, v) { for (var c = sp[0]; c < sp[1]; c++) if (arr[c] == null) arr[c] = v; };
+    var m = tMarks(p, clue), piece = m.piece, ind = m.ind, unit = m.unit;
     var defs = p.def || [];
     if (!defs.length) defs = defsFor(w).map(function (d) { return tSpan(clue, d); }).filter(Boolean);
     defs.forEach(function (sp, i) { span(sp, def, "mdef" + (p.kind === "dd" && defs.length > 1 ? " d" + i % 2 : "")); });
     el.textContent = "";
     for (var a = 0; a < n;) {
-      var key = [piece[a], ind[a], def[a]].join("|"), b = a + 1;
-      while (b < n && [piece[b], ind[b], def[b]].join("|") === key) b++;
-      var cls = [piece[a], ind[a], def[a]].filter(Boolean).join(" "), text = clue.slice(a, b);
+      var key = [piece[a], unit[a], ind[a], def[a]].join("|"), b = a + 1;
+      while (b < n && [piece[b], unit[b], ind[b], def[b]].join("|") === key) b++;
+      var sep = piece[a] && a && piece[a - 1] === piece[a] && unit[a - 1] !== unit[a] ? "sep" : "";
+      var cls = [piece[a], sep, ind[a], def[a]].filter(Boolean).join(" "), text = clue.slice(a, b);
       el.appendChild(cls ? mk(def[a] ? "u" : "span", cls, text) : document.createTextNode(text));
       a = b;
     }
@@ -113,9 +126,9 @@
     if (p.t) {
       var us = tUnits(p.t), own = ans.length === letters.length ? tFit(p.t, ans.toUpperCase(), clue, us) : null, list = [];
       us.forEach(function (u, unit) { list[u] = unit; });
-      var cls = function (u) { return "k" + u % 6 + (tTrusted(list[u]) ? " snd" : ""); };
+      var cls = function (u) { return tKind(list[u]); };
       var tiles = mk("div", "tiles");
-      letters.forEach(function (ch, k) { tiles.appendChild(mk("b", own ? cls(own[k]) : "", ch)); });
+      letters.forEach(function (ch, k) { tiles.appendChild(mk("b", own ? cls(own[k]) + (k && own[k - 1] !== own[k] && cls(own[k - 1]) === cls(own[k]) ? " sep" : "") : "", ch)); });
       // where each piece sits: the containers above it, and the letters of a part from the answer as placed
       var up = new Map();
       (function walk(n) { tKids(n).forEach(function (k) { up.set(k, n); walk(k); }); })(p.t);
@@ -128,7 +141,7 @@
       var ul = mk("ul");
       list.forEach(function (unit, u) {
         var li = mk("li");
-        li.appendChild(mk("b", cls(u), placed(unit) || tMake(unit, clue) || "?"));
+        li.appendChild(mk("b", cls(u), tMake(unit, clue) || placed(unit) || "?"));
         li.appendChild(document.createTextNode(" "));
         var parts = tSay(unit, clue);
         for (var c = unit, a = up.get(c); a; c = a, a = up.get(a)) {
@@ -141,7 +154,12 @@
         tPut(li, parts);
         ul.appendChild(li);
       });
-      box.appendChild(tiles); box.appendChild(ul);
+      // the key: each kind of piece in this parsing, in its colour
+      var kinds = [];
+      list.forEach(function (unit) { var k = T_KIND[unit.op] || T_KIND.syn; if (kinds.indexOf(k) < 0) kinds.push(k); });
+      var key = mk("div", "tkey");
+      kinds.forEach(function (k) { key.appendChild(mk("span", k[0], k[1])); });
+      box.appendChild(tiles); box.appendChild(key); box.appendChild(ul);
       (function groups(n) {
         if (n.op === "rev" && (n.of.op === "cat" || n.of.op === "ins")) {
           var by = (n.ind || []).map(function (sp) { return { ind: tText(clue, sp) }; });

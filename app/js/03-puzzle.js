@@ -148,6 +148,8 @@
     if (!sel) { var w0 = words[0]; sel = { r: w0.cells[0][0], c: w0.cells[0][1], dir: w0.dir }; }
     if (!p.qf && !p.ed) store.set("crossword:last", p.id);
     elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null; EDITED = !!saved.ed;
+    // The fill log (LG, see logFill) is kept only for puzzles started after it was added, so it always replays to the grid.
+    LG = p.qf || p.ed || (!saved.lg && saved.fill && saved.fill.join("").trim()) ? null : saved.lg || ""; SNAP = fill.map(function (row) { return row.slice(); }); HEAT = false;
     startClock();
     build();
     setMode(p.qf || p.ed ? "easy" : saved.mode || lastMode(p), true);
@@ -234,7 +236,7 @@
     if (!old && !solved && !fill.some(function (row) { return row.some(function (x) { return x; }); })) return;
     var rec = {
       fill: fill.map(function (row) { return row.map(function (x) { return x || " "; }).join(""); }),
-      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, ed: EDITED, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB,
+      ok: Object.keys(ok), time: now(), solved: solved, mode: MODE, used: USED, rev: REV, revw: REVW, hn: HN, ed: EDITED, hints: hinted || {}, parses: myParses, defs: myDefs, answers: userAns, sub: SUB, lg: LG || undefined,
       // finished before its parsings: the bell says when they arrive (only checkSubs clears it, so a puzzle open
       // when they arrive still gets its notification)
       np: solved && (old && old.solved ? old.np : !PARSES) ? 1 : undefined, sel: sel

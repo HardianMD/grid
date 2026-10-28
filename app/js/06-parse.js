@@ -292,19 +292,35 @@
     for (var i = 0; i < up.length && k < taken.length; i++) if (up[i] === taken[k]) { out.push(idx[i]); k++; }
     return k === taken.length ? mark(out) : null;
   }
+  // Where a piece's source words sit in the clue: at the offset the solver tapped when there is one, else the first
+  // whole-word match ("a" is the word, not the a in "eaten"), else anywhere.
+  function wordAt(low, t, c) {
+    if (!t) return -1;
+    t = t.toLowerCase();
+    if (c != null && low.substr(c, t.length) === t) return c;
+    for (var at = low.indexOf(t); at >= 0; at = low.indexOf(t, at + 1))
+      if (!/[a-z]/.test(low.charAt(at - 1)) && !/[a-z]/.test(low.charAt(at + t.length))) return at;
+    return low.indexOf(t);
+  }
+  // The letters the solver tapped (q.x, within the piece's words): the run itself, or for a cut the rest of the words.
+  function tappedMask(q) {
+    var m = [];
+    for (var i = 0; i < q.w.length; i++) if (/[a-z]/i.test(q.w[i]) && (q.o === "del" ? i < q.x[0] || i > q.x[1] : i >= q.x[0] && i <= q.x[1])) m[i] = 1;
+    return m;
+  }
   function markClue(el, w, s) {
     var clue = w.clue, low = clue.toLowerCase(), n = clue.length;
     if (cryptic(s)) { el.textContent = ""; el.appendChild(mk("span", "mcd", clue)); return; }  // the whole clue is the definition
     // Marks can sit inside one another ("ending in Chicago" indicates, "Chicago" is a piece's source), so each
     // character carries all of its marks and the clue is emitted in runs of equal marks.
     var piece = [], ind = [], def = [], plain = [];
-    var put = function (t, arr, v) { var at = t ? low.indexOf(t.toLowerCase()) : -1; if (at < 0) return; for (var c = at; c < at + t.length; c++) if (arr[c] == null) arr[c] = v; };
+    var put = function (t, arr, v) { var at = wordAt(low, t); if (at < 0) return; for (var c = at; c < at + t.length; c++) if (arr[c] == null) arr[c] = v; };
     (s.p || []).forEach(function (q, i) {
-      var cls = "k" + i % 6 + (q.o === "snd" ? " snd" : ""), at = q.w ? low.indexOf(q.w.toLowerCase()) : -1;
+      var cls = "k" + i % 6 + (q.o === "snd" ? " snd" : ""), at = wordAt(low, q.w, q.c);
       if (at < 0) return;
       // Letters taken from the clue's words (selections, hiddens, deletions) tint those letters alone; the rest of
       // the word stays plain, outside any indicator.
-      var mask = /^(sel|ini|alt|hid|del)$/.test(q.o) && takenMask(q.w, q.l);
+      var mask = q.x ? tappedMask(q) : /^(sel|ini|alt|hid|del)$/.test(q.o) && takenMask(q.w, q.l);
       for (var c = at; c < at + q.w.length; c++) {
         if (mask) { plain[c] = 1; if (mask[c - at] && piece[c] == null) piece[c] = cls; }
         else if (piece[c] == null) piece[c] = cls;
@@ -453,7 +469,7 @@
       if (m.index > pos) box.appendChild(document.createTextNode(body.slice(pos, m.index)));
       var t = mk("span", "tok"), a = m.index, b = a + m[0].length, chars = [];
       m[0].split("").forEach(function (ch, k) { var c = t.appendChild(mk("span", "ch", ch)); c.dataset.c = a + k; chars.push(c); c.addEventListener("click", function (e) { if (BLD.lmode) { e.stopPropagation(); lTap(+this.dataset.c); } }); });
-      if (spans.some(function (sp) { return a < sp[1] && b > sp[0]; })) t.classList.add("on");
+      spans.forEach(function (sp, n) { if (a < sp[1] && b > sp[0]) { t.classList.add("on"); t.dataset.d = n; } });
       t.dataset.i = DTOK.length; t.addEventListener("click", function () { if (!BLD.lmode) bTap(+this.dataset.i); });
       box.appendChild(t); DTOK.push({ el: t, a: a, b: b, chars: chars });
       pos = b;
@@ -477,7 +493,7 @@
   }
   function bRole(r, letters) {
     var s = BLD.sel; if (!s) return;
-    if (r === "def") DTOK.slice(s[0], s[1] + 1).forEach(function (x) { x.el.classList.add("on"); });
+    if (r === "def") defOn(s[0], s[1]);
     else if (r === "ind") { BLD.ask = "ind"; bRender(); return; }
     else if (ASK[r] && letters == null) { BLD.ask = r; $("bLet").value = ""; $("bLet").placeholder = ASK[r]; bRender(); try { $("bLet").focus(); } catch (e) {} return; }
     else {
@@ -504,18 +520,18 @@
   $("bOut").addEventListener("click", function (e) {
     var x = e.target.closest("[data-del]"); if (!x) return;
     var d = x.dataset.del.split(":");
-    if (d[0] === "def") { var r = defRuns()[+d[1]]; if (r) DTOK.slice(r[0], r[1] + 1).forEach(function (k) { k.el.classList.remove("on"); }); defFresh = false; }
+    if (d[0] === "def") { var r = defRuns()[+d[1]]; if (r) DTOK.slice(r[0], r[1] + 1).forEach(function (k) { k.el.classList.remove("on"); delete k.el.dataset.d; }); defFresh = false; }
     else BLD[d[0]].splice(+d[1], 1);
     bChanged();
   });
   $("bWhole").addEventListener("click", function (e) {
     var b = e.target.closest(".chip"); if (!b) return;
     var k = b.dataset.k, all = DTOK.every(function (x) { return x.el.classList.contains("on"); });
-    if (k === "cd") DTOK.forEach(function (x) { x.el.classList.toggle("on", !all); });  // the whole clue is the definition
+    if (k === "cd") DTOK.forEach(function (x) { x.el.classList.toggle("on", !all); x.el.dataset.d = 0; });  // the whole clue is the definition
     else {
       var i = BLD.whole.indexOf(k);
       if (i >= 0) BLD.whole.splice(i, 1); else BLD.whole.push(k);
-      if (k === "&lit" && i < 0) DTOK.forEach(function (x) { x.el.classList.add("on"); });  // and the wordplay too
+      if (k === "&lit" && i < 0) DTOK.forEach(function (x) { x.el.classList.add("on"); x.el.dataset.d = 0; });  // and the wordplay too
     }
     defFresh = false; BLD.sel = BLD.lsel = null; BLD.ask = null; bChanged();
   });
@@ -582,7 +598,7 @@
       dev.push({ anag: "Anagram", hid: "Hidden", del: "Deletion", sel: "Letter selection", ini: "Letter selection", alt: "Letter selection", snd: "Homophone",
         chg: "Letter change", spn: "Spoonerism" }[o]);
       var out = { l: o === "rev" ? q.l : l, o: o, at: x.at };
-      if (q.a != null) out.w = bText(q.a, q.b);
+      if (q.a != null) { out.w = bText(q.a, q.b); out.c = DTOK[q.a].a; if (q.cs) out.x = [q.cs[0] - out.c, q.cs[1] - out.c]; }  // the letters tapped, within the words
       if (q.f) out.f = q.f;
       return out;
     });
@@ -646,8 +662,8 @@
       x.el.classList.toggle("ind", BLD.ind.some(function (d) { return i >= d.a && i <= d.b; }));
       for (var c = 0; c < 6; c++) x.el.classList.remove("k" + c);
       (s.p || []).forEach(function (q, n) {
-        var r = q.w && BLD.ps.filter(function (p) { return p.a != null && bText(p.a, p.b) === q.w; })[0];
-        if (!r || i < r.a || i > r.b) return;
+        var r = BLD.ps[BLD.fitk[n]];
+        if (!r || r.a == null || i < r.a || i > r.b) return;
         if (r.cs) x.chars.forEach(function (c) { var k = +c.dataset.c; if (r.k === "del" ? k < r.cs[0] || k > r.cs[1] : k >= r.cs[0] && k <= r.cs[1]) c.classList.add("k" + n % 6); });
         else x.el.classList.add("k" + n % 6);
       });
@@ -675,15 +691,16 @@
   // A saved structure back into pieces on the clue's words.
   function bLoad(s, w) {
     BLD = { sel: null, lsel: null, lmode: false, ps: [], ind: [], ask: null, whole: [], fitk: [], old: "", oldType: "", w: w };
-    var find = function (t) {
-      var low = (t || "").toLowerCase(); if (!low) return null;
-      for (var a = 0; a < DTOK.length; a++) for (var b = a; b < DTOK.length; b++) if (bText(a, b).toLowerCase() === low) return [a, b];
-      return null;
+    var find = function (t, c) {
+      var low = (t || "").toLowerCase(), first = null; if (!low) return null;
+      for (var a = 0; a < DTOK.length; a++) for (var b = a; b < DTOK.length; b++) if (bText(a, b).toLowerCase() === low) { if (c == null || DTOK[a].a === c) return [a, b]; first = first || [a, b]; }
+      return first;
     };
     ((s && s.p) || []).forEach(function (q) {
-      var r = find(q.w), k = { sel: "syn", rev: "syn", ins: "syn" }[q.o] || q.o, p = { a: r ? r[0] : null, b: r ? r[1] : null, k: r || !/^(lit|ini|alt|anag|hid)$/.test(k) ? k : "syn", l: q.l };
+      var r = find(q.w, q.c), k = { sel: "syn", rev: "syn", ins: "syn" }[q.o] || q.o, p = { a: r ? r[0] : null, b: r ? r[1] : null, k: r || !/^(lit|ini|alt|anag|hid)$/.test(k) ? k : "syn", l: q.l };
       if (q.o === "rev") p.rev = true;
       if (q.o === "del") { p.f = q.f || q.l; if (!q.f) p.k = "syn"; }
+      if (r && q.x && DTOK[r[0]].a === q.c) { p.cs = [q.x[0] + q.c, q.x[1] + q.c]; if (q.o !== "del") p.k = "pick"; }
       if (q.o === "chg" || q.o === "spn") p.f = q.f;
       BLD.ps.push(p);
     });
@@ -691,18 +708,31 @@
   }
   var defFresh = true;
   $("defClear").addEventListener("click", function () {
-    DTOK.forEach(function (x) { x.el.classList.remove("on"); }); defFresh = false;
+    DTOK.forEach(function (x) { x.el.classList.remove("on"); delete x.el.dataset.d; }); defFresh = false;
     BLD.ps = []; BLD.ind = []; BLD.whole = []; BLD.sel = BLD.lsel = null; BLD.ask = null; bRender();
   });
-  // The definition's runs of words, as token ranges [first, last].
+  // The definition's runs of words, as token ranges [first, last]. Each word carries the number of its definition
+  // (data-d), so the two definitions of a double definition can sit side by side ("One is present, nervous").
   function defRuns() {
-    var out = [], run = null;
+    var out = [], run = null, d = null;
     DTOK.forEach(function (t, i) {
-      if (t.el.classList.contains("on")) { if (run) run[1] = i; else run = [i, i]; }
-      else if (run) { out.push(run); run = null; }
+      var on = t.el.classList.contains("on");
+      if (on && run && t.el.dataset.d === d) run[1] = i;
+      else { if (run) out.push(run); run = on ? [i, i] : null; d = t.el.dataset.d; }
     });
     if (run) out.push(run);
     return out;
+  }
+  // Words tapped as the definition join a definition beside them, unless a double definition is wanted and one
+  // definition is already there: then they are the second.
+  function defOn(a, b) {
+    var runs = defRuns(), ids = DTOK.filter(function (t) { return t.el.classList.contains("on"); }).map(function (t) { return +t.el.dataset.d; });
+    var d = String(ids.length ? Math.max.apply(null, ids) + 1 : 0);
+    if (!(BLD.whole.indexOf("Double definition") >= 0 && runs.length === 1)) {
+      var near = runs.filter(function (r) { return r[1] >= a - 1 && r[0] <= b + 1; })[0];
+      if (near) d = DTOK[near[0]].el.dataset.d;
+    }
+    DTOK.slice(a, b + 1).forEach(function (x) { x.el.classList.add("on"); x.el.dataset.d = d; });
   }
   function pickedDefs() { return defRuns().map(function (r) { return bText(r[0], r[1]); }).filter(Boolean); }
   function saveDefs(w) {

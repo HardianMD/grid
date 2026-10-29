@@ -396,7 +396,7 @@
       render(); save();
       return;
     }
-    hintAdd(w.dir + w.num, askMode === "hint2"); HN++;
+    hintAdd(w.dir + w.num, askMode === "hint2"); HN++; logHint(w.dir + w.num);
     render(); save();
   });
   // Word finder (its own button, in every mode): entries in the word list that fit the answer's length and the letters

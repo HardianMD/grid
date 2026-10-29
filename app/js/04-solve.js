@@ -147,7 +147,7 @@
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
       // With Heat on, each clue shows its time, after a blue dot if hinted and a brown one if revealed (as in Stats).
       if (heat && (!x.ht || x.ht.parentNode !== x.el)) x.el.appendChild(x.ht = mk("i", "ht"));
-      if (heat) x.ht.innerHTML = (hinted[k] ? '<span class="hh">\u25cf</span>' : "") + (REVW[k] ? '<span class="rv">\u25cf</span>' : "") + fmt((heat.t[words.indexOf(x)] || 0) * 1000);
+      if (heat) x.ht.innerHTML = (heat.h[k] ? '<span class="hh">\u25cf</span>' : "") + (REVW[k] ? '<span class="rv">\u25cf</span>' : "") + fmt((heat.t[words.indexOf(x)] || 0) * 1000);
       else if (x.ht) { x.ht.remove(); x.ht = null; }
     });
     $("nowTag").textContent = P.bank ? "Clue" : !P.qf ? wordName(w) : locked(w) ? QF.c.p.title + " \u00b7 " + QF.name : "Clue";
@@ -219,7 +219,10 @@
     }
     if (ev.length) LG += (LG ? " " : "") + ev.join(" ");
   }
-  // The log as [[sec, r, c, dir, letter], ...] ("" when cleared).
+  // A hint taken goes in the log too, as "<seconds>.<clue key>h" (hinted alone can't tell: a parsing saved after
+  // finishing marks its definition there too).
+  function logHint(k) { if (LG !== null && !solved) LG += (LG ? " " : "") + Math.round(now() / 1000) + "." + k + "h"; }
+  // The log's square changes as [[sec, r, c, dir, letter], ...] ("" when cleared).
   function logOf(lg) {
     return (lg || "").split(" ").filter(Boolean).map(function (e) {
       var m = /^(\d+)\.(\d+)\.(\d+)([ad])(.)$/.exec(e);
@@ -229,13 +232,14 @@
   // Heatmap: the seconds since the previous change count towards the answer being solved (the direction typed in, else
   // the square's only answer); a square takes the hotter of its two answers.
   function heatOf() {
-    var t = {}, prev = 0, max = 1;
+    var t = {}, h = {}, prev = 0, max = 1;
+    (LG.match(/\.[ad]\d+h\b/g) || []).forEach(function (m) { h[m.slice(1, -1)] = 1; });
     logOf(LG).forEach(function (e) {
       var cl = cells[e[1]] && cells[e[1]][e[2]]; if (!cl || cl.b) return;
       var i = cl[e[3]] >= 0 ? cl[e[3]] : cl[e[3] === "a" ? "d" : "a"];
       t[i] = (t[i] || 0) + e[0] - prev; prev = e[0]; max = Math.max(max, t[i]);
     });
-    return { t: t, bg: function (s) {  // white to the accent blue
+    return { t: t, h: h, bg: function (s) {  // white to the accent blue
       var f = 0.06 + 0.7 * s / max;
       return "rgb(" + [29, 95, 153].map(function (v) { return Math.round(255 - (255 - v) * f); }) + ")";
     } };

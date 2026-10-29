@@ -4,7 +4,7 @@
   // One indicator covers everything inside its operation, and the same words can indicate more than one. The tray
   // shows the pieces as a tree; the parsing is checked live by working out its letters.
   var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
-  var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"]];
+  var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
   var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Letter change…", "chg"], ["Move letters…", "mov"], ["Swap letters…", "swp"], ["Spoonerism", "spn"]];
   var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"]];
@@ -79,14 +79,23 @@
     if (r === "lit") return bAdd({ op: "lit", w: w });
     if (letters == null) {
       PE.ask = { r: r };
-      $("bLet").value = r === "abr" ? (abbrOf(text).filter(function (x) { return bAnswer().indexOf(x) >= 0; })[0] || abbrOf(text)[0] || "") : "";
-      $("bLet").placeholder = r === "abr" ? "Letters it is short for, e.g. S" : "Letters it stands for, e.g. AB";
+      $("bLet").value = r === "abr" ? (abbrOf(text).filter(function (x) { return bAnswer().indexOf(x) >= 0; })[0] || abbrOf(text)[0] || "") : r === "xr" ? bOtherAnswer(text) : "";
+      $("bLet").placeholder = r === "abr" ? "Letters it is short for, e.g. S" : r === "xr" ? "That clue’s answer (or the part used)" : "Letters it stands for, e.g. AB";
       bRender(); try { $("bLet").focus(); } catch (e) {}
       return;
     }
     var l = bLetters(letters);
     if (!l) return toast("No letters given");
-    bAdd({ op: r, w: w, l: l });
+    bAdd(r === "xr" ? { op: "syn", w: w, l: l, xr: 1 } : { op: r, w: w, l: l });
+  }
+  // The answer of the clue the words name by number ("14", "see 5 Down"), when it is known and only one clue fits.
+  function bOtherAnswer(text) {
+    var m = text.match(/\b(\d+)\s*(a|ac|across|d|dn|down)?\b/i); if (!m) return "";
+    var dir = m[2] ? m[2][0].toLowerCase() : null;
+    var hit = words.filter(function (x) { return String(x.num) === m[1] && (!dir || x.dir === dir) && x !== PE.w; });
+    if (hit.length !== 1) return "";
+    var a = hit[0].cells.map(function (rc) { return solAt(rc[0], rc[1]) || ""; }).join("");
+    return a.length === hit[0].cells.length ? a : "";
   }
   $("bRoles").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b && !b.disabled) bRole(b.dataset.r); });
   // Letters tapped: picked as they stand, or cut out of the words around them.
@@ -289,7 +298,7 @@
     li.style.paddingLeft = depth * 14 + "px";
     var u = us.has(n) ? us.get(n) : null;
     li.appendChild(mk("b", u != null ? tKind(n) : "op", l || "?"));
-    var t = " " + OPNAME[n.op] + (n.w && /^(lit|syn|abr)$/.test(n.op) ? " “" + tText(DTOK.clue, n.w) + "”" : "");
+    var t = " " + (n.xr ? "Another clue’s answer" : OPNAME[n.op]) + (n.w && /^(lit|syn|abr)$/.test(n.op) ? " “" + tText(DTOK.clue, n.w) + "”" : "");
     li.appendChild(document.createTextNode(t));
     (n.ind || []).forEach(function (sp) { li.appendChild(document.createTextNode(" ")); li.appendChild(mk("i", "mind", tText(DTOK.clue, sp))); });
     ul.appendChild(li);

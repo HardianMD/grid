@@ -44,12 +44,12 @@
       var chars = tLitChars(k, clue);
       if (chars) return [q([k.of[0].w[0], k.of[k.of.length - 1].w[1]])];
       var l = tMake(k, clue);
-      if (l && k.w && (k.op === "syn" || k.op === "abr")) return [l + " (" + (k.op === "abr" ? "short for " : "") + q(k.w) + ")"];
+      if (l && k.w && (k.op === "syn" || k.op === "abr")) return [l + " (" + (k.op === "abr" ? "short for " : k.xr ? "another clue’s answer, " : "") + q(k.w) + ")"];
       return l ? [l + " ("].concat(tSay(k, clue), [")"]) : tSay(k, clue);
     };
     switch (n.op) {
       case "lit": put(q(n.w) + " as written"); break;
-      case "syn": put(n.w ? "synonym of " + q(n.w) : "synonym (the blog doesn’t say of which words)"); break;
+      case "syn": put(n.xr ? "another clue’s answer" + (n.w ? ", " + q(n.w) : "") : n.w ? "synonym of " + q(n.w) : "synonym (the blog doesn’t say of which words)"); break;
       case "abr": put("abbreviation" + (n.w ? " of " + q(n.w) : "")); break;
       case "pick": put(tPickName(n, clue)); put.apply(null, noun(n.of)); by(); break;
       case "cut":

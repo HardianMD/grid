@@ -20,12 +20,14 @@
     });
     return out;
   }
-  // Clues with a known answer, or one the solver added.
+  // Clues with a known answer, or one the solver added; not one whose parsing takes another clue's answer (the
+  // updater leaves out those it knows, and clues that name another clue's number).
   function qfClues(h, s) {
     var out = [], mine = s.parses || {}, ans = s.answers || {};
     ["a", "d"].forEach(function (dir) {
       Object.keys(h.qc[dir] || {}).forEach(function (num) {
         var k = dir + num, x = h.qc[dir][num];
+        if (mine[k] && !mine[k].off && JSON.stringify((mine[k].s || {}).tree || {}).indexOf('"xr"') >= 0) return;
         if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] && mine[k].s && mine[k].s.tree && !mine[k].off ? mine[k] : x[0] ? { type: x[0] } : null) });
       });
     });

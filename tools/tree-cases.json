@@ -403,6 +403,44 @@
   }
  },
  {
+  "name": "a homophone the pronunciation dictionary bore out is checked",
+  "clue": "We hear you sheep (3)",
+  "answer": "EWE",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "snd",
+    "ind": [
+     [
+      0,
+      7
+     ]
+    ],
+    "l": "EWE",
+    "of": {
+     "op": "syn",
+     "w": [
+      8,
+      11
+     ],
+     "l": "U"
+    },
+    "heard": 1
+   },
+   "def": [
+    [
+     12,
+     17
+    ]
+   ]
+  }
+ },
+ {
   "name": "a spoonerism is worked out",
   "clue": "Spooner's nosy cook makes snug corner (4,4)",
   "answer": "COSY NOOK",

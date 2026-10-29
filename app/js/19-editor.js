@@ -124,13 +124,13 @@
   // An indicator tapped first waits, with its kind, for the next step of that kind.
   function bClaim(n) {
     var i = PE.ind.map(function (x) { return x.op; }).indexOf(n.op);
-    if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); PE.ind.splice(i, 1); }
+    if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); if (PE.ind[i].name === "Hidden word") n.hid = 1; PE.ind.splice(i, 1); }
   }
   var IND_KINDS = [["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
     ["Spoonerism", "spn"], ["Letter change", "chg"], ["Letters moved", "mov"], ["Letters swapped", "swp"]];
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
-    if (to && to.op === op) (to.ind = to.ind || []).push(w);
+    if (to && to.op === op) { (to.ind = to.ind || []).push(w); if (name === "Hidden word") to.hid = 1; }
     else { PE.ind.push({ w: w, op: op, name: name }); PE.pick = []; PE.target = null; }  // now its pieces are tapped
     PE.ask = null; PE.sel = null; bRender();
   }

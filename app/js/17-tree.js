@@ -2,7 +2,7 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
   var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
@@ -180,11 +180,12 @@
     if (o === "lit") return w && wl === l ? { op: "lit", w: w } : src(l);
     if (o === "syn" || o === "abr") return tWith({ op: o, l: l }, w);
     if (/^(sel|ini|alt|hid)$/.test(o)) {
-      if (q.x && w) return { op: "pick", of: { op: "lit", w: w }, at: tLetterIndex(tText(clue, w), q.x[0], q.x[1]) };
+      var hid = o === "hid" ? { hid: 1 } : {};
+      if (q.x && w) return Object.assign({ op: "pick", of: { op: "lit", w: w }, at: tLetterIndex(tText(clue, w), q.x[0], q.x[1]) }, hid);
       var fw = w && (!f || wl === f) ? ws : f ? [f] : ws;
       for (var back = 0; back < 2; back++) {
         var at = fw.length ? tPickAt(fw, back ? seg.split("").reverse().join("") : seg) : null;
-        if (at && at.length) { var p = { op: "pick", of: src(fw.join("")), at: at }; return back ? { op: "rev", of: p } : p; }
+        if (at && at.length) { var p = Object.assign({ op: "pick", of: src(fw.join("")), at: at }, hid); return back ? { op: "rev", of: p } : p; }
       }
       return src(l);
     }
@@ -328,13 +329,14 @@
         if (!rs.length || tWalk(n).some(function (y) { return y.w && y.w[0] < x[1] && x[0] < y.w[1]; })) return;
         var gap = Math.min.apply(null, rs.map(function (r) { return Math.max(r[0] - x[1], x[0] - r[1], 0); }));
         var size = Math.max.apply(null, rs.map(function (r) { return r[1]; })) - Math.min.apply(null, rs.map(function (r) { return r[0]; }));
-        pairs.push([gap, size, x, n, says.length ? 0 : 1]);
+        pairs.push([gap, size, x, n, says.length ? 0 : 1, kind]);
       });
     });
     var used = {}, taken = [];
     pairs.sort(function (u, v) { return u[4] - v[4] || u[0] - v[0] || u[1] - v[1]; }).forEach(function (p) {  // words known to signal the kind go first
       if (used[p[2]] || taken.indexOf(p[3]) >= 0) return;
       p[3].ind = [p[2]]; used[p[2]] = 1; taken.push(p[3]);
+      if (p[5] === "Hidden") p[3].hid = 1;  // a hidden word's indicator: the letters picked are a hidden word
     });
     return inds.map(function (it) { return it[0]; }).filter(function (x) { return !used[x]; });
   }

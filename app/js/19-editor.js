@@ -7,9 +7,9 @@
   var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
   var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Letter change…", "chg"], ["Spoonerism", "spn"]];
-  var WRAPN = [["Charade", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"]];
+  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"]];
   var WHOLE = [["Double definition", "dd"], ["Cryptic definition", "cd"], ["&lit", "&lit"], ["Palindrome", "pal"]];
-  var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Charade", ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Letters dropped",
+  var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Letters dropped",
     pick: "Letters picked", snd: "Sounds like", chg: "Letter change", spn: "Spoonerism" };
   WROLES.forEach(function (r) { $("bRoles").appendChild(mk("button", "chip" + (r[1] === "def" ? " def" : ""), r[0])).dataset.r = r[1]; });
   LROLES.forEach(function (r) { $("bLRoles").appendChild(mk("button", "chip", r[0])).dataset.r = r[1]; });
@@ -157,7 +157,7 @@
       bRender(); if (op === "snd" || op === "chg") try { $("bLet").focus(); } catch (e) {}
       return;
     }
-    if (op === "cat") n = { op: "cat", of: bOrder(ns, false) };
+    if (op === "cat") n = { op: "cat", of: ns };  // in the order tapped
     else if (op === "ins") n = bIns(ns, extra);
     else if (op === "rev") n = { op: "rev", of: one || { op: "cat", of: bOrder(ns, true) } };
     else if (op === "anag") n = { op: "anag", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
@@ -335,7 +335,7 @@
     $("bHint").textContent = ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them."
       : ask ? "Type the letters, then Add." : sel ? q + (indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."
         : "Now tap the pieces “" + tText(clue, waiting.w) + "” works on, then " + (waiting.name || IND_KINDS.filter(function (k) { return k[1] === waiting.op; })[0][0]) + ".")
-      : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected. ") + "Put together as:"
+      : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected (Join keeps the order you tapped them). ") + "Put together as:"
       : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time." : "Tap a word, or two for a run. Tap pieces below to put them together.";
     Array.prototype.forEach.call($("bWhole").children, function (b) { b.classList.toggle("on", PE.whole.indexOf(b.dataset.k) >= 0); });
     // the tray, then the live check

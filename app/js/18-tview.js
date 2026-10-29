@@ -58,6 +58,8 @@
       case "anag": put("anagram"); by(); put(" of "); put.apply(null, noun(n.of)); break;
       case "snd": put("homophone"); by(); put(": sounds like " + (n.of.l || tMake(n.of, clue) || "") + (n.of.w ? ", for " + q(n.of.w) : "")); break;
       case "chg": put("letter change"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
+      case "swp": put("letters swapped"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
+      case "mov": put("letters moved"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
       case "spn": put("spoonerism"); by(); put(" of "); put.apply(null, noun(n.of)); put(": swap their first sounds"); break;
       case "cat": n.of.forEach(function (k, i) { if (i) put(" + "); put.apply(null, noun(k)); }); break;
       case "ins": put.apply(null, noun(n.out)); put(" around"); by(); put(" "); put.apply(null, noun(n.in)); break;
@@ -69,7 +71,7 @@
   // like its tiles (letters picked or kept from words tint those letters alone).
   // Each kind of piece has its own colour, the same in every clue: a synonym is always blue, an anagram orange.
   // Two pieces of one kind side by side get a separator between them.
-  var T_KIND = { syn: "t-syn", abr: "t-abr", lit: "t-lit", pick: "t-pick", cut: "t-cut", anag: "t-anag", rev: "t-rev", snd: "t-snd", spn: "t-snd", chg: "t-chg" };
+  var T_KIND = { syn: "t-syn", abr: "t-abr", lit: "t-lit", pick: "t-pick", cut: "t-cut", anag: "t-anag", rev: "t-rev", snd: "t-snd", spn: "t-snd", chg: "t-chg", mov: "t-chg", swp: "t-chg" };
   function tKind(n) { return (T_KIND[n.op] || T_KIND.syn) + (tTrusted(n) ? " snd" : ""); }
   // Each clue character's marks from a tree: the piece's kind (its colour), which piece it is, and the indicator mark.
   function tMarks(p, clue) {
@@ -177,7 +179,7 @@
   function tTypes(p, clue) {
     var has = {};
     (function walk(n) {
-      var name = { ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Deletion", snd: "Homophone", spn: "Spoonerism", chg: "Letter change" }[n.op];
+      var name = { ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Deletion", snd: "Homophone", spn: "Spoonerism", chg: "Letter change", mov: "Letter change", swp: "Letter change" }[n.op];
       if (n.op === "pick") name = /^hidden/.test(tPickName(n, clue)) ? "Hidden" : "Letter selection";
       if (n.op === "cat") name = "Charade";
       if (name) has[name] = 1;

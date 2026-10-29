@@ -2,9 +2,9 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  spn {of}
+  //   branches: cat {of: []}  pick {of, at}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
-  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "spn"];
+  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
   function tText(clue, w) { return clue.slice(w[0], w[1]); }
   function tKids(n) { return n.op === "cat" ? n.of : n.op === "ins" ? [n.out, n.in] : n.of ? [n.of] : []; }
@@ -19,6 +19,15 @@
     if (n.op === "cat") return [].concat.apply([], n.of.map(function (k) { return tWords(k, clue) || [null]; }));
     var v = tMake(n, clue); return v ? [v] : null;
   }
+  // Is b the letters of a with one letter, or one run of letters, moved elsewhere?
+  function tMoved(a, b) {
+    if (a.length !== b.length || a === b || a.split("").sort().join("") !== b.split("").sort().join("")) return false;
+    for (var i = 0; i < a.length; i++) for (var j = i + 1; j < a.length; j++) {
+      var rest = a.slice(0, i) + a.slice(j);
+      for (var p = 0; p <= rest.length; p++) if (rest.slice(0, p) + a.slice(i, j) + rest.slice(p) === b) return true;
+    }
+    return false;
+  }
   // The letters a part gives in order, or null when they depend on the answer (an anagram, an unplaced container).
   function tMake(n, clue) {
     var op = n.op, c, o, i;
@@ -32,6 +41,12 @@
       return c.split("").filter(function (ch, j) { return n.at.indexOf(j) < 0; }).join("");
     }
     if (op === "rev") { c = tMake(n.of, clue); return c == null ? null : c.split("").reverse().join(""); }
+    if (op === "mov") { c = tMake(n.of, clue); o = tLetters(n.l); return c != null && tMoved(c, o) ? o : null; }
+    if (op === "swp") {  // exactly two letters trade places
+      c = tMake(n.of, clue); o = tLetters(n.l);
+      var d = c != null && c.length === o.length ? o.split("").map(function (x, j) { return x !== c[j] ? j : -1; }).filter(function (j) { return j >= 0; }) : [];
+      return d.length === 2 && c[d[0]] === o[d[1]] && c[d[1]] === o[d[0]] ? o : null;
+    }
     if (op === "spn") { var ws = tWords(n.of, clue); return ws && ws.indexOf(null) < 0 ? tSpoon(ws) : null; }
     if (op === "ins" && n.k != null) { o = tMake(n.out, clue); i = tMake(n.in, clue); return o == null || i == null ? null : o.slice(0, n.k) + i + o.slice(n.k); }
     return null;
@@ -99,7 +114,7 @@
   function tValid(n) {
     var op = n && n.op, bad = [];
     if (T_OPS.indexOf(op) < 0) return ["unknown op " + op];
-    if (op === "lit" && !n.w || /^(syn|abr|snd|chg)$/.test(op) && !n.l) bad.push(op + " without its letters");
+    if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp)$/.test(op) && !n.l) bad.push(op + " without its letters");
     if (op === "cat" && !((n.of || []).length >= 2)) bad.push("cat with fewer than two parts");
     if ((op === "pick" || op === "cut") && !(n.at || []).length) bad.push(op + " without letters");
     if (op === "ins" && !(n.out && n.in)) bad.push("ins without both parts");
@@ -282,7 +297,7 @@
     seq = seq.filter(Boolean);
     return !seq.length ? null : seq.length === 1 ? seq[0] : { op: "cat", of: seq };
   }
-  var T_IND_KIND = { Reversal: "rev", Container: "ins", Anagram: "anag", Deletion: "cut", "Letter selection": "pick", Hidden: "pick", Homophone: "snd", Spoonerism: "spn", "Letter change": "chg" };
+  var T_IND_KIND = { Reversal: "rev", Container: "ins", Anagram: "anag", Deletion: "cut", "Letter selection": "pick", Hidden: "pick", Homophone: "snd", Spoonerism: "spn", "Letter change": "chg", "Letter move": "mov", "Letter swap": "swp" };
   function tWalk(n) { return [n].concat.apply([n], tKids(n).map(tWalk)); }
   // The clue spans a node's words cover, child by child.
   function tReach(n) {
@@ -301,7 +316,7 @@
       var hit = inds.filter(function (x) { return x[2] === n._ind; })[0];
       if (hit) { n.ind = [hit[0]]; inds = inds.filter(function (x) { return x !== hit; }); }
     });
-    var cand = ops.filter(function (n) { return /^(rev|ins|anag|cut|pick|snd|spn|chg)$/.test(n.op) && !n.ind; }), pairs = [];
+    var cand = ops.filter(function (n) { return /^(rev|ins|anag|cut|pick|snd|spn|chg|mov|swp)$/.test(n.op) && !n.ind; }), pairs = [];
     inds.forEach(function (it) {
       var x = it[0], kind = it[1], says = kind ? [] : INDS[indKey(clue.slice(x[0], x[1]))] || [];
       if (says.indexOf("pick") >= 0 || says.indexOf("cut") >= 0) says = says.concat(["pick", "cut"]);  // letters kept or dropped: the same words say either

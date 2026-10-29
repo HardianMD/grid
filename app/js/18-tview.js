@@ -23,6 +23,7 @@
     var ws = tWords(n.of, clue) || [], full = ws.join(""), at = n.at, s = 0, starts = ws.map(function (x) { var a = s; s += x.length; return a; });
     var same = function (b) { return b.length === at.length && b.every(function (j, i) { return j === at[i]; }); };
     var run = at.every(function (j, i) { return !i || j === at[i - 1] + 1; });
+    if (n.hid) return "hidden in ";  // its indicator says a hidden word
     if (ws.length > 1 && same(starts)) return "first letters of ";
     if (ws.length > 1 && same(starts.map(function (a, i) { return a + ws[i].length - 1; }))) return "last letters of ";
     if (at.length === 1 && at[0] === 0) return "first letter of ";

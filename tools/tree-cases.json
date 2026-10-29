@@ -1088,5 +1088,107 @@
    }
   },
   "v": 2
+ },
+ {
+  "name": "letters moved",
+  "clue": "Fresh action creates charged particle (6)",
+  "answer": "CATION",
+  "v": 2,
+  "parse": {
+   "t": {
+    "op": "mov",
+    "of": {
+     "op": "lit",
+     "w": [
+      6,
+      12
+     ]
+    },
+    "l": "CATION"
+   },
+   "def": [
+    [
+     21,
+     37
+    ]
+   ]
+  }
+ },
+ {
+  "name": "letters moved: not a move of the part's letters",
+  "clue": "Fresh action creates charged particle (6)",
+  "answer": "CATION",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "mov",
+    "of": {
+     "op": "lit",
+     "w": [
+      0,
+      5
+     ]
+    },
+    "l": "CATION"
+   },
+   "def": [
+    [
+     21,
+     37
+    ]
+   ]
+  }
+ },
+ {
+  "name": "letters swapped",
+  "clue": "Journal swapping round for milk producer (5)",
+  "answer": "DAIRY",
+  "v": 2,
+  "parse": {
+   "t": {
+    "op": "swp",
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      7
+     ],
+     "l": "DIARY"
+    },
+    "l": "DAIRY"
+   },
+   "def": [
+    [
+     27,
+     40
+    ]
+   ]
+  }
+ },
+ {
+  "name": "letters swapped: more than two letters differ",
+  "clue": "Journal swapping round for milk producer (5)",
+  "answer": "DAIRY",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "swp",
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      7
+     ],
+     "l": "DRAIY"
+    },
+    "l": "DAIRY"
+   },
+   "def": [
+    [
+     27,
+     40
+    ]
+   ]
+  }
  }
 ]

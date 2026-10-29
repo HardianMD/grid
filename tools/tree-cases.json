@@ -1229,5 +1229,80 @@
     ]
    ]
   }
+ },
+ {
+  "name": "from flat: a joining word is the charade's indicator (made up)",
+  "clue": "Sailor and saint make (4)",
+  "answer": "ABST",
+  "flat": {
+   "v": 2,
+   "dev": [
+    "Charade"
+   ],
+   "p": [
+    {
+     "l": "AB",
+     "w": "Sailor",
+     "o": "syn",
+     "at": [
+      [
+       0,
+       2
+      ]
+     ]
+    },
+    {
+     "l": "ST",
+     "w": "saint",
+     "o": "abr",
+     "at": [
+      [
+       2,
+       2
+      ]
+     ]
+    }
+   ],
+   "ind": [
+    "and"
+   ],
+   "def": "make"
+  },
+  "parse": {
+   "def": [
+    [
+     17,
+     21
+    ]
+   ],
+   "t": {
+    "op": "cat",
+    "of": [
+     {
+      "op": "syn",
+      "l": "AB",
+      "w": [
+       0,
+       6
+      ]
+     },
+     {
+      "op": "abr",
+      "l": "ST",
+      "w": [
+       11,
+       16
+      ]
+     }
+    ],
+    "ind": [
+     [
+      7,
+      10
+     ]
+    ]
+   }
+  },
+  "v": 2
  }
 ]

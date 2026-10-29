@@ -62,7 +62,7 @@
       case "swp": put("letters swapped"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
       case "mov": put("letters moved"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
       case "spn": put("spoonerism"); by(); put(" of "); put.apply(null, noun(n.of)); put(": swap their first sounds"); break;
-      case "cat": n.of.forEach(function (k, i) { if (i) put(" + "); put.apply(null, noun(k)); }); break;
+      case "cat": n.of.forEach(function (k, i) { if (i) put(" + "); put.apply(null, noun(k)); }); if (n.ind) put(", joined"); by(); break;
       case "ins": put.apply(null, noun(n.out)); put(" around"); by(); put(" "); put.apply(null, noun(n.in)); break;
     }
     return out;

@@ -58,7 +58,8 @@
     var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
     // The structure: our own checked parsing where the data has one (x.ours), else the one read from the blog's or
     // the solver's words.
-    return { mine: !!mine, blog: !!blog, type: ctype(x.type), wordplay: x.wordplay || "", s: (x.ours && x.ours.s) || x.s || mine && readWp(w, mine) };
+    // rules: worked out from the clue by rules alone (the updater's rules.py) until a blog's parsing replaces it.
+    return { mine: !!mine, blog: !!blog, rules: !mine && !!(blog && blog.rules), type: ctype(x.type), wordplay: x.wordplay || "", s: (x.ours && x.ours.s) || x.s || mine && readWp(w, mine) };
   }
   // A structure for an edit saved before the Build step, read from its wordplay as the updater reads a blog's:
   // CAPITAL pieces (lower-case letters are the ones dropped), (WORDS)* anagrams, glosses in brackets or quotes,
@@ -233,7 +234,7 @@
     $("pvNote").textContent = r.mine && myParses[key].note || ""; $("pvNote").hidden = !$("pvNote").textContent;
     $("hintText").hidden = true; $("parseView").hidden = false;
     // The blog is linked from the finish bar; the note only says when the parsing is the solver's own or missing.
-    $("parseNote").textContent = r.mine || r.blog ? "" : "No parsing from the blog yet.";
+    $("parseNote").textContent = r.rules ? "Worked out by rules from the clue. The blog's parsing will replace it when it comes." : r.mine || r.blog ? "" : "No parsing from the blog yet.";
     $("parseNote").hidden = !!(P.ed || P.made) || !$("parseNote").textContent;  // a created puzzle's parsings are all the setter's
     $("parseForm").hidden = $("clueForm").hidden = $("clueParse").hidden = true;
     var rec = myParses[key], off = rec && rec.off;

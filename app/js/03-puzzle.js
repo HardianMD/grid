@@ -175,7 +175,8 @@
   function defsFor(w) {
     var k = w.dir + w.num;
     if (myDefs[k] && (P.ed || P.made || newEdit(myParses[k]))) return myDefs[k];
-    var d = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num];
+    var d = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num], x = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
+    if (!d && x && x.rules && x.s) d = x.s.def;  // no blog yet: the rule parsing's definition
     return d ? [d] : [];
   }
   function defSpans(w, defs) {

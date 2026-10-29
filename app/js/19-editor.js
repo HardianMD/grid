@@ -135,7 +135,7 @@
     var i = PE.ind.map(function (x) { return x.op; }).indexOf(n.op);
     if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); if (PE.ind[i].name === "Hidden word") n.hid = 1; PE.ind.splice(i, 1); }
   }
-  var IND_KINDS = [["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
+  var IND_KINDS = [["Join", "cat"], ["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
     ["Spoonerism", "spn"], ["Letter change", "chg"], ["Letters moved", "mov"], ["Letters swapped", "swp"]];
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
@@ -346,7 +346,7 @@
       box.appendChild(mk("button", "btn mini", ask.op === "cut" ? "Drop" : ask.op === "mov" ? "Next" : ask.op === "swp" ? "Swap" : "Pick")).dataset.go = 1;
     }
     if (ask && ask.ind) {
-      var says = INDS[indKey(tText(clue, ask.ind))] || [];
+      var ik = indKey(tText(clue, ask.ind)), says = (INDS[ik] || []).concat(T_JOINS.indexOf(ik) >= 0 ? ["cat"] : []);
       IND_KINDS.slice().sort(function (x, y) { var i = says.indexOf(x[1]), j = says.indexOf(y[1]); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); }).forEach(function (k) {
         var b = box.appendChild(mk("button", "chip" + (says.indexOf(k[1]) >= 0 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
       });

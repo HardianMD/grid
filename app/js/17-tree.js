@@ -299,7 +299,9 @@
     seq = seq.filter(Boolean);
     return !seq.length ? null : seq.length === 1 ? seq[0] : { op: "cat", of: seq };
   }
-  var T_IND_KIND = { Reversal: "rev", Container: "ins", Anagram: "anag", Deletion: "cut", "Letter selection": "pick", Hidden: "pick", Homophone: "snd", Spoonerism: "spn", "Letter change": "chg", "Letter move": "mov", "Letter swap": "swp" };
+  // Words that put one piece next to another ("A and B", "A on B", "A next to B"): a charade's indicator (as tree.py's JOINS).
+  var T_JOINS = ["and", "on", "over", "next to", "with", "by", "beside", "besides", "after", "before", "following", "follows", "followed by", "alongside", "joining", "joins", "joined to", "meeting", "meets", "plus", "then", "upon", "above", "below", "under", "beneath", "on top of", "atop", "adding", "added to", "attached to", "against", "near", "behind", "in front of", "ahead of", "preceding", "precedes", "succeeded by", "to", "has", "having", "gets", "getting", "takes", "taking", "abutting", "touching", "adjoining", "by the side of", "close to"];
+  var T_IND_KIND = { Charade: "cat", Reversal: "rev", Container: "ins", Anagram: "anag", Deletion: "cut", "Letter selection": "pick", Hidden: "pick", Homophone: "snd", Spoonerism: "spn", "Letter change": "chg", "Letter move": "mov", "Letter swap": "swp" };
   function tWalk(n) { return [n].concat.apply([n], tKids(n).map(tWalk)); }
   // The clue spans a node's words cover, child by child.
   function tReach(n) {
@@ -318,13 +320,14 @@
       var hit = inds.filter(function (x) { return x[2] === n._ind; })[0];
       if (hit) { n.ind = [hit[0]]; inds = inds.filter(function (x) { return x !== hit; }); }
     });
-    var cand = ops.filter(function (n) { return /^(rev|ins|anag|cut|pick|snd|spn|chg|mov|swp)$/.test(n.op) && !n.ind; }), pairs = [];
+    var cand = ops.filter(function (n) { return /^(cat|rev|ins|anag|cut|pick|snd|spn|chg|mov|swp)$/.test(n.op) && !n.ind; }), pairs = [];
     inds.forEach(function (it) {
-      var x = it[0], kind = it[1], says = kind ? [] : INDS[indKey(clue.slice(x[0], x[1]))] || [];
+      var x = it[0], kind = it[1], k = indKey(clue.slice(x[0], x[1])), says = kind ? [] : (INDS[k] || []).concat(T_JOINS.indexOf(k) >= 0 ? ["cat"] : []);
       if (says.indexOf("pick") >= 0 || says.indexOf("cut") >= 0) says = says.concat(["pick", "cut"]);  // letters kept or dropped: the same words say either
       if (!cand.some(function (n) { return says.indexOf(n.op) >= 0; })) says = [];
       cand.forEach(function (n) {
         if (kind && T_IND_KIND[kind] !== n.op || says.length && says.indexOf(n.op) < 0) return;
+        if (n.op === "cat" && !kind && says.indexOf("cat") < 0) return;  // only a join's own words join
         var rs = tReach(n);
         if (!rs.length || tWalk(n).some(function (y) { return y.w && y.w[0] < x[1] && x[0] < y.w[1]; })) return;
         var gap = Math.min.apply(null, rs.map(function (r) { return Math.max(r[0] - x[1], x[0] - r[1], 0); }));

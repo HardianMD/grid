@@ -140,9 +140,11 @@
     return { op: "ins", out: ns[i], in: rest.length === 1 ? rest[0] : { op: "cat", of: bOrder(rest, false) } };
   }
   // Which of the selected parts can go outside and give a run of the answer's letters.
+  // (Read backwards when no way fits forwards: the container is to be reversed next.)
   function bInsFits(ns) {
-    var ans = bAnswer();
-    return ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), ans); });
+    var ans = bAnswer(), back = ans.split("").reverse().join("");
+    var fits = ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), ans); });
+    return fits.indexOf(true) >= 0 ? fits : ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), back); });
   }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;

@@ -321,6 +321,19 @@
     if (!/^(lit|syn|abr)$/.test(n.op) && !(n.op === "pick" || n.op === "cut") || (n.op === "pick" || n.op === "cut") && n.of.op !== "lit") tKids(n).forEach(function (k) { bLine(k, depth + 1, us, ul, got); });
     return li;
   }
+  function bHasDef() { return defRuns().length > 0 || PE.whole.indexOf("cd") >= 0 || PE.whole.indexOf("&lit") >= 0; }
+  // A word free of the definition and the pieces that, alone or with a word or two beside it, usually indicates
+  // something: offered once there is a piece for it to work on.
+  function bCand(i, m) {
+    var free = function (j) { var x = DTOK[j]; return x && !x.el.classList.contains("on") && x.chars.every(function (c) { return !m.piece[+c.dataset.c] && !m.ind[+c.dataset.c]; }); };
+    if (!free(i)) return false;
+    for (var a = Math.max(0, i - 2); a <= i; a++) for (var b = i; b <= Math.min(DTOK.length - 1, a + 2); b++) {
+      var ok = true; for (var j = a; j <= b; j++) if (!free(j)) ok = false;
+      var k = ok && indKey(bText(a, b));
+      if (k && (INDS[k] || T_JOINS.indexOf(k) >= 0)) return true;
+    }
+    return false;
+  }
   function bRender() {
     var sel = PE.sel, ask = PE.ask, ls = PE.lset, clue = DTOK.clue, p = bParse();
     $("defPick").classList.toggle("letters", PE.lmode);
@@ -340,6 +353,16 @@
     var picked = PE.pick.map(function (i) { return PE.parts[i]; });
     $("bBar").hidden = !sel && !ls.length && !picked.length;
     $("bRoles").hidden = !!ask || !sel; $("bLRoles").hidden = !!ask || !ls.length || !!sel;
+    // The steps in order: the definition first (nothing else until it is marked; then it isn't offered again, bar a
+    // double definition's second), then a piece of wordplay, and only then the words that indicate what happens to it.
+    var hasDef = bHasDef(), needDef = !hasDef || PE.whole.indexOf("dd") >= 0 && runs.length < 2;
+    var selDef = !!sel && DTOK.slice(sel[0], sel[1] + 1).every(function (x) { return x.el.classList.contains("on"); });
+    Array.prototype.forEach.call($("bRoles").children, function (b) {
+      var r = b.dataset.r;
+      b.hidden = r === "def" ? !needDef || selDef : !hasDef || r === "ind" && !PE.parts.length;
+    });
+    $("bLetters").disabled = !hasDef && !PE.lmode;
+    DTOK.forEach(function (x, i) { x.el.classList.toggle("cand", !!PE.parts.length && !sel && !ask && bCand(i, m)); });
     var wrap = $("bWrap"); wrap.textContent = ""; wrap.hidden = !!ask || !!sel || !!ls.length || !picked.length;
     (picked.length === 1 ? WRAP1 : WRAPN).forEach(function (r) {
       var b = wrap.appendChild(mk("button", "chip" + (PE.ind.some(function (x) { return x.op === r[1]; }) ? " sugg" : ""), r[0])); b.type = "button"; b.dataset.op = r[1];
@@ -389,10 +412,14 @@
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
     var waiting = PE.ind.filter(function (x) { return x.op; })[0];
     $("bHint").textContent = ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
-      : ask ? "Type the letters, then Add." : sel ? q + (indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."
+      : ask ? "Type the letters, then Add." : !hasDef ? (sel ? q + ": tap Definition if it is the definition, or tap other words." : "First the definition: tap its words, then Definition. (Or Cryptic definition or &lit below.)")
+      : sel && needDef && PE.whole.indexOf("dd") >= 0 && !PE.parts.length ? q + " is:"
+      : sel ? q + (PE.parts.length && indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."
         : "Now tap the pieces “" + tText(clue, waiting.w) + "” works on, then " + (waiting.name || IND_KINDS.filter(function (k) { return k[1] === waiting.op; })[0][0]) + ".")
       : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected (Join keeps the order you tapped them). ") + "Put together as:"
-      : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time." : "Tap a word, or two for a run. Tap pieces below to put them together.";
+      : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time."
+      : !PE.parts.length ? (needDef ? "Now the second definition: tap its words, then Definition." : "Now the wordplay: tap a word, or two for a run (or Letters), and say what it gives.")
+      : "Next, any words that indicate what happens to it (dotted below): tap them, then Indicator. Or tap the next piece, or pieces below to put them together.";
     Array.prototype.forEach.call($("bWhole").children, function (b) { b.classList.toggle("on", PE.whole.indexOf(b.dataset.k) >= 0); });
     // the tray, then the live check
     var out = $("bOut"); out.textContent = "";

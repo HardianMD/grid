@@ -347,8 +347,19 @@
     }
     if (ask && ask.ind) {
       var ik = indKey(tText(clue, ask.ind)), says = (INDS[ik] || []).concat(T_JOINS.indexOf(ik) >= 0 ? ["cat"] : []);
-      IND_KINDS.slice().sort(function (x, y) { var i = says.indexOf(x[1]), j = says.indexOf(y[1]); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); }).forEach(function (k) {
-        var b = box.appendChild(mk("button", "chip" + (says.indexOf(k[1]) >= 0 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
+      // the kinds the pieces made so far use (those still without an indicator first), then what the words usually say
+      var used = [];
+      [false, true].forEach(function (had) {
+        PE.parts.forEach(function (t) {
+          tWalk(t).forEach(function (n) {
+            var name = n.op === "pick" ? (n.hid ? "Hidden word" : "Letters picked") : (IND_KINDS.filter(function (k) { return k[1] === n.op; })[0] || [])[0];
+            if (name && !!(n.ind && n.ind.length) === had && used.indexOf(name) < 0) used.push(name);
+          });
+        });
+      });
+      var rank = function (k) { var u = used.indexOf(k[0]), i = says.indexOf(k[1]); return u >= 0 ? u : i >= 0 ? 50 + i : 99; };
+      IND_KINDS.slice().sort(function (x, y) { return rank(x) - rank(y); }).forEach(function (k) {
+        var b = box.appendChild(mk("button", "chip" + (rank(k) < 99 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
       });
     }
     if (ask && ask.op === "ins") {  // each part by its letters, else by its words ("Anagram of “rude”"); those that fit marked

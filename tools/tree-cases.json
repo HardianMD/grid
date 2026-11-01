@@ -1527,5 +1527,84 @@
    "kind": "cd"
   },
   "v": 0
+ },
+ {
+  "name": "spoonerism by sound, taken on trust",
+  "clue": "Spooner’s sea poop, a starter (3,4)",
+  "answer": "PEASOUP",
+  "v": 1,
+  "parse": {
+   "def": [
+    [
+     20,
+     29
+    ]
+   ],
+   "t": {
+    "op": "spn",
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "l": "SEA",
+       "w": [
+        10,
+        13
+       ]
+      },
+      {
+       "op": "syn",
+       "l": "POOP",
+       "w": [
+        14,
+        18
+       ]
+      }
+     ]
+    },
+    "l": "PEASOUP"
+   }
+  }
+ },
+ {
+  "name": "spoonerism by sound, borne out by the pronunciation dictionary",
+  "clue": "Spooner’s sea poop, a starter (3,4)",
+  "answer": "PEASOUP",
+  "v": 2,
+  "parse": {
+   "def": [
+    [
+     20,
+     29
+    ]
+   ],
+   "t": {
+    "op": "spn",
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "l": "SEA",
+       "w": [
+        10,
+        13
+       ]
+      },
+      {
+       "op": "syn",
+       "l": "POOP",
+       "w": [
+        14,
+        18
+       ]
+      }
+     ]
+    },
+    "l": "PEASOUP",
+    "heard": 1
+   }
+  }
  }
 ]

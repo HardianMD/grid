@@ -139,7 +139,7 @@
   }
   // Parts taken on the solver's word: sounds (unless the pronunciation dictionary bore them out, "heard": the
   // updater's sounds.py) and letter changes.
-  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || n.op === "spn" && !!n.l || tKids(n).some(tTrusted); }
+  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || n.op === "spn" && !!n.l && !n.heard || tKids(n).some(tTrusted); }
   // 2 = the tree gives the answer letter for letter; 1 = it does, leaning on a sound or change; 0 = it doesn't (or no tree).
   function tCheck(p, clue, answer) {
     var t = p && p.t;

@@ -177,7 +177,7 @@
     $("clearBtn").hidden = solved; $("clearBtn").disabled = !done;  // first after the clue list, so the row never shifts
     $("mailBtn").hidden = !(open && P.entry.to); $("postBtn").hidden = !(open && P.entry.post);
     $("hintWrap").hidden = (HARD && !solved) || (!SOL && !DEFS && !PARSES);
-    $("hintBtn").textContent = { parse: "Parse", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
+    $("hintBtn").textContent = { parse: "Parse clue", add: "Add answer", hint: "Hint", reveal: "Reveal" }[nextAction(w)];
     if (!solved && done && USED === 3) USED = RANK[MODE];
     if (SOL && !HARD && !solved && !P.qf && done === total && allRight()) {
       stopClock(); solved = true; save();

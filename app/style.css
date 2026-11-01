@@ -78,6 +78,7 @@ header .timer.stopped { color: var(--good); }
 .clue { display: grid; grid-template-columns: 22px 1fr; gap: 6px; padding: 5px 6px; border-radius: 6px; font-size: calc(14px * var(--cz)); line-height: 1.3; cursor: pointer; }
 .clue > b { font-size: 12px; font-weight: 800; text-align: right; padding-top: 2px; font-variant-numeric: tabular-nums; }
 .clue.on { background: var(--word); }
+.app.pall .clue.on { background: none; box-shadow: inset 0 0 0 2px var(--accent); }  /* a rim: the fill would match the parsings' synonym tint */
 .clue.done { color: var(--ink-soft); }
 :where(.app:not(.pall)) .clue.done span { text-decoration: line-through; text-decoration-color: var(--rule); }
 .clue.right > b { color: var(--good); }
@@ -134,7 +135,7 @@ header .timer.stopped { color: var(--good); }
 .app.qf .checks { box-sizing: border-box; width: 100%; max-width: 520px !important; margin-inline: auto; }
 .checks .btn.qfa { padding-block: 0; font-size: 26px; line-height: 1; min-width: 40px; }
 .checks .btn.qfa:disabled, .checks #clearBtn:disabled, .checks #qfSolve:disabled { opacity: .35; cursor: default; }
-.app.qf #hintBtn { min-width: 68px; }  /* Hint, Reveal and Parse at one width */
+.app.qf #hintBtn { min-width: 68px; }  /* Hint, Reveal and Parse clue at one width */
 .app.qf .kb { order: 3; }
 .app.qf .gridwrap, .app.bank .gridwrap { padding-inline: 16px; }
 .app.qf .grid, .app.bank .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; background: none; border: 0; }

@@ -174,6 +174,7 @@
   // Definitions: the solver's own (saved per clue) win over the blog's.
   function defsFor(w) {
     var k = w.dir + w.num;
+    if (w.defs) return w.defs;  // a favourite's, from its own puzzle
     if (myDefs[k] && (P.ed || P.made || newEdit(myParses[k]))) return myDefs[k];
     var d = DEFS && DEFS[w.dir] && DEFS[w.dir][w.num], x = PARSES && PARSES[w.dir] && PARSES[w.dir][w.num];
     if (!d && x && x.rules && x.s) d = x.s.def;  // no blog yet: the rule parsing's definition

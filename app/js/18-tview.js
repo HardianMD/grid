@@ -130,7 +130,7 @@
   // The answer's tiles coloured by piece, then a line per piece: its letters, what it is, and where it sits (around
   // the pieces inside it, or inside another); reversals of several pieces and the whole-clue kinds get a note.
   function tShowBuild(p, w, box) {
-    var clue = w.clue, letters = w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || " "; });
+    var clue = w.clue, letters = w.ans ? Array.from(w.ans) : w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || " "; });
     var ans = letters.join("").replace(/[^A-Z]/gi, "");
     box.textContent = ""; box.hidden = !p;
     if (!p) return;

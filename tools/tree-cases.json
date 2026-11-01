@@ -559,7 +559,7 @@
   }
  },
  {
-  "name": "from flat: cut from a synonym (partial) (guardian-cryptic-30132 d14)",
+  "name": "from flat: cut from a synonym (partial)",
   "clue": "Layer of skin almost eaten by venom-producing pest (6,4)",
   "answer": "SPIDERMITE",
   "flat": {
@@ -618,7 +618,7 @@
   "v": 0
  },
  {
-  "name": "from flat: reversed charade read in clue order (guardian-cryptic-30136 a1)",
+  "name": "from flat: reversed charade read in clue order",
   "clue": "Quote this writer – rolling it will make you sick (6)",
   "answer": "EMETIC",
   "flat": {
@@ -701,7 +701,7 @@
   "v": 2
  },
  {
-  "name": "from flat: container around a reversed outer part (guardian-cryptic-30144 a25)",
+  "name": "from flat: container around a reversed outer part",
   "clue": "Inventor is absorbed by revolutionary point (6)",
   "answer": "EDISON",
   "flat": {
@@ -768,7 +768,7 @@
   "v": 2
  },
  {
-  "name": "from flat: reversal of a whole container (times-29675 a11)",
+  "name": "from flat: reversal of a whole container",
   "clue": "Extremely old lady has recalled nothing about guild member (9)",
   "answer": "LIVERYMAN",
   "flat": {
@@ -875,7 +875,7 @@
   "v": 2
  },
  {
-  "name": "from flat: homophone (everyman-4173 d21)",
+  "name": "from flat: homophone",
   "clue": "Stopping mechanism to develop a fault, as can be heard (5)",
   "answer": "BRAKE",
   "flat": {
@@ -921,7 +921,7 @@
   "v": 1
  },
  {
-  "name": "from flat: alternate letters (guardian-cryptic-30135 a19)",
+  "name": "from flat: alternate letters",
   "clue": "Oddly, equal pay was enshrined in these regulations (2,4)",
   "answer": "EULAWS",
   "flat": {
@@ -982,7 +982,7 @@
   "v": 2
  },
  {
-  "name": "from flat: hidden word (everyman-4173 a1)",
+  "name": "from flat: hidden word",
   "clue": "Bawdiest heresy describing OT character (6)",
   "answer": "ESTHER",
   "flat": {
@@ -1044,7 +1044,7 @@
   "v": 2
  },
  {
-  "name": "from flat: indicators attached to two operations (everyman-4173 a17)",
+  "name": "from flat: indicators attached to two operations",
   "clue": "Regrettably seedy, entertaining commercial gets you looking glum (3-4)",
   "answer": "SADEYED",
   "flat": {
@@ -1505,5 +1505,27 @@
    }
   },
   "v": 1
+ },
+ {
+  "name": "from flat: a definition written with straight quotes and dashes finds the clue's curly ones",
+  "clue": "Chef’s hat — not cold (5)",
+  "answer": "TOQUE",
+  "flat": {
+   "v": 0,
+   "dev": [
+    "Cryptic definition"
+   ],
+   "def": "Chef's hat - not cold"
+  },
+  "parse": {
+   "def": [
+    [
+     0,
+     21
+    ]
+   ],
+   "kind": "cd"
+  },
+  "v": 0
  }
 ]

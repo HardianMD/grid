@@ -4,7 +4,7 @@
   // One indicator covers everything inside its operation, and the same words can indicate more than one. The tray
   // shows the pieces as a tree; the parsing is checked live by working out its letters.
   var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
-  var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Another clue’s answer…", "xr"]];
+  var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Sounds like…", "snd"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
   var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
   // How one part's letters change: swapped, moved, or simply typed (other pieces' letters swapped in: three parts).
@@ -66,7 +66,7 @@
   function bAt(n) { var a = 1e6; (function g(k) { if (k.w) a = Math.min(a, k.w[0]); tKids(k).forEach(g); })(n); return a; }
   // A new piece; letters picked or cut are an operation already, so the next indicator tapped is theirs.
   function bAdd(n) {
-    PE.parts.push(n); var op = n.op === "pick" || n.op === "cut";
+    PE.parts.push(n); var op = n.op === "pick" || n.op === "cut" || n.op === "snd";
     if (op) bClaim(n);
     PE.pick = op ? [PE.parts.length - 1] : []; PE.target = op ? n : null; PE.sel = null; PE.lset = []; PE.ask = null; bRender();
   }
@@ -82,13 +82,13 @@
     if (letters == null) {
       PE.ask = { r: r };
       $("bLet").value = r === "abr" ? (abbrOf(text).filter(function (x) { return bAnswer().indexOf(x) >= 0; })[0] || abbrOf(text)[0] || "") : r === "xr" ? bOtherAnswer(text) : "";
-      $("bLet").placeholder = r === "abr" ? "Letters it is short for, e.g. S" : r === "xr" ? "That clue’s answer (or the part used)" : "Letters it stands for, e.g. AB";
+      $("bLet").placeholder = r === "abr" ? "Letters it is short for, e.g. S" : r === "snd" ? "Letters as they sound in the answer, e.g. NIGHT" : r === "xr" ? "That clue’s answer (or the part used)" : "Letters it stands for, e.g. AB";
       bRender(); try { $("bLet").focus(); } catch (e) {}
       return;
     }
     var l = bLetters(letters);
     if (!l) return toast("No letters given");
-    bAdd(r === "xr" ? { op: "syn", w: w, l: l, xr: 1 } : { op: r, w: w, l: l });
+    bAdd(r === "xr" ? { op: "syn", w: w, l: l, xr: 1 } : r === "snd" ? { op: "snd", of: { op: "lit", w: w }, l: l } : { op: r, w: w, l: l });
   }
   // The answer of the clue the words name by number ("14", "see 5 Down"), when it is known and only one clue fits.
   function bOtherAnswer(text) {

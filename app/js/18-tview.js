@@ -42,7 +42,15 @@
     var noun = function (k) {
       if (k.op === "lit") return [q(k.w)];
       var chars = tLitChars(k, clue);
-      if (chars) return [q([k.of[0].w[0], k.of[k.of.length - 1].w[1]])];
+      if (chars) {  // clue words as written: one quote per run of words, so split fodder reads "Soon" + "rap"
+        var runs = [];
+        tWalk(k).forEach(function (x) {
+          if (x.op !== "lit") return;
+          var last = runs[runs.length - 1];
+          if (last && !/[a-z]/i.test(clue.slice(last[1], x.w[0]))) last[1] = x.w[1]; else runs.push([x.w[0], x.w[1]]);
+        });
+        return runs.map(function (w, i) { return (i ? " + " : "") + q(w); });
+      }
       var l = tMake(k, clue);
       if (l && k.w && (k.op === "syn" || k.op === "abr")) return [l + " (" + (k.op === "abr" ? "short for " : k.xr ? "another clue’s answer, " : "") + q(k.w) + ")"];
       return l ? [l + " ("].concat(tSay(k, clue), [")"]) : tSay(k, clue);

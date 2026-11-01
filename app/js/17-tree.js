@@ -2,7 +2,7 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l, xr?}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}  sub {of, out, in, k?}
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
   var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
@@ -13,6 +13,28 @@
     if (ws.length < 2) return null;
     var on = function (w) { return w.match(/^(QU|[^AEIOUY]*)/)[1]; }, a = ws[0], b = ws[ws.length - 1], x = on(a), y = on(b);
     return [y + a.slice(x.length)].concat(ws.slice(1, -1), [x + b.slice(y.length)]).join("");
+  }
+  // A spoonerism as k says: the first i letters of the first word swap with the first j of the last (LACKED PUNCH,
+  // PACKED LUNCH); a part of one word first splits into two at s.
+  function tSpoonK(ws, k) {
+    var i = k[0], j = k[1], sp = k[2];
+    if (sp) { if (ws.length !== 1 || !(sp > 0 && sp < ws[0].length)) return null; ws = [ws[0].slice(0, sp), ws[0].slice(sp)]; }
+    if (ws.length < 2) return null;
+    var a = ws[0], b = ws[ws.length - 1];
+    if (!(i >= 0 && i < a.length && j >= 0 && j < b.length) || a.slice(0, i) === b.slice(0, j)) return null;
+    return [b.slice(0, j) + a.slice(i)].concat(ws.slice(1, -1), [a.slice(0, i) + b.slice(j)]).join("");
+  }
+  // Every way the words can be spoonerised, the opening consonants first, as [letters, k].
+  function tSpoons(ws) {
+    var out = [], ways = ws.length > 1 ? [[ws, 0]] : [];
+    if (ws.length === 1) for (var s = 2; s < ws[0].length - 1; s++) ways.push([[ws[0].slice(0, s), ws[0].slice(s)], s]);
+    var on = function (w) { return w.match(/^(QU|[^AEIOUY]*)/)[1].length; };
+    ways.forEach(function (wy) {
+      var a = wy[0][0], b = wy[0][wy[0].length - 1], ks = [[on(a), on(b)]];
+      for (var i = 0; i < Math.min(a.length, 4); i++) for (var j = 0; j < Math.min(b.length, 4); j++) ks.push([i, j]);
+      ks.forEach(function (k) { var v = tSpoonK(wy[0], k); if (v) out.push([v, wy[1] ? k.concat([wy[1]]) : k]); });
+    });
+    return out;
   }
   function tWords(n, clue) {
     if (n.op === "lit") return tText(clue, n.w).split(/\s+/).map(tLetters).filter(Boolean);
@@ -47,7 +69,7 @@
       var d = c != null && c.length === o.length ? o.split("").map(function (x, j) { return x !== c[j] ? j : -1; }).filter(function (j) { return j >= 0; }) : [];
       return d.length === 2 && c[d[0]] === o[d[1]] && c[d[1]] === o[d[0]] ? o : null;
     }
-    if (op === "spn") { var ws = tWords(n.of, clue); return ws && ws.indexOf(null) < 0 ? tSpoon(ws) : null; }
+    if (op === "spn") { if (n.l) return tLetters(n.l); var ws = tWords(n.of, clue); return ws && ws.indexOf(null) < 0 ? (n.k ? tSpoonK(ws, n.k) : tSpoon(ws)) : null; }
     if (op === "ins" && n.k != null) { o = tMake(n.out, clue); i = tMake(n.in, clue); return o == null || i == null ? null : o.slice(0, n.k) + i + o.slice(n.k); }
     if (op === "sub") {  // the letters "out" gives replaced by those "in" gives: at k, else the first place they sit
       c = tMake(n.of, clue); o = tMake(n.out, clue); i = tMake(n.in, clue);
@@ -66,6 +88,7 @@
     if (op === "pick") return n.at.length;
     if (op === "cut") return tSize(n.of, clue) - n.at.length;
     if (op === "sub") return tSize(n.of, clue) - tSize(n.out, clue) + tSize(n.in, clue);
+    if (op === "spn" && !n.l) return tSize(n.of, clue);  // a swap keeps the letters' count
     var v = tMake(n, clue); return v == null ? 0 : v.length;
   }
   // The coloured pieces: a charade's and a container's parts, through reversals of them; any other part is one piece.
@@ -106,12 +129,17 @@
       var f = tMake(n.of, clue), srt = function (s) { return s.split("").sort().join(""); };
       return f != null && target && srt(f) === srt(target) ? fill() : null;
     }
+    if (op === "spn" && !n.l) {
+      var sw = tWords(n.of, clue), sp = sw && sw.indexOf(null) < 0 ? tSpoons(sw) : [];
+      for (var z = 0; z < sp.length; z++) if (sp[z][0] === target) { n.k = sp[z][1]; return fill(); }
+      return null;
+    }
     var v = tMake(n, clue);
     return v && v === target ? fill() : null;
   }
   // Parts taken on the solver's word: sounds (unless the pronunciation dictionary bore them out, "heard": the
   // updater's sounds.py) and letter changes.
-  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || tKids(n).some(tTrusted); }
+  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || n.op === "spn" && !!n.l || tKids(n).some(tTrusted); }
   // 2 = the tree gives the answer letter for letter; 1 = it does, leaning on a sound or change; 0 = it doesn't (or no tree).
   function tCheck(p, clue, answer) {
     var t = p && p.t;

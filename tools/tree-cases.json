@@ -1398,5 +1398,112 @@
    }
   },
   "v": 0
+ },
+ {
+  "name": "spoonerism of a two-word synonym given as one piece (made up)",
+  "clue": "Was weak, hit, as Spooner's ready meal (6,5)",
+  "answer": "PACKED LUNCH",
+  "parse": {
+   "def": [
+    [
+     28,
+     38
+    ]
+   ],
+   "t": {
+    "op": "spn",
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      14
+     ],
+     "l": "LACKEDPUNCH"
+    },
+    "ind": [
+     [
+      18,
+      27
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "spoonerism swapping only part of the opening consonants (made up)",
+  "clue": "Spooner's railway cake shows a certain bird taking (5,4)",
+  "answer": "CRAIN TAKE",
+  "parse": {
+   "t": {
+    "op": "spn",
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "w": [
+        10,
+        17
+       ],
+       "l": "TRAIN"
+      },
+      {
+       "op": "lit",
+       "w": [
+        18,
+        22
+       ]
+      }
+     ]
+    },
+    "ind": [
+     [
+      0,
+      9
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "spoonerism by sound, taken on trust (made up)",
+  "clue": "Spooner's mobile, cut, gives a sated ice cream (4,4)",
+  "answer": "CONE FULL",
+  "parse": {
+   "t": {
+    "op": "spn",
+    "l": "CONEFULL",
+    "of": {
+     "op": "cat",
+     "of": [
+      {
+       "op": "syn",
+       "w": [
+        10,
+        16
+       ],
+       "l": "PHONE"
+      },
+      {
+       "op": "syn",
+       "w": [
+        18,
+        21
+       ],
+       "l": "CULL"
+      }
+     ]
+    },
+    "ind": [
+     [
+      0,
+      9
+     ]
+    ]
+   }
+  },
+  "v": 1
  }
 ]

@@ -1304,5 +1304,99 @@
    }
   },
   "v": 2
+ },
+ {
+  "name": "letters replaced by another piece's (made up)",
+  "clue": "Inspire, Charlie changed for Tesla, in retinue (9)",
+  "answer": "ENTOURAGE",
+  "parse": {
+   "def": [
+    [
+     39,
+     46
+    ]
+   ],
+   "t": {
+    "op": "sub",
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      7
+     ],
+     "l": "ENCOURAGE"
+    },
+    "out": {
+     "op": "abr",
+     "w": [
+      9,
+      16
+     ],
+     "l": "C"
+    },
+    "in": {
+     "op": "abr",
+     "w": [
+      29,
+      34
+     ],
+     "l": "T"
+    },
+    "ind": [
+     [
+      17,
+      28
+     ]
+    ]
+   }
+  },
+  "v": 2
+ },
+ {
+  "name": "letters replaced that the part does not have (made up)",
+  "clue": "Inspire, Charlie changed for Tesla, in retinue (9)",
+  "answer": "ENTOURAGE",
+  "parse": {
+   "def": [
+    [
+     39,
+     46
+    ]
+   ],
+   "t": {
+    "op": "sub",
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      7
+     ],
+     "l": "ENCOURAGE"
+    },
+    "out": {
+     "op": "abr",
+     "w": [
+      29,
+      34
+     ],
+     "l": "T"
+    },
+    "in": {
+     "op": "abr",
+     "w": [
+      29,
+      34
+     ],
+     "l": "T"
+    },
+    "ind": [
+     [
+      17,
+      28
+     ]
+    ]
+   }
+  },
+  "v": 0
  }
 ]

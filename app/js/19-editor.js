@@ -7,10 +7,10 @@
   var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
   var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Letter change…", "chg"], ["Move letters…", "mov"], ["Swap letters…", "swp"], ["Spoonerism", "spn"]];
-  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"]];
+  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Replace…", "sub"]];
   var WHOLE = [["Double definition", "dd"], ["Cryptic definition", "cd"], ["&lit", "&lit"], ["Palindrome", "pal"]];
   var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Letters dropped",
-    pick: "Letters picked", snd: "Sounds like", chg: "Letter change", mov: "Letters moved", swp: "Letters swapped", spn: "Spoonerism" };
+    pick: "Letters picked", snd: "Sounds like", chg: "Letter change", mov: "Letters moved", swp: "Letters swapped", sub: "Letters replaced", spn: "Spoonerism" };
   WROLES.forEach(function (r) { $("bRoles").appendChild(mk("button", "chip" + (r[1] === "def" ? " def" : ""), r[0])).dataset.r = r[1]; });
   LROLES.forEach(function (r) { $("bLRoles").appendChild(mk("button", "chip", r[0])).dataset.r = r[1]; });
   WHOLE.forEach(function (r) { $("bWhole").appendChild(mk("button", "chip", r[0])).dataset.k = r[1]; });
@@ -136,7 +136,7 @@
     if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); if (PE.ind[i].name === "Hidden word") n.hid = 1; PE.ind.splice(i, 1); }
   }
   var IND_KINDS = [["Join", "cat"], ["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
-    ["Spoonerism", "spn"], ["Letter change", "chg"], ["Letters moved", "mov"], ["Letters swapped", "swp"]];
+    ["Spoonerism", "spn"], ["Letter change", "chg"], ["Letters moved", "mov"], ["Letters swapped", "swp"], ["Letters replaced", "sub"]];
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
     if (to && to.op === op) { (to.ind = to.ind || []).push(w); if (name === "Hidden word") to.hid = 1; }
@@ -155,6 +155,21 @@
     var fits = ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), ans); });
     return fits.indexOf(true) >= 0 ? fits : ns.map(function (x, i) { return !!ans && bFitsIn(bIns(ns, i), back); });
   }
+  // Three parts, one with letters swapped for another's: which is the word, which comes out, which goes in.
+  // Take the way round that gives a run of the answer's letters, else any where the word holds what comes out.
+  function bSub(ns) {
+    if (ns.length !== 3) { toast("Pick three parts: the word, what comes out, what goes in"); return null; }
+    var clue = DTOK.clue, ans = bAnswer(), first = null, P = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    for (var i = 0; i < P.length; i++) {
+      var n = { op: "sub", of: ns[P[i][0]], out: ns[P[i][1]], in: ns[P[i][2]] };
+      var b = tMake(n.of, clue), o = tMake(n.out, clue);
+      if (!b || !o || b.indexOf(o) < 0 || o.length >= b.length) continue;
+      if (ans && bFitsIn(n, ans)) return n;
+      first = first || n;
+    }
+    if (!first) toast("None of them holds another’s letters");
+    return first;
+  }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;
     if (!ns.length) return;
@@ -168,7 +183,8 @@
       bRender(); if (op === "snd" || op === "chg") try { $("bLet").focus(); } catch (e) {}
       return;
     }
-    if (op === "cat") n = { op: "cat", of: ns };  // in the order tapped
+    if (op === "sub") { n = bSub(ns); if (!n) return; }
+    else if (op === "cat") n = { op: "cat", of: ns };  // in the order tapped
     else if (op === "ins") n = bIns(ns, extra);
     else if (op === "rev") n = { op: "rev", of: one || { op: "cat", of: bOrder(ns, true) } };
     else if (op === "anag") n = { op: "anag", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
@@ -436,6 +452,7 @@
           return (o && n.k != null ? o.slice(0, n.k) + "(" + say(n.in) + ")" + o.slice(n.k) : say(n.in) + " in " + say(n.out)) + ind(n);
         case "snd": return n.l + " (sounds like " + say(n.of) + ")" + ind(n);
         case "chg": case "mov": case "swp": return say(n.of) + " > " + n.l + ind(n);
+        case "sub": return say(n.of) + " with " + say(n.out) + " > " + say(n.in) + ind(n);
         case "spn": return "spoonerism of " + say(n.of) + ind(n);
       }
       return "";

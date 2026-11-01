@@ -2,12 +2,12 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l, xr?}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of}  sub {of, out, in, k?}
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
-  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn"];
+  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
   function tText(clue, w) { return clue.slice(w[0], w[1]); }
-  function tKids(n) { return n.op === "cat" ? n.of : n.op === "ins" ? [n.out, n.in] : n.of ? [n.of] : []; }
+  function tKids(n) { return n.op === "cat" ? n.of : n.op === "ins" ? [n.out, n.in] : n.op === "sub" ? [n.of, n.out, n.in] : n.of ? [n.of] : []; }
   // The first and last words swap their opening consonants: NOSY COOK to COSY NOOK.
   function tSpoon(ws) {
     if (ws.length < 2) return null;
@@ -49,6 +49,12 @@
     }
     if (op === "spn") { var ws = tWords(n.of, clue); return ws && ws.indexOf(null) < 0 ? tSpoon(ws) : null; }
     if (op === "ins" && n.k != null) { o = tMake(n.out, clue); i = tMake(n.in, clue); return o == null || i == null ? null : o.slice(0, n.k) + i + o.slice(n.k); }
+    if (op === "sub") {  // the letters "out" gives replaced by those "in" gives: at k, else the first place they sit
+      c = tMake(n.of, clue); o = tMake(n.out, clue); i = tMake(n.in, clue);
+      if (!c || !o || i == null) return null;
+      var at = n.k != null && c.substr(n.k, o.length) === o ? n.k : c.indexOf(o);
+      return at < 0 ? null : c.slice(0, at) + i + c.slice(at + o.length);
+    }
     return null;
   }
   // How many letters a part gives; every part's length is known without the answer.
@@ -59,6 +65,7 @@
     if (op === "rev" || op === "anag") return tSize(n.of, clue);
     if (op === "pick") return n.at.length;
     if (op === "cut") return tSize(n.of, clue) - n.at.length;
+    if (op === "sub") return tSize(n.of, clue) - tSize(n.out, clue) + tSize(n.in, clue);
     var v = tMake(n, clue); return v == null ? 0 : v.length;
   }
   // The coloured pieces: a charade's and a container's parts, through reversals of them; any other part is one piece.
@@ -118,7 +125,7 @@
     if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp)$/.test(op) && !n.l) bad.push(op + " without its letters");
     if (op === "cat" && !((n.of || []).length >= 2)) bad.push("cat with fewer than two parts");
     if ((op === "pick" || op === "cut") && !(n.at || []).length) bad.push(op + " without letters");
-    if (op === "ins" && !(n.out && n.in)) bad.push("ins without both parts");
+    if ((op === "ins" || op === "sub") && !(n.out && n.in)) bad.push(op + " without both parts");
     if (!/^(lit|syn|abr|cat|ins)$/.test(op) && !n.of) bad.push(op + " without its part");
     if (!bad.length) tKids(n).forEach(function (k) { bad = bad.concat(tValid(k)); });
     return bad;
@@ -320,7 +327,7 @@
       var hit = inds.filter(function (x) { return x[2] === n._ind; })[0];
       if (hit) { n.ind = [hit[0]]; inds = inds.filter(function (x) { return x !== hit; }); }
     });
-    var cand = ops.filter(function (n) { return /^(cat|rev|ins|anag|cut|pick|snd|spn|chg|mov|swp)$/.test(n.op) && !n.ind; }), pairs = [];
+    var cand = ops.filter(function (n) { return /^(cat|rev|ins|anag|cut|pick|snd|spn|chg|mov|swp|sub)$/.test(n.op) && !n.ind; }), pairs = [];
     inds.forEach(function (it) {
       var x = it[0], kind = it[1], k = indKey(clue.slice(x[0], x[1])), says = kind ? [] : (INDS[k] || []).concat(T_JOINS.indexOf(k) >= 0 ? ["cat"] : []);
       if (says.indexOf("pick") >= 0 || says.indexOf("cut") >= 0) says = says.concat(["pick", "cut"]);  // letters kept or dropped: the same words say either

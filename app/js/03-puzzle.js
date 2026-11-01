@@ -150,7 +150,7 @@
     if (!p.qf && !p.ed) store.set("crossword:last", p.id);
     elapsed = saved.time || 0; solved = !!saved.solved; since = null; SUB = saved.sub || null; EDITED = !!saved.ed;
     // The fill log (LG, see logFill) is kept only for puzzles started after it was added, so it always replays to the grid.
-    LG = p.qf || p.ed || (!saved.lg && saved.fill && saved.fill.join("").trim()) ? null : saved.lg || ""; SNAP = fill.map(function (row) { return row.slice(); }); HEAT = false;
+    LG = p.qf || p.ed || (!saved.lg && saved.fill && saved.fill.join("").trim()) ? null : saved.lg || ""; SNAP = fill.map(function (row) { return row.slice(); }); HEAT = PALL = false;
     startClock();
     build();
     setMode(p.qf || p.ed ? "easy" : saved.mode || lastMode(p), true);

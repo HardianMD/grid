@@ -136,12 +136,13 @@
       el.classList.toggle("ok", !!a ? fill[r][c] === a : !HARD && !SUB && !RP && (solved || !!ok[k]));  // a solved Easy or Medium grid is green throughout (a submitted one is unmarked)
       el.lastChild.textContent = fill[r][c];
     }
-    var fl = favs(), nh = noHints();
+    var fl = favs(), nh = noHints(), pall = PALL && solved && !P.qf;
+    $("app").classList.toggle("pall", pall);
     words.forEach(function (x) {
       x.el.classList.toggle("on", x === w);
       x.el.classList.toggle("fav", isFav(fl, P.id, x.dir + x.num));
-      var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] ? parseFor(x).type : "", myDefs[k] || ""].join("|");
-      if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x); }
+      var k = x.dir + x.num, sig = [HARD, nh, hinted[k] || 0, hinted[k] ? parseFor(x).type : "", myDefs[k] || "", pall && JSON.stringify(myParses[k] || 0)].join("|");
+      if (x.sig !== sig) { x.sig = sig; clueInto(x.span, x, pall); parseAll(x, pall); }
       x.el.classList.toggle("done", filled(x));
       x.el.classList.toggle("right", !HARD && !SUB && (solved || x.cells.every(function (rc) { return ok[rc[0] + "," + rc[1]]; })));
       x.el.classList.toggle("rev", !!REVW[x.dir + x.num]);  // a revealed answer's number is amber, not green
@@ -190,6 +191,7 @@
     $("app").classList.toggle("fin", solved && !P.qf);
     $("qfSolve").disabled = locked(w);
     $("heatBtn").hidden = $("replayBtn").hidden = !(solved && LG); $("heatBtn").setAttribute("aria-pressed", String(HEAT));
+    $("pallBtn").hidden = !(solved && (PARSES || P.ed || P.made || Object.keys(myParses).length)); $("pallBtn").setAttribute("aria-pressed", String(PALL));
     $("nitchBtn").hidden = !(solved && P.nitch);
     if (solved && P.nitch) { $("nitchBtn").textContent = ngrade(P.nitch.n); $("nitchBtn").style.background = ncol(P.nitch.n); }
     $("solvedBar").classList.toggle("dnf", revDnf || (!!SUB && SUB.res === "dnf"));
@@ -245,6 +247,20 @@
     } };
   }
   $("heatBtn").addEventListener("click", function () { HEAT = !HEAT; render(); });
+  // Parse all (wide screens only, see style.css): every clue's parsing under it in the clue list, drawn as the parse view
+  // draws one; the answer in words when there are no tiles.
+  $("pallBtn").addEventListener("click", function () { PALL = !PALL; render(); });
+  function parseAll(w, on) {
+    if (w.pa) w.el.removeChild(w.pa);
+    w.pa = null; w.span.classList.toggle("pclue", on);
+    if (!on) return;
+    var r = parseFor(w), line = mk("p", "pwp"), t = mk("i"), wp = mk("span"), bd = mk("div", "pbuild");
+    w.pa = mk("div", "cpar"); line.appendChild(t); line.appendChild(wp); w.pa.appendChild(line); w.pa.appendChild(bd);
+    drawParse(w, r, w.span, t, wp, bd);
+    if (!bd.querySelector(".tiles")) line.insertBefore(mk("b", null, answerText(w) + " "), t);
+    if (r.mine && myParses[w.dir + w.num].note) w.pa.appendChild(mk("p", "pnote", myParses[w.dir + w.num].note));
+    w.el.appendChild(w.pa);
+  }
 
   // Timer: counts up while the page is open and visible, stops when every answer is right.
   function now() { return elapsed + (since ? Date.now() - since : 0); }

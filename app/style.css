@@ -384,6 +384,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 .defpick { font: 16px/1.9 var(--f-ui); color: var(--ink); }
 .defpick .tok { cursor: pointer; border-radius: 3px; padding: 1px 0; -webkit-user-select: none; user-select: none; }
 .defpick .tok.on { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: var(--accent); background: var(--word); }
+.defpick .tok.cand:not(.on) { text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; text-decoration-color: var(--ink-soft); }
 .sub { font: 400 11px var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--ink-soft); }
 .chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip { font: 600 12px var(--f-ui); color: var(--accent); background: var(--sheet); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 9px; cursor: pointer; }

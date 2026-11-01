@@ -91,8 +91,9 @@ header .timer.stopped { color: var(--good); }
 .favs .fm { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-soft); }
 .favs { margin-top: 12px; }
 .favs .fb { display: grid; gap: 6px; }
-.favs .pwp, .favs .pans { grid-column: 2 / 4; margin: 0; font-size: calc(14px * var(--cz)); }
-.favs .pans { font-weight: 800; letter-spacing: 0.06em; }
+.favs .fsol, .favs .fpar { grid-column: 2 / 4; display: grid; gap: 6px; margin: 0; font-size: calc(14px * var(--cz)); }
+.favs .fpar p { margin: 0; }
+.favs .clue:has(.fpar .tiles) .fsol { display: none; }  /* the parsing's tiles show the answer too */
 
 .kb { background: var(--kb-bg); padding-block: 4px calc(4px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 4px; }
 .row { display: flex; gap: 5px; justify-content: center; }
@@ -531,7 +532,7 @@ u.def { text-decoration: underline; text-decoration-thickness: 2px; text-underli
 #bRoles .lbl { align-self: center; font-size: 12px; color: var(--ink-soft); margin: 0 2px; }
 .pbuild li .x { margin-left: 2px; }
 .chips.whole .chip { font-size: 11px; padding: 4px 8px; }
-.confirm .pnote { margin: 0; font: 14px/1.45 var(--f-ui); color: var(--ink); background: var(--paper); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; }
+.confirm .pnote, .favs .pnote { margin: 0; font: 14px/1.45 var(--f-ui); color: var(--ink); background: var(--paper); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; }
 /* Parse editor tray: each part a small tree; tap a part to select it for wrapping. */
 #bOut > .lbl { margin: 4px 0 0; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
 #bOut ul.tray { margin: 0; padding: 6px 8px; list-style: none; display: grid; gap: 3px; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; background: var(--sheet); }

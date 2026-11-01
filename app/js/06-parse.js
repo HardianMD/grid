@@ -219,18 +219,9 @@
     askMode = "parse";
     $("hintTitle").textContent = wordName(w);
     hinted[key] = 1; clueInto($("pvClue"), w, true); if (had) hinted[key] = had; else delete hinted[key];
-    var s = r.s || defsOnly(w, r.type) || (/&lit|palindrome/i.test(r.type) ? { v: 0, dev: [] } : null);
-    if (s) s = Object.assign({}, s, { ty: r.type });
-    var t = s && treeFor(w, s, w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || ""; }).join(""));
-    if (t) tMarkClue($("pvClue"), w, t);
+    var s = drawParse(w, r, $("pvClue"), $("pvType"), $("pvWp"), $("pvBuild"));
     $("pvAns").textContent = answerText(w); $("pvAns").hidden = !!s;
-    // a tree that gives the answer names the type from its operations; else the blog's or the solver's words
-    $("pvType").textContent = t && t.t && tCheck(t, w.clue, w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || ""; }).join("")) ? tTypes(t, w.clue) : r.type;
-    // With a structure the marked clue and the tiles are the parsing; the written parsing shows only when there is
-    // none, or when Blog parse is tapped (the blog's words, verbatim).
-    markup($("pvWp"), s ? "" : r.wordplay);
     var bp = blogParse(w); $("pvBlog").hidden = !(s && bp && bp.wordplay); $("pvBlog").classList.remove("on");
-    tShowBuild(t, w, $("pvBuild"));
     $("pvNote").textContent = r.mine && myParses[key].note || ""; $("pvNote").hidden = !$("pvNote").textContent;
     $("hintText").hidden = true; $("parseView").hidden = false;
     // The blog is linked from the finish bar; the note only says when the parsing is the solver's own or missing.
@@ -242,6 +233,23 @@
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !(off && newEdit(Object.assign({}, rec, { off: 0 })) || r.mine);
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
+  }
+  // The parsing r of clue w drawn into the given elements: the clue marked up, the type, the written wordplay (only
+  // when there is no structure) and the tiles; also used by the Favourites tab, whose w carries its own answer (ans)
+  // and definitions (defs). Returns the structure, if any.
+  function drawParse(w, r, clueEl, typeEl, wpEl, buildEl) {
+    var s = r.s || defsOnly(w, r.type) || (/&lit|palindrome/i.test(r.type) ? { v: 0, dev: [] } : null);
+    if (s) s = Object.assign({}, s, { ty: r.type });
+    var ans = function (any) { return w.ans || w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || any && fill[rc[0]][rc[1]] || ""; }).join(""); };
+    var t = s && treeFor(w, s, ans(true));
+    if (t) tMarkClue(clueEl, w, t);
+    // a tree that gives the answer names the type from its operations; else the blog's or the solver's words
+    typeEl.textContent = t && t.t && tCheck(t, w.clue, ans()) ? tTypes(t, w.clue) : r.type;
+    // With a structure the marked clue and the tiles are the parsing; the written parsing shows only when there is
+    // none, or when Blog parse is tapped (the blog's words, verbatim).
+    markup(wpEl, s ? "" : r.wordplay);
+    tShowBuild(t, w, buildEl);
+    return s;
   }
   // A cryptic or double definition with no stored structure: the clue's type and definitions are enough.
   function defsOnly(w, type) {

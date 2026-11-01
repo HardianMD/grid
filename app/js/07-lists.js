@@ -150,12 +150,6 @@
     }).join(""));
     return a && a.indexOf("?") < 0 ? a : "";
   }
-  function answerOf(p, k, clue) {
-    var a = rawAnswer(p, k);
-    if (!a) return "The answer isn\u2019t known yet.";
-    var br = seps(parseEnum(joinEnum(clue)));
-    return Array.from(a).map(function (ch, i) { return ch + (br[i] || ""); }).join("");
-  }
   // Shown once the starred clues' puzzles are read (full); FAVT drops an older showing still reading.
   var FAVT = 0;
   function showFavs() {
@@ -172,29 +166,40 @@
     if (!list.length) { var e = mk("p", "hempty", "No favourites yet. Tap the star by a clue to add it."); box.appendChild(e); }
     list.forEach(function (f) {
       var p = byId[f.p], dir = f.k[0], num = f.k.slice(1);
-      var el = mk("div", "clue");
-      var b = mk("b", "fn", num);
-      var s = mk("span", null, (p[dir === "a" ? "across" : "down"] || {})[num] || "");
+      var el = mk("div", "clue"), clue = joinEnum((p[dir === "a" ? "across" : "down"] || {})[num] || "");
+      var b = mk("b", "fn", num), s = mk("span"), cl = mk("span", "pclue", clue);
+      s.appendChild(cl);
       s.appendChild(mk("small", "fm", (dir === "a" ? "Across" : "Down") + " \u00b7 " + p.title + " \u00b7 " + metaText(p)));
-      var fb = mk("div", "fb");
-      // Each button shows its line under the clue, or hides it again; the answer line stays above the parsing.
-      [["Solution", "pans", function (x) { x.textContent = answerOf(p, f.k, s.firstChild.textContent); }],
-       ["Parse", "pwp", function (x) {
-        var mine = ((store.peek("crossword:" + p.id) || {}).parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
+      var fb = mk("div", "fb"), ans = rawAnswer(p, f.k);
+      // Each button shows its part under the clue (Parse also marks up the clue), or hides it again; both draw
+      // the answer as the parse view's tiles, so the plain tiles step aside while the parsing's are showing.
+      [["Solution", "fsol pbuild", function (x) {
+        if (!ans) return x.appendChild(mk("p", null, "The answer isn\u2019t known yet."));
+        var br = seps(parseEnum(clue)), tiles = mk("div", "tiles");
+        Array.from(ans).forEach(function (ch, i) { tiles.appendChild(mk("b", i && br[i - 1] ? "sep" : "", ch)); });
+        x.appendChild(tiles);
+      }],
+       ["Parse", "fpar", function (x) {
+        var rec = store.peek("crossword:" + p.id) || {}, mine = (rec.parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
         if (mine && (mine.off || !(p.ed || p.made || mine.s && mine.s.tree))) mine = null;  // as newEdit()
-        var r = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
-        var t = mk("i", null, ctype(r.type)); var wp = mk("span"); markup(wp, r.wordplay || "");
-        x.appendChild(t); x.appendChild(wp);
-        if (mine) x.appendChild(mk("small", null, " \u00b7 " + editedBy()));
+        var hint = ((jsonOf(p, "hints") || {})[dir] || {})[num], x0 = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
+        var w = { dir: dir, num: num, clue: clue, ans: ans,
+          defs: mine && (rec.defs || {})[f.k] || (hint ? [hint] : blog && blog.rules && blog.s && blog.s.def ? [blog.s.def] : []) };
+        var r = { type: ctype(x0.type), wordplay: x0.wordplay || "", s: ans && ((x0.ours && x0.ours.s) || x0.s) };
+        var line = mk("p", "pwp"), t = mk("i"), wp = mk("span"), bd = mk("div", "pbuild");
+        line.appendChild(t); line.appendChild(wp); x.appendChild(line); x.appendChild(bd);
+        drawParse(w, r, cl, t, wp, bd);
+        if (mine && mine.note) x.appendChild(mk("p", "pnote", mine.note));
+        if (mine) line.appendChild(mk("small", null, " \u00b7 " + editedBy()));
       }]].forEach(function (d) {
         var bt = document.createElement("button"); bt.type = "button"; bt.className = "btn mini"; bt.textContent = d[0];
         bt.addEventListener("click", function (e) {
           e.stopPropagation();
-          var x = el.querySelector("." + d[1]);
+          var x = el.querySelector("." + d[1].split(" ")[0]);
           bt.classList.toggle("solid", !x);
-          if (x) return el.removeChild(x);
-          x = mk("p", d[1]); d[2](x);
-          el.insertBefore(x, d[1] === "pans" ? el.querySelector(".pwp") : null);
+          if (x) { if (d[1] === "fpar") cl.textContent = clue; return el.removeChild(x); }
+          x = mk("div", d[1]); d[2](x);
+          el.insertBefore(x, d[1] === "fpar" ? null : el.querySelector(".fpar"));
         });
         fb.appendChild(bt);
       });

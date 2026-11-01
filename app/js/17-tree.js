@@ -160,10 +160,16 @@
   }
 
   // ---------- from the old flat structure (a list of pieces placed in the answer), as tree.py's from_flat ----------
+  // The text with curly quotes, dashes and accents made plain, one character for one, so offsets still hold.
+  var TFOLD = { "\u2019": "'", "\u2018": "'", "\u201c": '"', "\u201d": '"', "\u2014": "-", "\u2013": "-" };
+  function tFold(s) {
+    return Array.from(s).map(function (ch) { ch = TFOLD[ch] || ch; var d = ch.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); return d.length === 1 ? d : ch; }).join("");
+  }
   // Where the words w sit in the clue: at offset c when given, else the first whole-word match, else anywhere.
+  // Quotes, dashes and accents need not match (the updater reads the clue with them made plain).
   function tSpan(clue, w, c) {
     if (!w) return null;
-    var low = clue.toLowerCase(), t = w.toLowerCase(), a = -1, L = /\p{L}/u;
+    var low = tFold(clue).toLowerCase(), t = tFold(w).toLowerCase(), a = -1, L = /\p{L}/u;
     if (c != null && low.substr(c, t.length) === t) return [c, c + t.length];
     while ((a = low.indexOf(t, a + 1)) >= 0) {
       var b = a + t.length;

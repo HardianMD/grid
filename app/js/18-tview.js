@@ -72,7 +72,7 @@
       case "sub":
         var gone = tMake(n.out, clue) || "";
         put.apply(null, noun(n.of)); put(" with " + gone + " ("); put.apply(null, noun(n.out)); put(") replaced by "); put.apply(null, noun(n.in)); by(); break;
-      case "spn": put("spoonerism"); by(); put(" of "); put.apply(null, noun(n.of)); put(": swap their first sounds"); break;
+      case "spn": put("spoonerism"); by(); put(" of "); put.apply(null, noun(n.of)); put(n.l ? ": swap their sounds, giving " + n.l : ": swap their first sounds"); break;
       case "cat": n.of.forEach(function (k, i) { if (i) put(" + "); put.apply(null, noun(k)); }); if (n.ind) put(", joined"); by(); break;
       case "ins": put.apply(null, noun(n.out)); put(" around"); by(); put(" "); put.apply(null, noun(n.in)); break;
     }

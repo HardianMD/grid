@@ -9,7 +9,7 @@
   var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
   // How one part's letters change: swapped, moved, or simply typed (other pieces' letters swapped in: three parts).
   var HOW = [["Swap two letters", "swp"], ["Move letters", "mov"], ["Type what it becomes", "chg"]];
-  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Pick letters…", "pick"], ["Change letters…", "sub"]];
+  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Pick letters…", "pick"], ["Spoonerism", "spn"], ["Change letters…", "sub"]];
   var WHOLE = [["Double definition", "dd"], ["Cryptic definition", "cd"], ["&lit", "&lit"], ["Palindrome", "pal"]];
   var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Letters dropped",
     pick: "Letters picked", snd: "Sounds like", chg: "Letter change", mov: "Letters moved", swp: "Letters swapped", sub: "Letters replaced", spn: "Spoonerism" };
@@ -201,7 +201,16 @@
     else if (op === "anag") n = { op: "anag", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
     else if (op === "cut" || op === "pick") n = { op: op, of: one, at: extra };
     else if (op === "snd" || op === "chg" || op === "mov" || op === "swp") n = { op: op, of: one, l: bLetters(extra) };
-    else if (op === "spn") n = { op: "spn", of: one };
+    else if (op === "spn") {  // when the letters don't swap to fit the answer, the sounds may: then its letters are typed
+      n = { op: "spn", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
+      var sa = bAnswer();
+      if (extra != null) n.l = bLetters(extra);
+      else if (sa && !bFitsIn(n, sa)) {
+        PE.ask = { op: "spn" }; $("bLet").value = tMake(n, DTOK.clue) || ""; $("bLet").placeholder = "Letters the swapped sounds give, e.g. CONEFULL";
+        bRender(); try { $("bLet").focus(); } catch (e) {}
+        return;
+      }
+    }
     bClaim(n);
     PE.parts = PE.parts.filter(function (x) { return ns.indexOf(x) < 0; });
     PE.parts.push(n); PE.pick = [PE.parts.length - 1]; PE.target = n; PE.ask = null; PE.sel = null; PE.lset = [];
@@ -213,7 +222,7 @@
   function bAsked() {
     var a = PE.ask; if (!a) return;
     if (a.r) return bRole(a.r, $("bLet").value);
-    if (a.op === "snd" || a.op === "chg") { if (!bLetters($("bLet").value)) return toast("No letters given"); return bWrap(a.op, $("bLet").value); }
+    if (a.op === "snd" || a.op === "chg" || a.op === "spn") { if (!bLetters($("bLet").value)) return toast("No letters given"); return bWrap(a.op, $("bLet").value); }
   }
   // The ask row's buttons: a letter to drop or keep, which part goes outside, apply.
   $("bAskBox").addEventListener("click", function (e) {
@@ -381,8 +390,8 @@
       if ((r[1] === "cut" || r[1] === "pick") && picked.some(function (x) { return !tMake(x, clue); })) b.disabled = true;
     });
     // the ask: letters to type, letters to tap, or which part goes outside
-    var box = $("bAskBox"); box.textContent = ""; box.hidden = !ask || !!(ask.r || ask.op === "snd" || ask.op === "chg");
-    $("bAsk").hidden = !ask || !(ask.r || ask.op === "snd" || ask.op === "chg");
+    var box = $("bAskBox"); box.textContent = ""; box.hidden = !ask || !!(ask.r || ask.op === "snd" || ask.op === "chg" || ask.op === "spn");
+    $("bAsk").hidden = !ask || !(ask.r || ask.op === "snd" || ask.op === "chg" || ask.op === "spn");
     if (ask && ask.op === "mov" && ask.where) {  // the letters left, with a place to drop the moved ones between each
       var left = (tMake(picked[0], clue) || "").split("").filter(function (c, j) { return ask.drop.indexOf(j) < 0; });
       for (var p = 0; p <= left.length; p++) {
@@ -424,7 +433,7 @@
     }
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
     var waiting = PE.ind.filter(function (x) { return x.op; })[0];
-    $("bHint").textContent = ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
+    $("bHint").textContent = ask && ask.op === "spn" ? "Swapping the letters doesn't give the answer. If sounds swap (F for PH), type the letters it gives, then Add." : ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
       : ask ? "Type the letters, then Add." : !hasDef ? (sel ? q + ": tap Definition if it is the definition, or tap other words." : "First the definition: tap its words, then Definition. (Or Cryptic definition or &lit below.)")
       : sel && needDef && PE.whole.indexOf("dd") >= 0 && !PE.parts.length ? q + " is:"
       : sel ? q + (PE.parts.length && indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."
@@ -493,7 +502,7 @@
         case "snd": return n.l + " (sounds like " + say(n.of) + ")" + ind(n);
         case "chg": case "mov": case "swp": return say(n.of) + " > " + n.l + ind(n);
         case "sub": return say(n.of) + " with " + say(n.out) + " > " + say(n.in) + ind(n);
-        case "spn": return "spoonerism of " + say(n.of) + ind(n);
+        case "spn": return "spoonerism of " + say(n.of) + (n.l ? " > " + n.l + " (by sound)" : "") + ind(n);
       }
       return "";
     };

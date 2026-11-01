@@ -6,8 +6,10 @@
   var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
   var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
-  var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Letter change…", "chg"], ["Move letters…", "mov"], ["Swap letters…", "swp"], ["Spoonerism", "spn"]];
-  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Replace…", "sub"]];
+  var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
+  // How one part's letters change: swapped, moved, or simply typed (other pieces' letters swapped in: three parts).
+  var HOW = [["Swap two letters", "swp"], ["Move letters", "mov"], ["Type what it becomes", "chg"]];
+  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Pick letters…", "pick"], ["Change letters…", "sub"]];
   var WHOLE = [["Double definition", "dd"], ["Cryptic definition", "cd"], ["&lit", "&lit"], ["Palindrome", "pal"]];
   var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", anag: "Anagram", cut: "Letters dropped",
     pick: "Letters picked", snd: "Sounds like", chg: "Letter change", mov: "Letters moved", swp: "Letters swapped", sub: "Letters replaced", spn: "Spoonerism" };
@@ -105,6 +107,7 @@
     var w = [t0.a, t1.b], lit = { op: "lit", w: w }, chars = tLitChars(lit, DTOK.clue), at = cs.map(function (c) { return chars.indexOf(c); });
     while (!/[a-z]/i.test(DTOK.clue[w[1] - 1])) w[1]--;  // trailing punctuation
     if (b.dataset.r === "cut" && at.length >= chars.length) return toast("That cuts every letter");
+    PE.lmode = false; $("bLetters").setAttribute("aria-pressed", "false");  // so the next tap can be its indicator
     bAdd({ op: b.dataset.r, of: lit, at: at });
   });
   // Selected parts wrapped in an operation. Several parts are put in the order whose letters sit in the answer
@@ -132,14 +135,16 @@
   }
   // An indicator tapped first waits, with its kind, for the next step of that kind.
   function bClaim(n) {
-    var i = PE.ind.map(function (x) { return x.op; }).indexOf(n.op);
+    var i = PE.ind.map(function (x) { return x.op; }).indexOf(bFam(n.op));
     if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); if (PE.ind[i].name === "Hidden word") n.hid = 1; PE.ind.splice(i, 1); }
   }
   var IND_KINDS = [["Join", "cat"], ["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
-    ["Spoonerism", "spn"], ["Letter change", "chg"], ["Letters moved", "mov"], ["Letters swapped", "swp"], ["Letters replaced", "sub"]];
+    ["Spoonerism", "spn"], ["Letter change", "chg"]];
+  // Letters changed, moved, swapped or replaced are one kind of step for an indicator.
+  function bFam(op) { return /^(chg|mov|swp|sub|how)$/.test(op) ? "chg" : op; }
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
-    if (to && to.op === op) { (to.ind = to.ind || []).push(w); if (name === "Hidden word") to.hid = 1; }
+    if (to && bFam(to.op) === op) { (to.ind = to.ind || []).push(w); if (name === "Hidden word") to.hid = 1; }
     else { PE.ind.push({ w: w, op: op, name: name }); PE.pick = []; PE.target = null; }  // now its pieces are tapped
     PE.ask = null; PE.sel = null; bRender();
   }
@@ -173,6 +178,12 @@
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;
     if (!ns.length) return;
+    if (op === "how") { PE.ask = { how: 1 }; return bRender(); }
+    if ((op === "pick" || op === "cut") && ns.length > 1) {  // letters picked from several parts: joined in clue order first
+      var j = { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) };
+      PE.parts = PE.parts.filter(function (x) { return ns.indexOf(x) < 0; }); PE.parts.push(j); PE.pick = [PE.parts.length - 1];
+      return bWrap(op, extra);
+    }
     if (op === "ins" && extra == null && ns.length > 1) {  // when only one way round gives the answer's letters, take it
       var fits = bInsFits(ns);
       if (fits.filter(Boolean).length === 1) extra = fits.indexOf(true);
@@ -209,6 +220,7 @@
     var a = PE.ask, b = e.target.closest("button"); if (!a || !b) return;
     if (b.dataset.j != null) { var j = +b.dataset.j, i = a.drop.indexOf(j); if (i >= 0) a.drop.splice(i, 1); else a.drop.push(j); return bRender(); }
     if (b.dataset.out != null) return bWrap("ins", +b.dataset.out);
+    if (b.dataset.how) return bWrap(b.dataset.how);
     if (b.dataset.kind) return bIndKind(b.dataset.kind, b.textContent);
     if (b.dataset.to != null) {  // where moved letters go: before the remaining letter at that place, or at the end
       var all = tMake(PE.parts[PE.pick[0]], DTOK.clue) || "", mv = a.drop.slice().sort(function (x, y) { return x - y; });
@@ -365,8 +377,8 @@
     DTOK.forEach(function (x, i) { x.el.classList.toggle("cand", !!PE.parts.length && !sel && !ask && bCand(i, m)); });
     var wrap = $("bWrap"); wrap.textContent = ""; wrap.hidden = !!ask || !!sel || !!ls.length || !picked.length;
     (picked.length === 1 ? WRAP1 : WRAPN).forEach(function (r) {
-      var b = wrap.appendChild(mk("button", "chip" + (PE.ind.some(function (x) { return x.op === r[1]; }) ? " sugg" : ""), r[0])); b.type = "button"; b.dataset.op = r[1];
-      if ((r[1] === "cut" || r[1] === "pick") && !tMake(picked[0] || {}, clue)) b.disabled = true;
+      var b = wrap.appendChild(mk("button", "chip" + (PE.ind.some(function (x) { return x.op === bFam(r[1]); }) ? " sugg" : ""), r[0])); b.type = "button"; b.dataset.op = r[1];
+      if ((r[1] === "cut" || r[1] === "pick") && picked.some(function (x) { return !tMake(x, clue); })) b.disabled = true;
     });
     // the ask: letters to type, letters to tap, or which part goes outside
     var box = $("bAskBox"); box.textContent = ""; box.hidden = !ask || !!(ask.r || ask.op === "snd" || ask.op === "chg");
@@ -384,14 +396,15 @@
       });
       box.appendChild(mk("button", "btn mini", ask.op === "cut" ? "Drop" : ask.op === "mov" ? "Next" : ask.op === "swp" ? "Swap" : "Pick")).dataset.go = 1;
     }
+    if (ask && ask.how) HOW.forEach(function (h) { var b = box.appendChild(mk("button", "chip", h[0])); b.type = "button"; b.dataset.how = h[1]; });
     if (ask && ask.ind) {
-      var ik = indKey(tText(clue, ask.ind)), says = (INDS[ik] || []).concat(T_JOINS.indexOf(ik) >= 0 ? ["cat"] : []);
+      var ik = indKey(tText(clue, ask.ind)), says = (INDS[ik] || []).map(bFam).concat(T_JOINS.indexOf(ik) >= 0 ? ["cat"] : []);
       // the kinds the pieces made so far use (those still without an indicator first), then what the words usually say
       var used = [];
       [false, true].forEach(function (had) {
         PE.parts.forEach(function (t) {
           tWalk(t).forEach(function (n) {
-            var name = n.op === "pick" ? (n.hid ? "Hidden word" : "Letters picked") : (IND_KINDS.filter(function (k) { return k[1] === n.op; })[0] || [])[0];
+            var name = n.op === "pick" ? (n.hid ? "Hidden word" : "Letters picked") : (IND_KINDS.filter(function (k) { return k[1] === bFam(n.op); })[0] || [])[0];
             if (name && !!(n.ind && n.ind.length) === had && used.indexOf(name) < 0) used.push(name);
           });
         });
@@ -411,7 +424,7 @@
     }
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
     var waiting = PE.ind.filter(function (x) { return x.op; })[0];
-    $("bHint").textContent = ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
+    $("bHint").textContent = ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
       : ask ? "Type the letters, then Add." : !hasDef ? (sel ? q + ": tap Definition if it is the definition, or tap other words." : "First the definition: tap its words, then Definition. (Or Cryptic definition or &lit below.)")
       : sel && needDef && PE.whole.indexOf("dd") >= 0 && !PE.parts.length ? q + " is:"
       : sel ? q + (PE.parts.length && indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."

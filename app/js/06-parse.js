@@ -55,7 +55,7 @@
   function blogParse(w) { return PARSES && PARSES[w.dir] && PARSES[w.dir][w.num]; }
   function parseFor(w) {
     var key = w.dir + w.num, mine = newEdit(myParses[key]) ? myParses[key] : null, blog = blogParse(w);
-    var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : "The blog has no parsing for this clue. Tap Edit to add your own." };
+    var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : (P.blog ? "The blog has no parsing for this clue." : P.noblog ? "No blog covers this puzzle." : "The blog isn't out yet, or not read yet: tap ↻ later.") + " Tap Edit to add your own." };
     // The structure: our own checked parsing where the data has one (x.ours), else the one read from the blog's or
     // the solver's words.
     // rules: worked out from the clue by rules alone (the updater's rules.py) until a blog's parsing replaces it.

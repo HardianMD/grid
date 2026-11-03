@@ -480,7 +480,7 @@
   $("replayBtn").addEventListener("click", function () {
     if (RP) return replayStop();
     var ev = logOf(LG), i = 0, k = 20 / ((ev[ev.length - 1][0] - ev[0][0]) || 1);
-    RP = { fill: fill, sel: sel }; HEAT = false;
+    RP = { fill: fill, sel: sel }; HEAT = PALL = false;  // plain clues while it plays (Parse all stays off after)
     fill = fill.map(function (row) { return row.map(function () { return ""; }); });
     replayLook(true);
     (function step() {

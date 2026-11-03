@@ -1608,7 +1608,7 @@
   }
  },
  {
-  "name": "a reverse anagram: the clue's words are an anagram of part of the answer, the rest its indicator",
+  "name": "a rebus: the answer read as wordplay (TICKED, by OFF, an anagram) gives the clue's words",
   "clue": "Reprimanded kid etc? (7,3)",
   "answer": "TICKED OFF",
   "v": 2,
@@ -1633,7 +1633,23 @@
       19
      ]
     },
-    "l": "OFF"
+    "a": "TICKED OFF",
+    "t": {
+     "op": "anag",
+     "ind": [
+      [
+       7,
+       10
+      ]
+     ],
+     "of": {
+      "op": "lit",
+      "w": [
+       0,
+       6
+      ]
+     }
+    }
    },
    "def": [
     [
@@ -1644,43 +1660,7 @@
   }
  },
  {
-  "name": "a reverse anagram with its indicator first (made up)",
-  "clue": "Reprimanded kid etc? (7,3)",
-  "answer": "OFF TICKED",
-  "v": 2,
-  "pieces": [
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0,
-   0
-  ],
-  "parse": {
-   "t": {
-    "op": "rebus",
-    "of": {
-     "op": "lit",
-     "w": [
-      12,
-      19
-     ]
-    },
-    "l": "OFF"
-   },
-   "def": [
-    [
-     0,
-     11
-    ]
-   ]
-  }
- },
- {
-  "name": "a reverse anagram whose indicator is not in the answer fails",
+  "name": "a rebus with a word of the answer left unused fails",
   "clue": "Reprimanded kid etc? (7,3)",
   "answer": "TICKED OFF",
   "v": 0,
@@ -1694,12 +1674,80 @@
       19
      ]
     },
-    "l": "OUT"
+    "a": "TICKED OFF",
+    "t": {
+     "op": "anag",
+     "of": {
+      "op": "lit",
+      "w": [
+       0,
+       6
+      ]
+     }
+    }
    },
    "def": [
     [
      0,
      11
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a rebus whose answer reads as an anagram bagging an abbreviation",
+  "clue": "An irritation voiced when checking out matinee hit cryptically? (10,4,2,3,7,4)",
+  "answer": "UNEXPECTED ITEM IN THE BAGGING AREA",
+  "v": 2,
+  "parse": {
+   "t": {
+    "op": "rebus",
+    "of": {
+     "op": "lit",
+     "w": [
+      39,
+      50
+     ]
+    },
+    "a": "UNEXPECTED ITEM IN THE BAGGING AREA",
+    "t": {
+     "op": "ins",
+     "ind": [
+      [
+       23,
+       30
+      ]
+     ],
+     "out": {
+      "op": "anag",
+      "ind": [
+       [
+        0,
+        10
+       ]
+      ],
+      "of": {
+       "op": "lit",
+       "w": [
+        11,
+        22
+       ]
+      }
+     },
+     "in": {
+      "op": "abr",
+      "w": [
+       31,
+       35
+      ],
+      "l": "A"
+     }
+    }
+   },
+   "def": [
+    [
+     0,
+     38
     ]
    ]
   }

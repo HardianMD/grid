@@ -2,8 +2,8 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l, xr?}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  rebus {of, l, k?}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
-  //   rebus (reverse anagram): the clue words an anagram of part of the answer and l, the rest, its indicator (KID ETC, OFF)
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  rebus {of, a, t}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
+  //   rebus (reverse wordplay): a, answer letters with their word breaks, read as wordplay t (spans in a) gives of, the clue words
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
   var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "rebus", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
@@ -71,6 +71,7 @@
       return d.length === 2 && c[d[0]] === o[d[1]] && c[d[1]] === o[d[0]] ? o : null;
     }
     if (op === "spn") { if (n.l) return tLetters(n.l); var ws = tWords(n.of, clue); return ws && ws.indexOf(null) < 0 ? (n.k ? tSpoonK(ws, n.k) : tSpoon(ws)) : null; }
+    if (op === "rebus") return tRebusOk(n, clue) ? tLetters(n.a) : null;
     if (op === "ins" && n.k != null) { o = tMake(n.out, clue); i = tMake(n.in, clue); return o == null || i == null ? null : o.slice(0, n.k) + i + o.slice(n.k); }
     if (op === "sub") {  // the letters "out" gives replaced by those "in" gives: at k, else the first place they sit
       c = tMake(n.of, clue); o = tMake(n.out, clue); i = tMake(n.in, clue);
@@ -79,6 +80,14 @@
       return at < 0 ? null : c.slice(0, at) + i + c.slice(at + o.length);
     }
     return null;
+  }
+  // Does a rebus's answer text, read as wordplay, give its clue words, every letter of the text used (a piece or an
+  // indicator)?
+  function tRebusOk(n, clue) {
+    var f = tMake(n.of, clue), used = {};
+    if (!f || !tFit(n.t, f, n.a, tUnits(n.t))) return false;
+    tWalk(n.t).forEach(function (x) { (x.w ? [x.w] : []).concat(x.ind || []).forEach(function (sp) { for (var c = sp[0]; c < sp[1]; c++) used[c] = 1; }); });
+    return Array.from(n.a).every(function (ch, c) { return !/[a-z]/i.test(ch) || used[c]; });
   }
   // How many letters a part gives; every part's length is known without the answer.
   function tSize(n, clue) {
@@ -89,7 +98,7 @@
     if (op === "pick") return n.at.length;
     if (op === "cut") return tSize(n.of, clue) - n.at.length;
     if (op === "sub") return tSize(n.of, clue) - tSize(n.out, clue) + tSize(n.in, clue);
-    if (op === "rebus") return tSize(n.of, clue) + tLetters(n.l).length;
+    if (op === "rebus") return tLetters(n.a).length;
     if (op === "spn" && !n.l) return tSize(n.of, clue);  // a swap keeps the letters' count
     var v = tMake(n, clue); return v == null ? 0 : v.length;
   }
@@ -131,16 +140,6 @@
       var f = tMake(n.of, clue);
       return f != null && target && srt(f) === srt(target) ? fill() : null;
     }
-    if (op === "rebus") {  // the indicator's letters at k (after the anagram, else before, else inside); the rest an anagram
-      var g = tMake(n.of, clue), l = tLetters(n.l), Lf = target.length - l.length, ks2 = n.k != null ? [n.k, Lf, 0] : [Lf, 0];
-      if (g == null || Lf < 1 || !l) return null;
-      for (var k2 = 1; k2 < Lf; k2++) ks2.push(k2);
-      for (var q2 = 0; q2 < ks2.length; q2++) {
-        var at2 = ks2[q2];
-        if (at2 >= 0 && at2 <= Lf && target.substr(at2, l.length) === l && srt(target.slice(0, at2) + target.slice(at2 + l.length)) === srt(g)) { n.k = at2; return fill(); }
-      }
-      return null;
-    }
     if (op === "spn" && !n.l) {
       var sw = tWords(n.of, clue), sp = sw && sw.indexOf(null) < 0 ? tSpoons(sw) : [];
       for (var z = 0; z < sp.length; z++) if (sp[z][0] === target) { n.k = sp[z][1]; return fill(); }
@@ -151,7 +150,7 @@
   }
   // Parts taken on the solver's word: sounds (unless the pronunciation dictionary bore them out, "heard": the
   // updater's sounds.py) and letter changes.
-  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || n.op === "spn" && !!n.l && !n.heard || tKids(n).some(tTrusted); }
+  function tTrusted(n) { return n.op === "snd" && !n.heard || n.op === "chg" || n.op === "spn" && !!n.l && !n.heard || tKids(n).concat(n.op === "rebus" ? [n.t] : []).some(tTrusted); }
   // 2 = the tree gives the answer letter for letter; 1 = it does, leaning on a sound or change; 0 = it doesn't (or no tree).
   function tCheck(p, clue, answer) {
     var t = p && p.t;
@@ -162,12 +161,13 @@
   function tValid(n) {
     var op = n && n.op, bad = [];
     if (T_OPS.indexOf(op) < 0) return ["unknown op " + op];
-    if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp|rebus)$/.test(op) && !n.l) bad.push(op + " without its letters");
+    if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp)$/.test(op) && !n.l) bad.push(op + " without its letters");
     if (op === "cat" && !((n.of || []).length >= 2)) bad.push("cat with fewer than two parts");
     if ((op === "pick" || op === "cut") && !(n.at || []).length) bad.push(op + " without letters");
     if ((op === "ins" || op === "sub") && !(n.out && n.in)) bad.push(op + " without both parts");
     if (!/^(lit|syn|abr|cat|ins)$/.test(op) && !n.of) bad.push(op + " without its part");
-    if (!bad.length) tKids(n).forEach(function (k) { bad = bad.concat(tValid(k)); });
+    if (op === "rebus" && !(n.a && n.t)) bad.push("rebus without its answer text and wordplay");
+    if (!bad.length) tKids(n).concat(op === "rebus" ? [n.t] : []).forEach(function (k) { bad = bad.concat(tValid(k)); });
     return bad;
   }
 

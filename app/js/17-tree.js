@@ -2,10 +2,10 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l, xr?}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  rebus {of, a, t}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  pal {of}  rebus {of, a, t}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
   //   rebus (reverse wordplay): a, answer letters with their word breaks, read as wordplay t (spans in a) gives of, the clue words
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
-  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "rebus", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
+  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "pal", "rebus", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
   function tText(clue, w) { return clue.slice(w[0], w[1]); }
   function tKids(n) { return n.op === "cat" ? n.of : n.op === "ins" ? [n.out, n.in] : n.op === "sub" ? [n.of, n.out, n.in] : n.of ? [n.of] : []; }
@@ -64,6 +64,7 @@
       return c.split("").filter(function (ch, j) { return n.at.indexOf(j) < 0; }).join("");
     }
     if (op === "rev") { c = tMake(n.of, clue); return c == null ? null : c.split("").reverse().join(""); }
+    if (op === "pal") { c = tMake(n.of, clue); return c && c === c.split("").reverse().join("") ? c : null; }  // reads the same either way
     if (op === "mov") { c = tMake(n.of, clue); o = tLetters(n.l); return c != null && tMoved(c, o) ? o : null; }
     if (op === "swp") {  // exactly two letters trade places
       c = tMake(n.of, clue); o = tLetters(n.l);
@@ -94,7 +95,7 @@
     var op = n.op;
     if (op === "cat") return n.of.reduce(function (s, k) { return s + tSize(k, clue); }, 0);
     if (op === "ins") return tSize(n.out, clue) + tSize(n.in, clue);
-    if (op === "rev" || op === "anag") return tSize(n.of, clue);
+    if (op === "rev" || op === "anag" || op === "pal") return tSize(n.of, clue);
     if (op === "pick") return n.at.length;
     if (op === "cut") return tSize(n.of, clue) - n.at.length;
     if (op === "sub") return tSize(n.of, clue) - tSize(n.out, clue) + tSize(n.in, clue);

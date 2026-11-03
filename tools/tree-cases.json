@@ -1606,5 +1606,102 @@
     "heard": 1
    }
   }
+ },
+ {
+  "name": "a reverse anagram: the clue's words are an anagram of part of the answer, the rest its indicator",
+  "clue": "Reprimanded kid etc? (7,3)",
+  "answer": "TICKED OFF",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "rebus",
+    "of": {
+     "op": "lit",
+     "w": [
+      12,
+      19
+     ]
+    },
+    "l": "OFF"
+   },
+   "def": [
+    [
+     0,
+     11
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a reverse anagram with its indicator first (made up)",
+  "clue": "Reprimanded kid etc? (7,3)",
+  "answer": "OFF TICKED",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "rebus",
+    "of": {
+     "op": "lit",
+     "w": [
+      12,
+      19
+     ]
+    },
+    "l": "OFF"
+   },
+   "def": [
+    [
+     0,
+     11
+    ]
+   ]
+  }
+ },
+ {
+  "name": "a reverse anagram whose indicator is not in the answer fails",
+  "clue": "Reprimanded kid etc? (7,3)",
+  "answer": "TICKED OFF",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "rebus",
+    "of": {
+     "op": "lit",
+     "w": [
+      12,
+      19
+     ]
+    },
+    "l": "OUT"
+   },
+   "def": [
+    [
+     0,
+     11
+    ]
+   ]
+  }
  }
 ]

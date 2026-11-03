@@ -2,9 +2,10 @@
   // The format and this checker are the same as crossword-data's tools/tree.py, which documents every node; both run
   // the cases in tools/tree-cases.json (here from tools/check.js). Change the two together.
   //   leaves:   lit {w}  syn {w?, l, xr?}  abr {w?, l}            (w = [start, end) in the clue)
-  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
+  //   branches: cat {of: []}  pick {of, at, hid?}  cut {of, at}  rev {of}  anag {of}  rebus {of, l, k?}  ins {out, in}  snd {of, l}  chg {of, l}  mov {of, l}  swp {of, l}  spn {of, k?, l?}  sub {of, out, in, k?}
+  //   rebus (reverse anagram): the clue words an anagram of part of the answer and l, the rest, its indicator (KID ETC, OFF)
   //   each branch may carry ind: [span, ...]; a parsing is {t?, def: [span], kind?: dd|cd|&lit, pal?, ind?}
-  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
+  var T_OPS = ["lit", "syn", "abr", "cat", "pick", "cut", "rev", "anag", "rebus", "ins", "snd", "chg", "mov", "swp", "spn", "sub"];
   function tLetters(s) { return String(s || "").toUpperCase().replace(/[^A-Z]/g, ""); }
   function tText(clue, w) { return clue.slice(w[0], w[1]); }
   function tKids(n) { return n.op === "cat" ? n.of : n.op === "ins" ? [n.out, n.in] : n.op === "sub" ? [n.of, n.out, n.in] : n.of ? [n.of] : []; }
@@ -88,6 +89,7 @@
     if (op === "pick") return n.at.length;
     if (op === "cut") return tSize(n.of, clue) - n.at.length;
     if (op === "sub") return tSize(n.of, clue) - tSize(n.out, clue) + tSize(n.in, clue);
+    if (op === "rebus") return tSize(n.of, clue) + tLetters(n.l).length;
     if (op === "spn" && !n.l) return tSize(n.of, clue);  // a swap keeps the letters' count
     var v = tMake(n, clue); return v == null ? 0 : v.length;
   }
@@ -104,7 +106,7 @@
   // for its inner part and keeps the first that works (in k).
   function tFit(n, target, clue, us, u) {
     if (us.has(n)) u = us.get(n);
-    var op = n.op, r, fill = function () { return target.split("").map(function () { return u; }); };
+    var op = n.op, r, fill = function () { return target.split("").map(function () { return u; }); }, srt = function (s) { return s.split("").sort().join(""); };
     if (op === "cat") {
       var out = [], at = 0;
       for (var j = 0; j < n.of.length; j++) {
@@ -126,8 +128,18 @@
     }
     if (op === "rev") { r = tFit(n.of, target.split("").reverse().join(""), clue, us, u); return r ? r.reverse() : null; }
     if (op === "anag") {
-      var f = tMake(n.of, clue), srt = function (s) { return s.split("").sort().join(""); };
+      var f = tMake(n.of, clue);
       return f != null && target && srt(f) === srt(target) ? fill() : null;
+    }
+    if (op === "rebus") {  // the indicator's letters at k (after the anagram, else before, else inside); the rest an anagram
+      var g = tMake(n.of, clue), l = tLetters(n.l), Lf = target.length - l.length, ks2 = n.k != null ? [n.k, Lf, 0] : [Lf, 0];
+      if (g == null || Lf < 1 || !l) return null;
+      for (var k2 = 1; k2 < Lf; k2++) ks2.push(k2);
+      for (var q2 = 0; q2 < ks2.length; q2++) {
+        var at2 = ks2[q2];
+        if (at2 >= 0 && at2 <= Lf && target.substr(at2, l.length) === l && srt(target.slice(0, at2) + target.slice(at2 + l.length)) === srt(g)) { n.k = at2; return fill(); }
+      }
+      return null;
     }
     if (op === "spn" && !n.l) {
       var sw = tWords(n.of, clue), sp = sw && sw.indexOf(null) < 0 ? tSpoons(sw) : [];
@@ -150,7 +162,7 @@
   function tValid(n) {
     var op = n && n.op, bad = [];
     if (T_OPS.indexOf(op) < 0) return ["unknown op " + op];
-    if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp)$/.test(op) && !n.l) bad.push(op + " without its letters");
+    if (op === "lit" && !n.w || /^(syn|abr|snd|chg|mov|swp|rebus)$/.test(op) && !n.l) bad.push(op + " without its letters");
     if (op === "cat" && !((n.of || []).length >= 2)) bad.push("cat with fewer than two parts");
     if ((op === "pick" || op === "cut") && !(n.at || []).length) bad.push(op + " without letters");
     if ((op === "ins" || op === "sub") && !(n.out && n.in)) bad.push(op + " without both parts");

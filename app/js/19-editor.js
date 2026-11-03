@@ -140,11 +140,15 @@
     if (i >= 0) { (n.ind = n.ind || []).push(PE.ind[i].w); if (PE.ind[i].name === "Hidden word") n.hid = 1; PE.ind.splice(i, 1); }
   }
   var IND_KINDS = [["Join", "cat"], ["Container", "ins"], ["Anagram", "anag"], ["Reversal", "rev"], ["Letters picked", "pick"], ["Hidden word", "pick"], ["Letters dropped", "cut"], ["Sounds like", "snd"],
-    ["Spoonerism", "spn"], ["Letter change", "chg"]];
+    ["Spoonerism", "spn"], ["Letter change", "chg"], ["Palindrome", "pal"]];
   // Letters changed, moved, swapped or replaced are one kind of step for an indicator.
   function bFam(op) { return /^(chg|mov|swp|sub|how)$/.test(op) ? "chg" : op; }
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
+    if (op === "pal") {  // says the whole answer reads the same backwards: no pieces to wait for
+      PE.ind.push({ w: w, op: op }); if (PE.whole.indexOf("pal") < 0) PE.whole.push("pal");
+      PE.ask = null; PE.sel = null; return bRender();
+    }
     if (to && bFam(to.op) === op) { (to.ind = to.ind || []).push(w); if (name === "Hidden word") to.hid = 1; }
     else { PE.ind.push({ w: w, op: op, name: name }); PE.pick = []; PE.target = null; }  // now its pieces are tapped
     PE.ask = null; PE.sel = null; bRender();
@@ -412,7 +416,7 @@
     var selDef = !!sel && DTOK.slice(sel[0], sel[1] + 1).every(function (x) { return x.el.classList.contains("on"); });
     Array.prototype.forEach.call($("bRoles").children, function (b) {
       var r = b.dataset.r;
-      b.hidden = r === "def" ? !needDef || selDef : !hasDef || r === "ind" && !PE.parts.length;
+      b.hidden = r === "def" ? !needDef || selDef : !hasDef || r === "ind" && !PE.parts.length && PE.whole.indexOf("pal") < 0;  // a palindrome's indicator needs no pieces
     });
     $("bLetters").disabled = !hasDef && !PE.lmode;
     DTOK.forEach(function (x, i) { x.el.classList.toggle("cand", !!PE.parts.length && !sel && !ask && bCand(i, m)); });
@@ -451,6 +455,7 @@
           });
         });
       });
+      if (PE.whole.indexOf("pal") >= 0) used.unshift("Palindrome");
       var rank = function (k) { var u = used.indexOf(k[0]), i = says.indexOf(k[1]); return u >= 0 ? u : i >= 0 ? 50 + i : 99; };
       IND_KINDS.slice().sort(function (x, y) { return rank(x) - rank(y); }).forEach(function (k) {
         var b = box.appendChild(mk("button", "chip" + (rank(k) < 99 ? " sugg" : ""), k[0])); b.type = "button"; b.dataset.kind = k[1];
@@ -465,7 +470,7 @@
       });
     }
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
-    var waiting = PE.ind.filter(function (x) { return x.op; })[0];
+    var waiting = PE.ind.filter(function (x) { return x.op && x.op !== "pal"; })[0];
     $("bHint").textContent = PE.rb && !PE.parts.length && !sel && !ask && !ls.length ? "Rebus: the answer’s words are the clue now. Tap them and say what each does, as for any wordplay, so that together they give “" + bRbOf() + "”. Then Done." : ask && ask.op === "spn" ? "Swapping the letters doesn't give the answer. If sounds swap (F for PH), type the letters it gives, then Add." : ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
       : ask ? "Type the letters, then Add." : !hasDef ? (sel ? q + ": tap Definition if it is the definition, or tap other words." : "First the definition: tap its words, then Definition. (Or Cryptic definition or &lit below.)")
       : sel && needDef && PE.whole.indexOf("dd") >= 0 && !PE.parts.length ? q + " is:"
@@ -473,6 +478,7 @@
         : "Now tap the pieces “" + tText(clue, waiting.w) + "” works on, then " + (waiting.name || IND_KINDS.filter(function (k) { return k[1] === waiting.op; })[0][0]) + ".")
       : PE.target && !/^(cat)$/.test(PE.target.op) ? "Tap the words that indicate it, then Indicator. Or put it together further:" : picked.length ? (picked.length === 1 ? "One part selected. " : picked.length + " parts selected (Join keeps the order you tapped them). ") + "Put together as:"
       : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time."
+      : !PE.parts.length && PE.whole.indexOf("pal") >= 0 && !needDef && !PE.ind.some(function (x) { return x.op === "pal"; }) ? "Palindrome: tap the words that say the answer reads the same both ways, then Indicator."
       : !PE.parts.length ? (needDef ? "Now the second definition: tap its words, then Definition." : "Now the wordplay: tap a word, or two for a run (or Letters), and say what it gives.")
       : "Next, any words that indicate what happens to it (dotted below): tap them, then Indicator. Or tap the next piece, or pieces below to put them together.";
     $("bWhole").hidden = !!PE.rb; $("bRbDone").hidden = !PE.rb;
@@ -502,7 +508,7 @@
     var more = mk("ul", "bx");
     PE.ind.forEach(function (x, i) {
       var k = x.name || (IND_KINDS.filter(function (y) { return y[1] === x.op; })[0] || [])[0];
-      var li = more.appendChild(mk("li", null, k ? k + " indicator, waiting for its pieces: " : "Indicator, not yet on a step: "));
+      var li = more.appendChild(mk("li", null, x.op === "pal" ? "Palindrome indicator: " : k ? k + " indicator, waiting for its pieces: " : "Indicator, not yet on a step: "));
       li.appendChild(mk("i", "mind", tText(clue, x.w))); li.appendChild(mk("button", "x", "×")).dataset.di = i;
     });
     runs.forEach(function (r, i) { var li = more.appendChild(mk("li", null, "Definition: " + bText(r[0], r[1]) + " ")); li.appendChild(mk("button", "x", "×")).dataset.dr = i; });
@@ -551,6 +557,7 @@
     if (p.kind === "dd" || p.kind === "cd") parts.push(p.kind);
     if (p.t) parts.push(say(p.t));
     if (p.kind === "&lit") parts.push("&lit");
+    if (p.pal) parts.push("pal" + (p.t ? "" : ind(p)));
     return parts.join(" ");
   }
   // A saved parsing into the editor: its tree as one part (take it apart with ×), its definitions and kinds.
@@ -559,7 +566,7 @@
     $("bLetters").setAttribute("aria-pressed", "false");
     if (!p) return;
     if (p.t) PE.parts = [JSON.parse(JSON.stringify(p.t))];
-    PE.ind = (p.ind || []).map(function (w) { return { w: w, op: null }; });
+    PE.ind = (p.ind || []).map(function (w) { return { w: w, op: p.pal && !p.t ? "pal" : null }; });
     if (p.kind) PE.whole.push(p.kind);
     if (p.pal) PE.whole.push("pal");
   }

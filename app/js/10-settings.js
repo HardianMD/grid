@@ -37,11 +37,13 @@
   });
   // The update key, kept in the owner's private Firestore record (never shown again once saved).
   function keyRef() { return DB.collection("users/" + FBUSER.uid + "/private").doc("github"); }
+  // A second tap within 3 s confirms, and uses the confirmation up, so the next tap asks again.
   function sure(b, ask) {
-    if (b.classList.contains("sure")) return true;
-    var was = b.textContent; b.classList.add("sure"); b.textContent = ask;
-    setTimeout(function () { b.classList.remove("sure"); b.textContent = was; }, 3000);
-    return false;
+    var on = b.classList.contains("sure");
+    if (!on) { b.was = b.textContent; b.textContent = ask; b.st = setTimeout(function () { sure(b); }, 3000); }
+    else { clearTimeout(b.st); b.textContent = b.was; }
+    b.classList.toggle("sure", !on);
+    return on;
   }
   function keyNote() {
     if (!FBUSER) return;

@@ -24,6 +24,7 @@
   // The answer as far as it is known: the solution, else the squares filled (or typed in Your answer).
   function bAnswer() {
     var w = PE.w; if (!w) return "";
+    if (PE.rb) return tMake(PE.rb.of, w.clue) || "";  // a rebus's wordplay gives the clue words
     var typed = !$("ansRow").hidden && bLetters($("ansInput").value);
     var a = typed || w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || "?"; }).join("");
     return a.length === w.cells.length && a.indexOf("?") < 0 ? a : "";
@@ -175,10 +176,41 @@
     if (!first) toast("None of them holds another’s letters");
     return first;
   }
+  // A rebus: the answer's words, written out, become the words to tap, parsed like any wordplay, which must give the
+  // selected clue words; Done puts the rebus back in the clue as one piece.
+  function bRbStart(ns) {
+    var ans = bAnswer(), clue = DTOK.clue, of = ns.length === 1 ? ns[0] : { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) };
+    if (!ans) return toast("The answer isn’t known yet");
+    if (!tMake(of, clue)) return toast("Pick clue words as they stand");
+    var back = { pe: PE, def: bParse().def, ns: ns }, a = bAnsText(PE.w.clue, ans);
+    buildDefPick({ clue: a }, []);
+    PE = { w: PE.w, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "", rb: { back: back, of: of, a: a } };
+    $("bLetters").setAttribute("aria-pressed", "false");
+    bRender();
+  }
+  function bRbOf() { var ws = tWalk(PE.rb.of).filter(function (x) { return x.w; }); return ws.map(function (x) { return tText(PE.w.clue, x.w); }).join(" "); }
+  function bRbDone() {
+    var rb = PE.rb, t = bParse().t, back = rb.back;
+    buildDefPick(PE.w, back.def); PE = back.pe;
+    if (t) {
+      PE.parts = PE.parts.filter(function (x) { return back.ns.indexOf(x) < 0; });
+      PE.parts.push({ op: "rebus", of: rb.of, a: rb.a, t: t }); PE.pick = [PE.parts.length - 1];
+    }
+    PE.target = null; PE.ask = null; PE.sel = null; PE.lset = []; PE.lmode = false; $("bLetters").setAttribute("aria-pressed", "false");
+    bRender();
+  }
+  $("bRbDone").addEventListener("click", bRbDone);
+  // The answer with the word breaks its count gives ("(7,3)": TICKED OFF), else as one word.
+  function bAnsText(clue, ans) {
+    var m = clue.match(/\(([\d,\-\s]+)\)\s*$/), out = "", at = 0;
+    (m ? m[1].match(/\d+|[,\-]/g) : []).forEach(function (x) { if (/\d/.test(x)) { out += ans.substr(at, +x); at += +x; } else out += x === "-" ? "-" : " "; });
+    return at === ans.length ? out : ans;
+  }
   function bWrap(op, extra) {
     var ns = PE.pick.map(function (i) { return PE.parts[i]; }), one = ns.length === 1 ? ns[0] : null, n;
     if (!ns.length) return;
     if (op === "how") { PE.ask = { how: 1 }; return bRender(); }
+    if (op === "rebus") return bRbStart(ns);
     if ((op === "pick" || op === "cut") && ns.length > 1) {  // letters picked from several parts: joined in clue order first
       var j = { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) };
       PE.parts = PE.parts.filter(function (x) { return ns.indexOf(x) < 0; }); PE.parts.push(j); PE.pick = [PE.parts.length - 1];
@@ -188,20 +220,19 @@
       var fits = bInsFits(ns);
       if (fits.filter(Boolean).length === 1) extra = fits.indexOf(true);
     }
-    if ((op === "cut" || op === "pick" || op === "snd" || op === "chg" || op === "mov" || op === "swp" || op === "rebus") && extra == null || op === "ins" && extra == null && ns.length > 1) {
+    if ((op === "cut" || op === "pick" || op === "snd" || op === "chg" || op === "mov" || op === "swp") && extra == null || op === "ins" && extra == null && ns.length > 1) {
       PE.ask = { op: op, drop: [] };
-      if (op === "snd" || op === "chg" || op === "rebus") { $("bLet").value = ""; $("bLet").placeholder = op === "snd" ? "Letters as they sound in the answer, e.g. BRAKE" : op === "rebus" ? "Indicator in the answer, e.g. OFF" : "Letters it becomes, e.g. FEAST"; }
-      bRender(); if (op === "snd" || op === "chg" || op === "rebus") try { $("bLet").focus(); } catch (e) {}
+      if (op === "snd" || op === "chg") { $("bLet").value = ""; $("bLet").placeholder = op === "snd" ? "Letters as they sound in the answer, e.g. BRAKE" : "Letters it becomes, e.g. FEAST"; }
+      bRender(); if (op === "snd" || op === "chg") try { $("bLet").focus(); } catch (e) {}
       return;
     }
     if (op === "sub") { n = bSub(ns); if (!n) return; }
     else if (op === "cat") n = { op: "cat", of: ns };  // in the order tapped
     else if (op === "ins") n = bIns(ns, extra);
     else if (op === "rev") n = { op: "rev", of: one || { op: "cat", of: bOrder(ns, true) } };
-    else if (op === "anag" || op === "rebus") n = { op: op, of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
+    else if (op === "anag") n = { op: op, of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
     else if (op === "cut" || op === "pick") n = { op: op, of: one, at: extra };
     else if (op === "snd" || op === "chg" || op === "mov" || op === "swp") n = { op: op, of: one, l: bLetters(extra) };
-    if (op === "rebus") n.l = bLetters(extra);
     else if (op === "spn") {  // when the letters don't swap to fit the answer, the sounds may: then its letters are typed
       n = { op: "spn", of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
       var sa = bAnswer();
@@ -214,7 +245,7 @@
     }
     bClaim(n);
     PE.parts = PE.parts.filter(function (x) { return ns.indexOf(x) < 0; });
-    PE.parts.push(n); PE.pick = [PE.parts.length - 1]; PE.target = op === "rebus" ? null : n; PE.ask = null; PE.sel = null; PE.lset = [];
+    PE.parts.push(n); PE.pick = [PE.parts.length - 1]; PE.target = n; PE.ask = null; PE.sel = null; PE.lset = [];
     bRender();
   }
   $("bWrap").addEventListener("click", function (e) { var b = e.target.closest(".chip"); if (b) bWrap(b.dataset.op); });
@@ -223,7 +254,7 @@
   function bAsked() {
     var a = PE.ask; if (!a) return;
     if (a.r) return bRole(a.r, $("bLet").value);
-    if (a.op === "snd" || a.op === "chg" || a.op === "spn" || a.op === "rebus") { if (!bLetters($("bLet").value)) return toast("No letters given"); return bWrap(a.op, $("bLet").value); }
+    if (a.op === "snd" || a.op === "chg" || a.op === "spn") { if (!bLetters($("bLet").value)) return toast("No letters given"); return bWrap(a.op, $("bLet").value); }
   }
   // The ask row's buttons: a letter to drop or keep, which part goes outside, apply.
   $("bAskBox").addEventListener("click", function (e) {
@@ -332,18 +363,18 @@
   }
   // A part as a line of the tray, and its parts below it.
   function bLine(n, depth, us, ul, got) {
-    var li = mk("li", "pt" + (depth ? " sub" : "")), l = tMake(n, DTOK.clue) || got(n);
+    var li = mk("li", "pt" + (depth ? " sub" : "")), l = n.op === "rebus" ? n.a : tMake(n, DTOK.clue) || got(n);
     li.style.paddingLeft = depth * 14 + "px";
     var u = us.has(n) ? us.get(n) : null;
     li.appendChild(mk("b", u != null ? tKind(n) : "op", l || "?"));
-    var t = " " + (n.xr ? "Another clue’s answer" : OPNAME[n.op]) + (n.w && /^(lit|syn|abr)$/.test(n.op) ? " “" + tText(DTOK.clue, n.w) + "”" : "");
+    var t = " " + (n.xr ? "Another clue’s answer" : OPNAME[n.op]) + (n.op === "rebus" ? ": " + tNotation({ t: n.t }, n.a) : "") + (n.w && /^(lit|syn|abr)$/.test(n.op) ? " “" + tText(DTOK.clue, n.w) + "”" : "");
     li.appendChild(document.createTextNode(t));
-    (n.ind || []).concat(n.op === "rebus" ? [n.l] : []).forEach(function (sp) { li.appendChild(document.createTextNode(" ")); li.appendChild(mk("i", "mind", typeof sp === "string" ? sp : tText(DTOK.clue, sp))); });
+    (n.ind || []).forEach(function (sp) { li.appendChild(document.createTextNode(" ")); li.appendChild(mk("i", "mind", tText(DTOK.clue, sp))); });
     ul.appendChild(li);
     if (!/^(lit|syn|abr)$/.test(n.op) && !(n.op === "pick" || n.op === "cut") || (n.op === "pick" || n.op === "cut") && n.of.op !== "lit") tKids(n).forEach(function (k) { bLine(k, depth + 1, us, ul, got); });
     return li;
   }
-  function bHasDef() { return defRuns().length > 0 || PE.whole.indexOf("cd") >= 0 || PE.whole.indexOf("&lit") >= 0; }
+  function bHasDef() { return !!PE.rb || defRuns().length > 0 || PE.whole.indexOf("cd") >= 0 || PE.whole.indexOf("&lit") >= 0; }
   // A word free of the definition and the pieces that, alone or with a word or two beside it, usually indicates
   // something: offered once there is a piece for it to work on.
   function bCand(i, m) {
@@ -387,11 +418,12 @@
     DTOK.forEach(function (x, i) { x.el.classList.toggle("cand", !!PE.parts.length && !sel && !ask && bCand(i, m)); });
     var wrap = $("bWrap"); wrap.textContent = ""; wrap.hidden = !!ask || !!sel || !!ls.length || !picked.length;
     (picked.length === 1 ? WRAP1 : WRAPN).forEach(function (r) {
+      if (PE.rb && r[1] === "rebus") return;  // no rebus inside a rebus
       var b = wrap.appendChild(mk("button", "chip" + (PE.ind.some(function (x) { return x.op === bFam(r[1]); }) ? " sugg" : ""), r[0])); b.type = "button"; b.dataset.op = r[1];
       if ((r[1] === "cut" || r[1] === "pick") && picked.some(function (x) { return !tMake(x, clue); })) b.disabled = true;
     });
     // the ask: letters to type, letters to tap, or which part goes outside
-    var box = $("bAskBox"); box.textContent = ""; var typing = !!ask && !!(ask.r || /^(snd|chg|spn|rebus)$/.test(ask.op));
+    var box = $("bAskBox"); box.textContent = ""; var typing = !!ask && !!(ask.r || /^(snd|chg|spn)$/.test(ask.op));
     box.hidden = !ask || typing; $("bAsk").hidden = !typing;
     if (ask && ask.op === "mov" && ask.where) {  // the letters left, with a place to drop the moved ones between each
       var left = (tMake(picked[0], clue) || "").split("").filter(function (c, j) { return ask.drop.indexOf(j) < 0; });
@@ -434,7 +466,7 @@
     }
     var q = sel ? "“" + bText(sel[0], sel[1]) + "”" : "";
     var waiting = PE.ind.filter(function (x) { return x.op; })[0];
-    $("bHint").textContent = ask && ask.op === "rebus" ? "The words are an anagram of part of the answer; the rest of the answer is its anagram indicator. Type that indicator as it is in the answer, then Add." : ask && ask.op === "spn" ? "Swapping the letters doesn't give the answer. If sounds swap (F for PH), type the letters it gives, then Add." : ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
+    $("bHint").textContent = PE.rb && !PE.parts.length && !sel && !ask && !ls.length ? "Rebus: the answer’s words are the clue now. Tap them and say what each does, as for any wordplay, so that together they give “" + bRbOf() + "”. Then Done." : ask && ask.op === "spn" ? "Swapping the letters doesn't give the answer. If sounds swap (F for PH), type the letters it gives, then Add." : ask && ask.how ? "How do its letters change? (For letters swapped in from other pieces, select the word and the pieces that go out and in, then Change letters.)" : ask && ask.ind ? "“" + tText(clue, ask.ind) + "” indicates:" : ask && ask.r ? "Type the letters, then Add." : ask && ask.op === "ins" ? "Which goes outside?" : ask && ask.op === "cut" ? "Tap the letters to drop: any of them." : ask && ask.op === "pick" ? "Tap the letters to keep: any of them." : ask && ask.op === "swp" ? "Tap the two letters that swap, then Swap." : ask && ask.op === "mov" ? (ask.where ? "Tap \u2193 where they go." : "Tap the letters that move, then Next.")
       : ask ? "Type the letters, then Add." : !hasDef ? (sel ? q + ": tap Definition if it is the definition, or tap other words." : "First the definition: tap its words, then Definition. (Or Cryptic definition or &lit below.)")
       : sel && needDef && PE.whole.indexOf("dd") >= 0 && !PE.parts.length ? q + " is:"
       : sel ? q + (PE.parts.length && indSays(bText(sel[0], sel[1])) ? " usually indicates " + indSays(bText(sel[0], sel[1])) + ". It is:" : " is:") : ls.length ? "Letters " + ls.map(function (c) { return clue[c].toUpperCase(); }).join("") + ": tap more, or say what they are." : waiting && !picked.length ? (/^(pick|cut)$/.test(waiting.op) ? "Now tap Letters and the letters “" + tText(clue, waiting.w) + "” " + (waiting.op === "pick" ? "keeps" : "drops") + ", or tap the piece they come from."
@@ -443,6 +475,7 @@
       : PE.target ? "Tap the words that indicate it, then Indicator. Or carry on." : PE.lmode ? "Tap any letters, one at a time."
       : !PE.parts.length ? (needDef ? "Now the second definition: tap its words, then Definition." : "Now the wordplay: tap a word, or two for a run (or Letters), and say what it gives.")
       : "Next, any words that indicate what happens to it (dotted below): tap them, then Indicator. Or tap the next piece, or pieces below to put them together.";
+    $("bWhole").hidden = !!PE.rb; $("bRbDone").hidden = !PE.rb;
     Array.prototype.forEach.call($("bWhole").children, function (b) { b.classList.toggle("on", PE.whole.indexOf(b.dataset.k) >= 0); });
     // the tray, then the live check
     var out = $("bOut"); out.textContent = "";
@@ -475,9 +508,15 @@
     runs.forEach(function (r, i) { var li = more.appendChild(mk("li", null, "Definition: " + bText(r[0], r[1]) + " ")); li.appendChild(mk("button", "x", "×")).dataset.dr = i; });
     if (more.children.length) out.appendChild(more);
     var view = out.appendChild(mk("div", "pbuild"));
-    tShowBuild(p, PE.w, view);
+    tShowBuild(p, PE.rb ? { clue: clue, ans: bAnswer() } : PE.w, view);
     var ul2 = view.querySelector("ul"); if (ul2) ul2.remove();  // the tray already says what each piece is
     var ans = bAnswer(), v = ans ? tCheck(p, clue, ans) : 0;
+    if (PE.rb) {  // a rebus's wordplay: it must give the clue words, with every word of the answer playing a part
+      var ok = p.t && tRebusOk({ of: PE.rb.of, a: clue, t: p.t }, PE.w.clue);
+      out.appendChild(mk("div", "chk" + (ok ? " agree" : ""), ok ? "Checked: read this way, the answer gives “" + bRbOf() + "”. Tap Done." : v ? "It gives the letters, but every word of the answer must be a piece or an indicator."
+        : !p.t ? "Not checked: no pieces yet." : PE.parts.length > 1 ? "Not joined yet: select pieces and put them together." : "Not checked: these don’t give “" + bRbOf() + "” yet."));
+      return;
+    }
     out.appendChild(mk("div", "chk" + (v ? " agree" : ""), p.kind === "dd" || p.kind === "cd" ? "Not checked: definitions can’t be letter-checked, so this rests on your word."
       : !p.t ? "Not checked: no pieces yet." : !ans ? "Not checked: the answer isn’t known yet."
       : v === 2 ? (PE.parts.length > 1 ? "Checked: as a charade, the pieces give the answer." : "Checked: the parsing gives the answer letter for letter.")
@@ -496,7 +535,7 @@
         case "cut": var f = tMake(n.of, clue) || ""; return f.split("").map(function (ch, j) { return n.at.indexOf(j) >= 0 ? "(" + ch.toLowerCase() + ")" : ch; }).join("").replace(/\)\(/g, "") + (n.of.w ? " (" + tText(clue, n.of.w) + ")" : "") + ind(n);
         case "rev": return (n.of.op === "cat" || n.of.op === "ins" ? "(" + say(n.of) + ")" : say(n.of)) + "<" + ind(n);
         case "anag": return "(" + say(n.of) + ")*" + ind(n);
-        case "rebus": var ra = "(" + say(n.of) + ")*", ri = "_" + tLetters(n.l) + "_"; return (n.k === 0 ? ri + " + " + ra : ra + " + " + ri) + " (rebus)";
+        case "rebus": return tNotation({ t: n.t }, n.a) + " = " + say(n.of) + " (rebus)";
         case "cat": return n.of.map(say).join(" + ");
         case "ins":
           var o = tMake(n.out, clue);
@@ -526,6 +565,7 @@
   }
   // The editor's parsing as the solver's record: the tree (s.tree), its type and its notation.
   function bRecord(note) {
+    if (PE.rb) bRbDone();  // a rebus being built goes in first
     var p = bParse(), clue = DTOK.clue, has = p.t || p.kind || p.pal;
     var type = has ? tTypes(p, clue) : "";
     var x = { type: type || "Parsing", wordplay: tNotation(p, clue) || PE.old };

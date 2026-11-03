@@ -65,7 +65,7 @@
         put.apply(null, noun(n.of)); put(" less " + n.at.map(function (j) { return whole[j] || ""; }).join("")); by(); break;
       case "rev": put("reversal"); by(); put(" of "); put.apply(null, noun(n.of)); break;
       case "anag": put("anagram"); by(); put(" of "); put.apply(null, noun(n.of)); break;
-      case "rebus": put("rebus: "); put.apply(null, noun(n.of)); put(" is an anagram of the answer’s other letters, and "); put({ ind: tLetters(n.l) }); put(", in the answer, is the anagram indicator"); break;
+      case "rebus": put("rebus: the answer’s words, read as wordplay, give "); put.apply(null, noun(n.of)); put(": "); put.apply(null, tSay(n.t, n.a)); break;
       case "snd": put("homophone"); by(); put(": sounds like " + (n.of.l || tMake(n.of, clue) || "") + (n.of.w ? ", for " + q(n.of.w) : "")); break;
       case "chg": put("letter change"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
       case "swp": put("letters swapped"); by(); put(": " + (tMake(n.of, clue) || "") + " becomes " + n.l + (n.of.w ? ", from " + q(n.of.w) : "")); break;
@@ -154,7 +154,7 @@
       var ul = mk("ul");
       list.forEach(function (unit, u) {
         var li = mk("li");
-        li.appendChild(mk("b", cls(u), tMake(unit, clue) || placed(unit) || "?"));
+        li.appendChild(mk("b", cls(u), unit.op === "rebus" ? unit.a : tMake(unit, clue) || placed(unit) || "?"));
         li.appendChild(document.createTextNode(" "));
         var parts = tSay(unit, clue);
         for (var c = unit, a = up.get(c); a; c = a, a = up.get(a)) {

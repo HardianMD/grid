@@ -186,7 +186,8 @@
     }
     if (p.kind === "cd") note("Cryptic definition: ", ["the whole clue."]);
     if (p.kind === "&lit") note("&lit: ", ["the whole clue is the definition, and its words are also the wordplay."]);
-    if (p.pal) note("Palindrome: ", [a === "the answer" ? "reads the same backwards." : a + " reads the same backwards."]);
+    var by = !p.t && p.ind ? p.ind.reduce(function (o, sp, i) { return o.concat(i ? [", "] : [], [{ ind: tText(clue, sp) }]); }, []) : [];  // a palindrome's own indicator
+    if (p.pal) note("Palindrome" + (by.length ? " " : ": "), (by.length ? ["("].concat(by, ["): "]) : []).concat([a === "the answer" ? "reads the same backwards." : a + " reads the same backwards."]));
   }
   // The clue's type, from the operations its tree uses.
   function tTypes(p, clue) {

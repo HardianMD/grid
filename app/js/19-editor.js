@@ -6,12 +6,12 @@
   var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
   var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Sounds like…", "snd"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
-  var WRAP1 = [["Reversal", "rev"], ["Anagram", "anag"], ["Rebus…", "rebus"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
+  var WRAP1 = [["Reversal", "rev"], ["Palindrome", "pal"], ["Anagram", "anag"], ["Rebus…", "rebus"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
   // How one part's letters change: swapped, moved, or simply typed (other pieces' letters swapped in: three parts).
   var HOW = [["Swap two letters", "swp"], ["Move letters", "mov"], ["Type what it becomes", "chg"]];
-  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Anagram", "anag"], ["Rebus…", "rebus"], ["Pick letters…", "pick"], ["Spoonerism", "spn"], ["Change letters…", "sub"]];
+  var WRAPN = [["Join", "cat"], ["Container…", "ins"], ["Reversal", "rev"], ["Palindrome", "pal"], ["Anagram", "anag"], ["Rebus…", "rebus"], ["Pick letters…", "pick"], ["Spoonerism", "spn"], ["Change letters…", "sub"]];
   var WHOLE = [["Double definition", "dd"], ["Cryptic definition", "cd"], ["&lit", "&lit"], ["Palindrome", "pal"]];
-  var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", anag: "Anagram", rebus: "Rebus", cut: "Letters dropped",
+  var OPNAME = { lit: "As written", syn: "Synonym", abr: "Abbreviation", cat: "Joined", ins: "Container", rev: "Reversal", pal: "Palindrome", anag: "Anagram", rebus: "Rebus", cut: "Letters dropped",
     pick: "Letters picked", snd: "Sounds like", chg: "Letter change", mov: "Letters moved", swp: "Letters swapped", sub: "Letters replaced", spn: "Spoonerism" };
   WROLES.forEach(function (r) { $("bRoles").appendChild(mk("button", "chip" + (r[1] === "def" ? " def" : ""), r[0])).dataset.r = r[1]; });
   LROLES.forEach(function (r) { $("bLRoles").appendChild(mk("button", "chip", r[0])).dataset.r = r[1]; });
@@ -145,6 +145,7 @@
   function bFam(op) { return /^(chg|mov|swp|sub|how)$/.test(op) ? "chg" : op; }
   function bIndKind(op, name) {
     var w = PE.ask.ind, to = PE.target || PE.pick.length === 1 && PE.parts[PE.pick[0]];
+    if (op === "pal" && to && to.op === "pal") { (to.ind = to.ind || []).push(w); PE.ask = null; PE.sel = null; return bRender(); }
     if (op === "pal") {  // says the whole answer reads the same backwards: no pieces to wait for
       PE.ind.push({ w: w, op: op }); if (PE.whole.indexOf("pal") < 0) PE.whole.push("pal");
       PE.ask = null; PE.sel = null; return bRender();
@@ -234,6 +235,7 @@
     else if (op === "cat") n = { op: "cat", of: ns };  // in the order tapped
     else if (op === "ins") n = bIns(ns, extra);
     else if (op === "rev") n = { op: "rev", of: one || { op: "cat", of: bOrder(ns, true) } };
+    else if (op === "pal") { n = { op: op, of: one || { op: "cat", of: bOrder(ns, false) } }; PE.whole = PE.whole.filter(function (k) { return k !== "pal"; }); }
     else if (op === "anag") n = { op: op, of: one || { op: "cat", of: ns.slice().sort(function (x, y) { return bAt(x) - bAt(y); }) } };
     else if (op === "cut" || op === "pick") n = { op: op, of: one, at: extra };
     else if (op === "snd" || op === "chg" || op === "mov" || op === "swp") n = { op: op, of: one, l: bLetters(extra) };
@@ -541,6 +543,7 @@
         case "cut": var f = tMake(n.of, clue) || ""; return f.split("").map(function (ch, j) { return n.at.indexOf(j) >= 0 ? "(" + ch.toLowerCase() + ")" : ch; }).join("").replace(/\)\(/g, "") + (n.of.w ? " (" + tText(clue, n.of.w) + ")" : "") + ind(n);
         case "rev": return (n.of.op === "cat" || n.of.op === "ins" ? "(" + say(n.of) + ")" : say(n.of)) + "<" + ind(n);
         case "anag": return "(" + say(n.of) + ")*" + ind(n);
+        case "pal": return "pal " + say(n.of) + ind(n);
         case "rebus": return tNotation({ t: n.t }, n.a) + " = " + say(n.of) + " (rebus)";
         case "cat": return n.of.map(say).join(" + ");
         case "ins":

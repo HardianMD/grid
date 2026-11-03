@@ -1751,5 +1751,73 @@
     ]
    ]
   }
+ },
+ {
+  "name": "palindrome of a synonym, with its indicator",
+  "clue": "Midday both ways (4)",
+  "answer": "NOON",
+  "v": 2,
+  "pieces": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "parse": {
+   "t": {
+    "op": "pal",
+    "ind": [
+     [
+      7,
+      16
+     ]
+    ],
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      6
+     ],
+     "l": "NOON"
+    }
+   },
+   "def": [
+    [
+     0,
+     6
+    ]
+   ]
+  }
+ },
+ {
+  "name": "palindrome step on letters that don't read both ways",
+  "clue": "Midday both ways (4)",
+  "answer": "NOON",
+  "v": 0,
+  "parse": {
+   "t": {
+    "op": "pal",
+    "ind": [
+     [
+      7,
+      16
+     ]
+    ],
+    "of": {
+     "op": "syn",
+     "w": [
+      0,
+      6
+     ],
+     "l": "NOUN"
+    }
+   },
+   "def": [
+    [
+     0,
+     6
+    ]
+   ]
+  }
  }
 ]

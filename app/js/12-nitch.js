@@ -27,7 +27,7 @@
       u = ok.length >= 5 && !g.dnf ? mean(ok) : 0, pn = u && Math.round(100 * g.time / 1000 / u);
     return { g: g, u: u, pn: pn, w: pn && Math.round(100 * pn / p.nitch.n) };
   }
-  // Where the user's time sits in the field: a smoothed curve of the field's times, shaded up to the user's line.
+  // Where the user's time sits in the field: a smoothed curve of the field's times, shaded up to the user's line, with the field's average.
   function ncurve(t, me) {
     var hi = Math.max(t[t.length - 1], me), bw = Math.max(20, hi / 22), W = 320, H = 110, pts = [], top = 0;
     for (var i = 0; i <= 120; i++) {
@@ -36,13 +36,13 @@
     }
     var X = function (v) { return (v / hi * W).toFixed(1); }, Y = function (v) { return (H - v / top * (H - 22)).toFixed(1); },
       line = pts.map(function (q) { return X(q[0]) + "," + Y(q[1]); }).join(" L"), left = pts.filter(function (q) { return q[0] <= me; }),
-      md = t.length % 2 ? t[t.length >> 1] : (t[t.length / 2 - 1] + t[t.length / 2]) / 2, ax = "";
+      av = mean(t), ax = "";
     for (var m = 0; m * 60 <= hi; m += hi > 3600 ? 20 : 10) ax += '<text x="' + X(m * 60) + '" y="' + (H + 13) + '" text-anchor="middle">' + m + "m</text>";
     return '<svg viewBox="0 0 ' + W + " " + (H + 16) + '" font-size="10" fill="var(--ink-soft)">' +
       '<path d="M' + line + " L" + W + "," + H + " L0," + H + ' Z" fill="var(--word)"/>' +
       (left.length ? '<path d="M' + left.map(function (q) { return X(q[0]) + "," + Y(q[1]); }).join(" L") + " L" + X(me) + "," + H + " L0," + H + ' Z" fill="var(--accent)" opacity=".35"/>' : "") +
       '<path d="M' + line + '" fill="none" stroke="var(--accent)" stroke-width="2"/><line x1="0" x2="' + W + '" y1="' + H + '" y2="' + H + '" stroke="var(--rule)"/>' + ax +
-      '<line x1="' + X(md) + '" x2="' + X(md) + '" y1="18" y2="' + H + '" stroke="var(--ink)" stroke-dasharray="3 3" opacity=".6"/><text x="' + (+X(md) + 4) + '" y="' + (H - 6) + '">median ' + fmt(md * 1000) + "</text>" +
+      '<line x1="' + X(av) + '" x2="' + X(av) + '" y1="18" y2="' + H + '" stroke="var(--ink)" stroke-dasharray="3 3" opacity=".6"/><text x="' + (+X(av) + 4) + '" y="' + (H - 6) + '">average ' + fmt(av * 1000) + "</text>" +
       '<line x1="' + X(me) + '" x2="' + X(me) + '" y1="14" y2="' + H + '" stroke="var(--bad)" stroke-width="2.5"/><text x="' + X(me) + '" y="10" text-anchor="' + (me > hi * 0.75 ? "end" : "start") + '" font-weight="700" font-size="11" fill="var(--bad)">You ' + fmt(me * 1000) + "</text></svg>";
   }
   function showNitch(p) {

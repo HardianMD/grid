@@ -6,7 +6,7 @@ private updater repo.
 ## Recent changes
 - 10 Nov: part-done parsings (a note, definitions or indicators, no wordplay yet) are saved with their tree and shown
   again (`partEdit`); a blog parsing, when there is one, still gives the type and tiles. One saved before the blog had
-  parsed the clue carries `wait`, and the bell says when the blog's parsing arrives (`res: "part"`, via the head's `qc`).
+  parsed the clue carries `wait`, and the bell says when the blog's parsing arrives (`res: "part"`, via the head's `qc`) (#197).
 - 3 Nov: two-tap buttons (`sure()`: Delete, Unpublish, Sign out, Replace) disarm on the confirming tap (#194).
 - 3 Nov: Palindrome step on a piece (#193, tree node `pal {of}`) and a markable palindrome indicator (#192, kept as the
   parsing's loose `ind`). `tMarks` no longer writes clue offsets into saved trees; old records keep stray `"37":0`

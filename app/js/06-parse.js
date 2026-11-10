@@ -54,12 +54,12 @@
   }
   function blogParse(w) { return PARSES && PARSES[w.dir] && PARSES[w.dir][w.num]; }
   function parseFor(w) {
-    var key = w.dir + w.num, mine = newEdit(myParses[key]) ? myParses[key] : null, blog = blogParse(w);
+    var key = w.dir + w.num, rec = newEdit(myParses[key]) ? myParses[key] : null, blog = blogParse(w), mine = blog && partEdit(rec) ? null : rec;
     var x = mine || blog || { type: "Not parsed", wordplay: P.ed || P.made ? "Tap Edit to add one." : (P.blog ? "The blog has no parsing for this clue." : P.noblog ? "No blog covers this puzzle." : "The blog isn't out yet, or not read yet: tap ↻ later.") + " Tap Edit to add your own." };
     // The structure: our own checked parsing where the data has one (x.ours), else the one read from the blog's or
     // the solver's words.
     // rules: worked out from the clue by rules alone (the updater's rules.py) until a blog's parsing replaces it.
-    return { mine: !!mine, blog: !!blog, rules: !mine && !!(blog && blog.rules), type: ctype(x.type), wordplay: x.wordplay || "", s: (x.ours && x.ours.s) || x.s || mine && readWp(w, mine) };
+    return { mine: !!mine, note: rec && rec.note || "", blog: !!blog, rules: !mine && !!(blog && blog.rules), type: ctype(x.type), wordplay: x.wordplay || "", s: (x.ours && x.ours.s) || x.s || mine && readWp(w, mine) };
   }
   // A structure for an edit saved before the Build step, read from its wordplay as the updater reads a blog's:
   // CAPITAL pieces (lower-case letters are the ones dropped), (WORDS)* anagrams, glosses in brackets or quotes,
@@ -222,7 +222,7 @@
     var s = drawParse(w, r, $("pvClue"), $("pvType"), $("pvWp"), $("pvBuild"));
     $("pvAns").textContent = answerText(w); $("pvAns").hidden = !!s;
     var bp = blogParse(w); $("pvBlog").hidden = !(s && bp && bp.wordplay); $("pvBlog").classList.remove("on");
-    $("pvNote").textContent = r.mine && myParses[key].note || ""; $("pvNote").hidden = !$("pvNote").textContent;
+    $("pvNote").textContent = r.note; $("pvNote").hidden = !$("pvNote").textContent;
     $("hintText").hidden = true; $("parseView").hidden = false;
     // The blog is linked from the finish bar; the note only says when the parsing is the solver's own or missing.
     $("parseNote").textContent = r.rules ? "Worked out by rules from the clue. The blog's parsing will replace it when it comes." : r.mine || r.blog ? "" : "No parsing from the blog yet.";
@@ -267,13 +267,15 @@
     $("ansRow").hidden = !withAnswer;
     if (withAnswer) $("ansInput").value = w.cells.map(function (rc) { return fill[rc[0]][rc[1]] || ""; }).join("");
     var p = has && r.s ? treeFor(w, Object.assign({}, r.s, { ty: r.type }), w.cells.map(function (rc) { return solAt(rc[0], rc[1]) || fill[rc[0]][rc[1]] || ""; }).join("")) : null;
+    var part = !mine && partEdit(myParses[w.dir + w.num]) && newEdit(myParses[w.dir + w.num]) ? myParses[w.dir + w.num].s.tree : null;  // the solver's start, over the blog's
+    if (part) { p = p || {}; if (part.def && part.def.length) p.def = part.def; if (part.ind) p.ind = part.ind; }
     var defs = p && p.def && p.def.length ? p.def : defSpans(w, defsFor(w));
     buildDefPick(w, defs); bLoad(p, w);
     if (has && !p) ["&lit", "Palindrome"].forEach(function (k, i) { if (r.type.split(/,\s*/).indexOf(k) >= 0) PE.whole.push(["&lit", "pal"][i]); });
     // A parsing of the solver's own written as text, with no pieces, moves to the note so nothing is lost.
     var moved = !!(mine && !r.s && mine.wordplay && !mine.note);
-    $("parseNotes").value = mine ? mine.note || (moved ? mine.wordplay : "") : "";
-    PE.old = moved || !has || p ? "" : r.wordplay; PE.oldType = has ? r.type : "";
+    $("parseNotes").value = moved ? mine.wordplay : r.note;
+    PE.old = moved || !has || p ? "" : r.wordplay;
     bRender();
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;

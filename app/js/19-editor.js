@@ -3,7 +3,7 @@
   // operation (a charade, container, reversal, anagram, cut, ...), and an operation takes the words that indicate it.
   // One indicator covers everything inside its operation, and the same words can indicate more than one. The tray
   // shows the pieces as a tree; the parsing is checked live by working out its letters.
-  var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
+  var DTOK = [], PE = { w: null, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "" };
   var WROLES = [["Definition", "def"], ["Indicator", "ind"], ["As written", "lit"], ["Synonym…", "syn"], ["Abbreviation…", "abr"], ["Sounds like…", "snd"], ["Another clue’s answer…", "xr"]];
   var LROLES = [["Picked letters", "pick"], ["Letters cut out", "cut"]];
   var WRAP1 = [["Reversal", "rev"], ["Palindrome", "pal"], ["Anagram", "anag"], ["Rebus…", "rebus"], ["Drop letters…", "cut"], ["Pick letters…", "pick"], ["Sounds like…", "snd"], ["Change letters…", "how"], ["Spoonerism", "spn"]];
@@ -189,7 +189,7 @@
     if (!tMake(of, clue)) return toast("Pick clue words as they stand");
     var back = { pe: PE, def: bParse().def, ns: ns }, a = bAnsText(PE.w.clue, ans);
     buildDefPick({ clue: a }, []);
-    PE = { w: PE.w, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "", rb: { back: back, of: of, a: a } };
+    PE = { w: PE.w, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", rb: { back: back, of: of, a: a } };
     $("bLetters").setAttribute("aria-pressed", "false");
     bRender();
   }
@@ -565,7 +565,7 @@
   }
   // A saved parsing into the editor: its tree as one part (take it apart with ×), its definitions and kinds.
   function bLoad(p, w) {
-    PE = { w: w, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "", oldType: "" };
+    PE = { w: w, sel: null, lmode: false, lset: [], parts: [], pick: [], ask: null, target: null, ind: [], whole: [], old: "" };
     $("bLetters").setAttribute("aria-pressed", "false");
     if (!p) return;
     if (p.t) PE.parts = [JSON.parse(JSON.stringify(p.t))];
@@ -576,10 +576,11 @@
   // The editor's parsing as the solver's record: the tree (s.tree), its type and its notation.
   function bRecord(note) {
     if (PE.rb) bRbDone();  // a rebus being built goes in first
-    var p = bParse(), clue = DTOK.clue, has = p.t || p.kind || p.pal;
+    var p = bParse(), clue = DTOK.clue, has = p.t || p.kind || p.pal, any = has || p.def.length || p.ind || note;
     var type = has ? tTypes(p, clue) : "";
-    var x = { type: type || "Parsing", wordplay: tNotation(p, clue) || PE.old };
-    if (has) x.s = { tree: JSON.parse(JSON.stringify(p)) };
+    var x = { type: type || (has ? "Parsing" : "Not parsed"), wordplay: tNotation(p, clue) || PE.old };
+    if (any) x.s = { tree: JSON.parse(JSON.stringify(p)) };  // a note or definitions alone are kept too (partEdit)
     if (note) x.note = note;
-    return x.wordplay || note || type && type !== PE.oldType ? x : null;
+    if (any && !has && !blogParse(PE.w) && !P.ed && !P.made) x.wait = 1;  // the bell says when the blog's parsing arrives
+    return any || x.wordplay ? x : null;
   }

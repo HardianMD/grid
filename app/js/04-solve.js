@@ -258,7 +258,7 @@
     w.pa = mk("div", "cpar"); line.appendChild(t); line.appendChild(wp); w.pa.appendChild(line); w.pa.appendChild(bd);
     drawParse(w, r, w.span, t, wp, bd);
     if (!bd.querySelector(".tiles")) line.insertBefore(mk("b", null, answerText(w) + " "), t);
-    if (r.mine && myParses[w.dir + w.num].note) w.pa.appendChild(mk("p", "pnote", myParses[w.dir + w.num].note));
+    if (r.note) w.pa.appendChild(mk("p", "pnote", r.note));
     w.el.appendChild(w.pa);
   }
 

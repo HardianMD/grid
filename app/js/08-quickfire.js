@@ -28,7 +28,7 @@
       Object.keys(h.qc[dir] || {}).forEach(function (num) {
         var k = dir + num, x = h.qc[dir][num];
         if (mine[k] && !mine[k].off && JSON.stringify((mine[k].s || {}).tree || {}).indexOf('"xr"') >= 0) return;
-        if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] && mine[k].s && mine[k].s.tree && !mine[k].off ? mine[k] : x[0] ? { type: x[0] } : null) });
+        if (x[1] || /^[A-Z]+$/.test(ans[k] || "")) out.push({ h: h, k: k, t: qfTypes(mine[k] && mine[k].s && mine[k].s.tree && !mine[k].off && !(x[0] && partEdit(mine[k])) ? mine[k] : x[0] ? { type: x[0] } : null) });
       });
     });
     return out;

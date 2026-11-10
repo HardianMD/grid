@@ -1,5 +1,6 @@
   // Notifications: a submitted grid is marked as soon as its answers arrive, and the bell says how it went;
-  // a puzzle finished before its parsings gets one when they arrive.
+  // a puzzle finished before its parsings gets one when they arrive, and so does a clue saved part parsed (x.wait)
+  // before the blog had parsed it.
   // Opening the list clears the red dot; each notification stays until its puzzle is opened.
   // Each puzzle's notification of each kind once (another device may have added the same one).
   function notes() {
@@ -15,6 +16,8 @@
       if (!s) return;
       // Records changed here get a new `at`, so other devices take the change rather than notify again.
       if (s.np && p.parsed) { s = store.get(k); delete s.np; s.at = Date.now(); store.set(k, s); add.push({ id: p.id, res: "parse" }); }
+      var got = p.blog && Object.keys(s.parses || {}).filter(function (c) { var x = (p.qc || {})[c[0]], q = x && x[c.slice(1)]; return s.parses[c].wait && (!q || q[0]); });
+      if (got && got.length) { s = store.get(k); got.forEach(function (c) { delete s.parses[c].wait; if (P && P.id === p.id && myParses[c]) delete myParses[c].wait; }); s.at = Date.now(); store.set(k, s); add.push({ id: p.id, res: "part", n: got.length }); }
       if (P && P.id === p.id && $("home").hidden) return;  // a grid on screen is marked there instead
       // a DNF is marked again in case its answers were corrected since
       if (!s.sub || s.sub.res === "ok" || !p.solution) return;
@@ -36,8 +39,8 @@
       if (!p) return;
       var b = document.createElement("button"), t = document.createElement("b"), r = document.createElement("span");
       b.type = "button"; b.className = "note-item " + n.res;
-      t.textContent = p.title.replace(/ No\. /, " ") + (n.res === "parse" ? " has its parsings" : " has been checked");
-      r.textContent = n.res === "parse" ? "Tap to see how the clues work" : n.res === "ok" ? "\u2713 Finished in " + fmt(n.time)
+      t.textContent = p.title.replace(/ No\. /, " ") + (n.res === "parse" ? " has its parsings" : n.res === "part" ? " has blog parsings for clues you part parsed" : " has been checked");
+      r.textContent = n.res === "parse" ? "Tap to see how the clues work" : n.res === "part" ? (n.n > 1 ? n.n + " clues" : "One clue") + ": tap to compare with your notes" : n.res === "ok" ? "\u2713 Finished in " + fmt(n.time)
         : dnfText(n.time, n.bad, n.gap);
       b.appendChild(t); b.appendChild(r);
       b.addEventListener("click", function () { $("noteSheet").hidden = true; openPuzzle(p); });

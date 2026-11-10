@@ -170,6 +170,9 @@
   // A solver's parsing made in the tree editor (19-editor.js). Edits from before it are kept but no longer shown,
   // and their definitions with them, except in a created puzzle, where every parsing is the setter's.
   function newEdit(rec) { return !!(rec && !rec.off && (P.ed || P.made || rec.s && rec.s.tree)); }
+  // One with no wordplay yet (a note, definitions or indicators only): kept and shown, but a blog's parsing, when there
+  // is one, still gives the type, wordplay and tiles.
+  function partEdit(rec) { var t = rec && rec.s && rec.s.tree; return !!t && !t.t && !t.kind && !t.pal; }
   // Clue text, with the definition underlined once its hint has been shown.
   // Definitions: the solver's own (saved per clue) win over the blog's.
   function defsFor(w) {
@@ -262,7 +265,7 @@
     });
     if (core(rec) === core(old)) return;
     rec.at = Date.now(); store.set(k, rec);
-    QF.c.mine = newEdit(myParses.a1) ? myParses.a1 : null; QF.c.t = qfTypes(QF.c.mine || QF.c.blog);
+    QF.c.mine = newEdit(myParses.a1) ? myParses.a1 : null; QF.c.t = qfTypes(partEdit(QF.c.mine) && QF.c.blog || QF.c.mine || QF.c.blog);
   }
   function core(v) {
     var o = {}; Object.keys(v).forEach(function (k) { if (k !== "time" && k !== "sel" && k !== "at") o[k] = v[k]; });

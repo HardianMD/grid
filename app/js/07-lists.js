@@ -182,7 +182,7 @@
        ["Parse", "fpar", function (x) {
         var rec = store.peek("crossword:" + p.id) || {}, mine = (rec.parses || {})[f.k], blog = ((jsonOf(p, "parses") || {})[dir] || {})[num];
         if (mine && (mine.off || !(p.ed || p.made || mine.s && mine.s.tree))) mine = null;  // as newEdit()
-        var hint = ((jsonOf(p, "hints") || {})[dir] || {})[num], x0 = mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
+        var hint = ((jsonOf(p, "hints") || {})[dir] || {})[num], x0 = blog && partEdit(mine) ? blog : mine || blog || { type: "Not parsed", wordplay: "No parsing for this clue yet." };
         var w = { dir: dir, num: num, clue: clue, ans: ans,
           defs: mine && (rec.defs || {})[f.k] || (hint ? [hint] : blog && blog.rules && blog.s && blog.s.def ? [blog.s.def] : []) };
         var r = { type: ctype(x0.type), wordplay: x0.wordplay || "", s: ans && ((x0.ours && x0.ours.s) || x0.s) };

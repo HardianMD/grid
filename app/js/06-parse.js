@@ -233,7 +233,16 @@
     $("parseEdit").hidden = false; $("parseReset").hidden = P.ed || !(off && newEdit(Object.assign({}, rec, { off: 0 })) || r.mine);
     $("hintNo").hidden = true;
     $("hintYes").textContent = "Done";
+    $("pvPrev").hidden = $("pvNext").hidden = !solved || !!(P.qf || P.ed);
   }
+  // On a finished grid, ‹ and › step through the parsings in clue-list order, across then down, without closing the
+  // view (the selection moves along; it is saved with the next change).
+  function stepParse(d) {
+    var n = words.length, w = words[((words.indexOf(curWord()) + d) % n + n) % n];
+    sel = { r: w.cells[0][0], c: w.cells[0][1], dir: w.cdir[0] }; render(); showParse(w);
+  }
+  $("pvPrev").addEventListener("click", function () { stepParse(-1); });
+  $("pvNext").addEventListener("click", function () { stepParse(1); });
   // The parsing r of clue w drawn into the given elements: the clue marked up, the type, the written wordplay (only
   // when there is no structure) and the tiles; also used by the Favourites tab, whose w carries its own answer (ans)
   // and definitions (defs). Returns the structure, if any.
@@ -280,7 +289,7 @@
     $("hintText").textContent = withAnswer ? "The answer to this clue isn't known yet. If you have solved it, enter the answer and, if you like, how it works. It will be locked in green." : "";
     $("hintText").hidden = !withAnswer;
     $("parseView").hidden = $("parseNote").hidden = $("clueForm").hidden = $("clueParse").hidden = true; $("parseForm").hidden = false;
-    $("parseEdit").hidden = true; $("parseReset").hidden = true; $("pvBlog").hidden = true;
+    $("parseEdit").hidden = $("parseReset").hidden = $("pvBlog").hidden = $("pvPrev").hidden = $("pvNext").hidden = true;
     $("hintNo").hidden = false; $("hintNo").textContent = "Cancel";
     $("hintYes").textContent = "Save";
     $("hintAsk").hidden = false;

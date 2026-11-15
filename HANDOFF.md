@@ -1,9 +1,11 @@
 # Handover
 
-Current state of the app and recent changes, newest first. Last updated 10 Nov 2026. Source-specific notes live in the
+Current state of the app and recent changes, newest first. Last updated 15 Nov 2026. Source-specific notes live in the
 private updater repo.
 
 ## Recent changes
+- 15 Nov: ‹ and › in the parse view of any finished grid step through the clues in list order, wrapping round
+  (`stepParse`; the selection moves along and saves with the next change).
 - 10 Nov: part-done parsings (a note, definitions or indicators, no wordplay yet) are saved with their tree and shown
   again (`partEdit`); a blog parsing, when there is one, still gives the type and tiles. One saved before the blog had
   parsed the clue carries `wait`, and the bell says when the blog's parsing arrives (`res: "part"`, via the head's `qc`) (#197).

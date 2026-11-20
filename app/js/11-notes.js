@@ -19,8 +19,8 @@
       var got = p.blog && Object.keys(s.parses || {}).filter(function (c) { var x = (p.qc || {})[c[0]], q = x && x[c.slice(1)]; return s.parses[c].wait && (!q || q[0]); });
       if (got && got.length) { s = store.get(k); got.forEach(function (c) { delete s.parses[c].wait; if (P && P.id === p.id && myParses[c]) delete myParses[c].wait; }); s.at = Date.now(); store.set(k, s); add.push({ id: p.id, res: "part", n: got.length }); }
       if (P && P.id === p.id && $("home").hidden) return;  // a grid on screen is marked there instead
-      // a DNF is marked again in case its answers were corrected since
-      if (!s.sub || s.sub.res === "ok" || !p.solution) return;
+      // a submitted grid is marked again in case its answers arrived or were corrected since
+      if (!s.sub || !p.solution) return;
       if (!(m = markOf(p, s)).any || (m.bad ? "dnf" : "ok") === s.sub.res) return;
       s = store.get(k); s.sub.res = m.bad ? "dnf" : "ok"; s.at = Date.now(); store.set(k, s);
       if (P && P.id === p.id) P.stale = true;

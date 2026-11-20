@@ -6,7 +6,9 @@ private updater repo.
 ## Recent changes
 - 20 Nov: a finished grid is marked again against answers that arrive or change later: a submitted "ok" grid is
   re-graded on open and from the bell's check, and a solved Easy or Medium grid shows squares now known wrong in amber
-  (they were green with the solver's own added answer).
+  (they were green with the solver's own added answer) (#200).
+- 20 Nov: in the parse editor a hyphenated word's parts and the word before 's are tokens of their own (`DTOK[i].g`
+  is the word); a tap takes the whole word, a second tap the part tapped, a tap on another word makes a run (`bTap`).
 - 15 Nov: ‹ and › in the parse view of any finished grid step through the clues in list order, wrapping round
   (`stepParse`; the selection moves along and saves with the next change).
 - 10 Nov: part-done parsings (a note, definitions or indicators, no wordplay yet) are saved with their tree and shown

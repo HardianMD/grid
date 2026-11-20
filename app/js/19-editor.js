@@ -32,24 +32,28 @@
   function buildDefPick(w, defs) {
     var box = $("defPick"), body = w.clue.replace(/\s*\([\d,\-\s]+\)\s*$/, ""), re = /\S+/g, m;
     box.innerHTML = ""; DTOK = [];
-    var pos = 0;
-    while ((m = re.exec(body))) {
-      if (m.index > pos) box.appendChild(document.createTextNode(body.slice(pos, m.index)));
-      var t = mk("span", "tok"), a = m.index, b = a + m[0].length, chars = [];
-      m[0].split("").forEach(function (ch, k) {
+    var pos = 0, g = 0;
+    // each word is one group; a hyphenated word's parts and the word before an 's are tokens of their own
+    while ((m = re.exec(body))) { g++; m[0].match(/[^-]+-+(?=[^-])|.+?(?=['\u2019]s[^a-z]*$)|.+/gi).forEach(function (part) {
+      var a = Math.max(pos, m.index);
+      if (a > pos) box.appendChild(document.createTextNode(body.slice(pos, a)));
+      var t = mk("span", "tok"), b = a + part.length, chars = [];
+      part.split("").forEach(function (ch, k) {
         var c = t.appendChild(mk("span", "ch", ch)); c.dataset.c = a + k; chars.push(c);
         c.addEventListener("click", function (e) { if (PE.lmode) { e.stopPropagation(); lTap(+this.dataset.c); } });
       });
       defs.forEach(function (sp, n) { if (a < sp[1] && b > sp[0]) { t.classList.add("on"); t.dataset.d = n; } });
       t.dataset.i = DTOK.length; t.addEventListener("click", function () { if (!PE.lmode) bTap(+this.dataset.i); });
-      box.appendChild(t); DTOK.push({ el: t, a: a, b: b, chars: chars });
+      box.appendChild(t); DTOK.push({ el: t, a: a, b: b, chars: chars, g: g });
       pos = b;
-    }
+    }); }
     DTOK.clue = w.clue;
   }
+  // A tap takes the whole word; a second tap on part of it takes just that part, a tap elsewhere makes a run.
   function bTap(i) {
-    var s = PE.sel;
-    PE.sel = !s || s[0] !== s[1] ? [i, i] : s[0] === i ? null : [Math.min(s[0], i), Math.max(s[0], i)];
+    var s = PE.sel, g = DTOK[i].g, all = DTOK.map(function (x, j) { return j; }).filter(function (j) { return DTOK[j].g === g; });
+    var one = s && DTOK[s[0]].g === DTOK[s[1]].g, whole = one && s[0] === all[0] && s[1] === all[all.length - 1];
+    PE.sel = !one ? [all[0], all[all.length - 1]] : s[0] === i && s[1] === i ? null : whole && DTOK[s[0]].g === g ? [i, i] : [Math.min(s[0], i), Math.max(s[1], i)];
     PE.ask = null; bRender();
   }
   // Letters toggle one at a time: any letters, next to each other or not, in one word or several.

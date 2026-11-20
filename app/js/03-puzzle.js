@@ -157,7 +157,7 @@
     USED = typeof saved.used === "number" ? saved.used : saved.fill ? -1 : 3;
     if (USED < 0 && solved) USED = RANK[MODE];  // older finished records: the mode it was played in
     REV = !!saved.rev; REVW = saved.revw || {};
-    if (SUB && SUB.res !== "ok") { var was = SUB.res; grade(); if (SUB.res !== was) save(); }  // answers arrived or were corrected since
+    if (SUB) { var was = SUB.res; grade(); if (SUB.res !== was) save(); }  // answers arrived or were corrected since (a finished grid too)
     render();
   }
 

@@ -114,7 +114,7 @@
     var inCross = {};
     if (other >= 0) words[other].cells.forEach(function (rc) { inCross[rc[0] + "," + rc[1]] = 1; });
     var total = 0, done = 0, bad = 0, gap = 0, g = helpOf({ used: USED, mode: MODE, hn: HN, rev: REV, revw: REVW }), revDnf = g.rd;
-    // Revealed squares are amber; a marked Hard or Competition grid shows right squares green and wrong or blank ones amber. REVW lists, per revealed answer, the
+    // Revealed squares are amber; a marked or solved grid shows right squares green and wrong or blank ones amber. REVW lists, per revealed answer, the
     // squares the reveal filled (1: all of them), so crossing letters already green stay green.
     var rv = {};
     words.forEach(function (x) {
@@ -125,7 +125,7 @@
     var heat = HEAT && heatOf();
     for (var r = 0; r < R; r++) for (var c = 0; c < C; c++) {
       if (cells[r][c].b) continue;
-      var el = cellEls[r][c], k = r + "," + c, a = !RP && SUB && solAt(r, c);
+      var el = cellEls[r][c], k = r + "," + c, a = !RP && (SUB || solved) && solAt(r, c);  // a finished grid is marked against answers that arrived since
       if (heat || el.style.background) el.style.background = heat ? heat.bg(Math.max(heat.t[cells[r][c].a] || 0, heat.t[cells[r][c].d] || 0)) : "";
       total++; if (fill[r][c]) done++;
       if (a && fill[r][c] !== a) { bad++; if (!fill[r][c]) gap++; }
